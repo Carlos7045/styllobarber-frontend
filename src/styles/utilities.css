@@ -1,0 +1,229 @@
+/* === UTILITÁRIOS CUSTOMIZADOS STYLLOBARBER === */
+
+/* Gradientes de marca */
+.gradient-gold {
+  background: linear-gradient(135deg, var(--primary-gold-light), var(--primary-gold-dark));
+}
+
+.gradient-dark {
+  background: linear-gradient(135deg, var(--primary-black), var(--secondary-graphite));
+}
+
+.gradient-petrol {
+  background: linear-gradient(135deg, var(--secondary-petrol-light), var(--secondary-petrol-dark));
+}
+
+/* Efeitos de texto */
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-shadow-gold {
+  text-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+}
+
+.text-shadow-dark {
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Bordas especiais */
+.border-gradient-gold {
+  border: 2px solid transparent;
+  background: linear-gradient(var(--background-primary), var(--background-primary)) padding-box,
+              linear-gradient(135deg, var(--primary-gold), var(--primary-gold-light)) border-box;
+}
+
+/* Efeitos de hover */
+.hover-lift {
+  transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
+}
+
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.hover-gold {
+  transition: all 0.2s ease-out;
+}
+
+.hover-gold:hover {
+  color: var(--primary-gold);
+  box-shadow: var(--shadow-gold);
+}
+
+/* Estados de loading */
+.loading-shimmer {
+  background: linear-gradient(90deg, 
+    var(--neutral-light-gray) 25%, 
+    var(--neutral-white) 50%, 
+    var(--neutral-light-gray) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Skeleton loaders */
+.skeleton {
+  @apply bg-neutral-light-gray animate-pulse rounded;
+}
+
+.skeleton-text {
+  @apply skeleton h-4 w-full mb-2;
+}
+
+.skeleton-title {
+  @apply skeleton h-6 w-3/4 mb-4;
+}
+
+.skeleton-avatar {
+  @apply skeleton h-10 w-10 rounded-full;
+}
+
+/* Scrollbars customizadas */
+.scrollbar-styllobarber {
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary-gold) var(--neutral-light-gray);
+}
+
+.scrollbar-styllobarber::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.scrollbar-styllobarber::-webkit-scrollbar-track {
+  background: var(--neutral-light-gray);
+  border-radius: 4px;
+}
+
+.scrollbar-styllobarber::-webkit-scrollbar-thumb {
+  background: var(--primary-gold);
+  border-radius: 4px;
+  border: 1px solid var(--neutral-light-gray);
+}
+
+.scrollbar-styllobarber::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-gold-dark);
+}
+
+/* Animações de entrada */
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s ease-out;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.5s ease-out;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.3s ease-out;
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Estados de foco acessíveis */
+.focus-gold {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-gold focus:ring-offset-2;
+}
+
+.focus-dark {
+  @apply focus:outline-none focus:ring-2 focus:ring-secondary-graphite focus:ring-offset-2;
+}
+
+/* Utilitários de layout */
+.container-styllobarber {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.section-padding {
+  @apply py-12 md:py-16 lg:py-20;
+}
+
+/* Estados de componentes */
+.disabled {
+  @apply opacity-50 cursor-not-allowed pointer-events-none;
+}
+
+.loading {
+  @apply opacity-75 cursor-wait;
+}
+
+/* Utilitários de tipografia */
+.heading-primary {
+  @apply font-heading font-bold text-primary-black;
+}
+
+.heading-secondary {
+  @apply font-display font-normal text-primary-black;
+}
+
+.body-text {
+  @apply font-body font-normal text-text-primary;
+}
+
+.interface-text {
+  @apply font-interface font-medium text-text-primary;
+}
+
+/* Responsividade para componentes */
+.responsive-grid {
+  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6;
+}
+
+.responsive-flex {
+  @apply flex flex-col sm:flex-row items-start sm:items-center gap-4;
+}
