@@ -83,7 +83,7 @@ interface AuthContextType {
   loading: boolean
   initialized: boolean
   isAuthenticated: boolean
-  
+
   // Estado de saúde do sistema
   systemHealth: {
     isHealthy: boolean
@@ -92,7 +92,7 @@ interface AuthContextType {
     isInFallbackMode: boolean
     lastHealthCheck: Date | null
   }
-  
+
   // Ações
   signIn: (data: LoginData) => Promise<AuthResult>
   signUp: (data: SignUpData) => Promise<AuthResult>
@@ -101,12 +101,12 @@ interface AuthContextType {
   updateProfile: (updates: Partial<UserProfile>) => Promise<AuthResult>
   updateProfileSimple: (updates: Partial<UserProfile>) => Promise<AuthResult>
   uploadUserAvatar: (file: File) => Promise<AuthResult>
-  
+
   // Ações de sistema
   performHealthCheck: () => Promise<void>
   recoverFromError: (error: Error) => Promise<boolean>
   resetSystemState: () => void
-  
+
   // Helpers
   hasRole: (role: 'admin' | 'barber' | 'client') => boolean
   hasPermission: (permission: string) => boolean
@@ -136,7 +136,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
-  
+
   // Estado de saúde do sistema
   const [systemHealth, setSystemHealth] = useState({
     isHealthy: true,
@@ -145,7 +145,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     isInFallbackMode: false,
     lastHealthCheck: null as Date | null
   })
-  
+
   // Hook de error recovery
   const errorRecoveryHook = useErrorRecovery()
 
@@ -155,7 +155,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const performHealthCheck = async (): Promise<void> => {
     try {
       console.log('🔍 Realizando health check do sistema de autenticação...')
-      
+
       const health = {
         isHealthy: true,
         circuitState: 'closed',
@@ -163,13 +163,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         isInFallbackMode: false,
         lastHealthCheck: new Date()
       }
-      
+
       // Verificar errorRecovery com try-catch
       try {
         health.circuitState = errorRecovery.getCircuitState()
         health.failureCount = errorRecovery.getFailureCount()
         health.isInFallbackMode = errorRecovery.isInFallbackMode()
-        
+
         // Verificar se há problemas críticos
         if (health.circuitState === 'open' || health.failureCount > 5) {
           health.isHealthy = false
@@ -178,15 +178,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('⚠️ Erro ao verificar errorRecovery:', errorRecoveryError)
         health.isHealthy = false
       }
-      
+
       // Verificar se a sessão atual é válida (com timeout)
       if (session) {
         try {
           const sessionCheckPromise = sessionManager.validateSession()
-          const timeoutPromise = new Promise((_, reject) => 
+          const timeoutPromise = new Promise((_, reject) =>
             setTimeout(() => reject(new Error('Session validation timeout')), 5000)
           )
-          
+
           const isSessionValid = await Promise.race([sessionCheckPromise, timeoutPromise])
           if (!isSessionValid) {
             health.isHealthy = false
@@ -197,7 +197,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.warn('⚠️ Health check: Erro ao validar sessão:', error)
         }
       }
-      
+
       setSystemHealth(health)
       console.log('✅ Health check concluído:', health)
     } catch (error) {
@@ -209,24 +209,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }))
     }
   }
-  
+
   // Função para recuperação de erros
   const recoverFromError = async (error: Error): Promise<boolean> => {
     try {
       console.log('🔧 AuthContext: Iniciando recovery de erro:', error.message)
-      
+
       const recoveryResult = await errorRecovery.recoverFromError(error, {
         userId: user?.id,
         context: 'AuthContext',
         timestamp: Date.now()
       })
-      
+
       if (recoveryResult.success) {
         console.log('✅ Recovery bem-sucedido no AuthContext')
-        
+
         // Atualizar health após recovery
         await performHealthCheck()
-        
+
         // Se houve mudança na sessão, revalidar
         if (recoveryResult.strategy === 'refresh_session') {
           const currentSession = await sessionManager.getCurrentSession()
@@ -234,7 +234,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             await updateAuthState(currentSession)
           }
         }
-        
+
         return true
       } else {
         console.log('❌ Recovery falhou no AuthContext:', recoveryResult.error)
@@ -245,14 +245,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return false
     }
   }
-  
+
   // Função para resetar estado do sistema
   const resetSystemState = (): void => {
     console.log('🔄 Resetando estado do sistema de autenticação...')
-    
+
     // Reset do error recovery
     errorRecovery.resetCircuit()
-    
+
     // Reset do health
     setSystemHealth({
       isHealthy: true,
@@ -261,7 +261,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isInFallbackMode: false,
       lastHealthCheck: new Date()
     })
-    
+
     console.log('✅ Estado do sistema resetado')
   }
 
@@ -298,7 +298,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           console.warn('⚠️ Erro na query direta do perfil:', error)
         } else if (profile) {
           console.log('✅ Perfil obtido via query direta')
-          
+
           // Tentar armazenar no cache (se disponível)
           if (cacheManager) {
             try {
@@ -307,7 +307,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               console.warn('⚠️ Erro ao armazenar no cache:', cacheError)
             }
           }
-          
+
           return profile
         }
       } catch (directQueryError) {
@@ -319,7 +319,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const syncResult = await profileSync.syncProfile(userId)
         if (syncResult.success && syncResult.profile) {
           console.log('✅ Perfil obtido via ProfileSync')
-          
+
           // Tentar armazenar no cache (se disponível)
           if (cacheManager) {
             try {
@@ -328,7 +328,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               console.warn('⚠️ Erro ao armazenar no cache:', cacheError)
             }
           }
-          
+
           return syncResult.profile
         }
       } catch (syncError) {
@@ -360,30 +360,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Função para atualizar estado de autenticação (simplificada para debug)
   const updateAuthState = async (session: Session | null) => {
-    console.log('🔄 Atualizando estado de autenticação:', { 
-      hasSession: !!session, 
-      userId: session?.user?.id 
+    console.log('🔄 Atualizando estado de autenticação:', {
+      hasSession: !!session,
+      userId: session?.user?.id
     })
-    
+
     setSession(session)
     setUser(session?.user ?? null)
 
     if (session?.user) {
       console.log('👤 Usuário encontrado na sessão, buscando perfil...')
-      
+
       try {
         // Buscar perfil diretamente (sem SessionManager para debug)
         const userProfile = await fetchUserProfile(session.user.id)
         console.log('📋 Perfil obtido:', userProfile ? 'sucesso' : 'falhou')
         setProfile(userProfile)
-        
+
         // Health check opcional
         try {
           await performHealthCheck()
         } catch (healthError) {
           console.warn('⚠️ Erro no health check (não crítico):', healthError)
         }
-        
+
       } catch (error) {
         console.error('❌ Erro ao buscar perfil:', error)
         setProfile(null)
@@ -391,7 +391,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } else {
       console.log('🚫 Nenhum usuário na sessão, limpando estado...')
       setProfile(null)
-      
+
       // Limpar estado de saúde quando não há sessão
       setSystemHealth(prev => ({
         ...prev,
@@ -413,20 +413,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const initializeAuth = async () => {
       try {
         console.log('🚀 Inicializando sistema de autenticação...')
-        
+
         // Usar SessionManager para obter sessão inicial
         const session = await sessionManager.getCurrentSession()
-        
+
         if (mounted) {
           await updateAuthState(session)
         }
       } catch (error) {
         console.error('❌ Erro na inicialização da auth:', error)
-        
+
         if (mounted) {
           // Tentar recovery na inicialização
           const recoverySuccess = await recoverFromError(error as Error)
-          
+
           if (!recoverySuccess) {
             setLoading(false)
             setInitialized(true)
@@ -441,7 +441,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('🔄 Auth state changed:', event)
-        
+
         if (mounted) {
           await updateAuthState(session)
         }
@@ -453,21 +453,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
     }
   }, [])
-  
+
   // Health checks periódicos
   useEffect(() => {
     if (!initialized) return
-    
+
     // Health check inicial
     performHealthCheck()
-    
+
     // Health checks periódicos a cada 2 minutos
     const healthCheckInterval = setInterval(() => {
       if (user) {
         performHealthCheck()
       }
     }, 120000) // 2 minutos
-    
+
     return () => clearInterval(healthCheckInterval)
   }, [initialized, user?.id]) // Usar user.id em vez de user completo
 
@@ -483,26 +483,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         password: data.senha,
       })
 
-      console.log('📊 Resultado do login:', { 
-        success: !authError, 
+      console.log('📊 Resultado do login:', {
+        success: !authError,
         hasUser: !!authData?.user,
         hasSession: !!authData?.session,
-        error: authError 
+        error: authError
       })
 
       if (authError) {
         console.error('❌ Erro no login:', authError)
-        return { 
-          success: false, 
-          error: authError 
+        return {
+          success: false,
+          error: authError
         }
       }
 
       if (!authData?.user) {
         console.error('❌ Login sem usuário retornado')
-        return { 
-          success: false, 
-          error: { message: 'Usuário não retornado pelo login' } as AuthError 
+        return {
+          success: false,
+          error: { message: 'Usuário não retornado pelo login' } as AuthError
         }
       }
 
@@ -527,18 +527,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
 
-      return { 
-        success: true, 
-        error: null, 
+      return {
+        success: true,
+        error: null,
         user: user,
-        profile: userProfile 
+        profile: userProfile
       }
 
     } catch (error) {
       console.error('❌ Erro inesperado no login:', error)
-      return { 
-        success: false, 
-        error: error as AuthError 
+      return {
+        success: false,
+        error: error as AuthError
       }
     } finally {
       setLoading(false)
@@ -563,11 +563,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         },
       })
 
-      console.log('📊 Resultado do cadastro:', { 
-        success: !error, 
+      console.log('📊 Resultado do cadastro:', {
+        success: !error,
         hasUser: !!authData?.user,
         needsConfirmation: !authData?.session,
-        error 
+        error
       })
 
       if (error) {
@@ -577,9 +577,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (!authData?.user) {
         console.error('❌ Cadastro sem usuário retornado')
-        return { 
-          success: false, 
-          error: { message: 'Usuário não foi criado' } as AuthError 
+        return {
+          success: false,
+          error: { message: 'Usuário não foi criado' } as AuthError
         }
       }
 
@@ -615,16 +615,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
       }
 
-      return { 
-        success: true, 
-        error: null, 
-        user: authData.user 
+      return {
+        success: true,
+        error: null,
+        user: authData.user
       }
     } catch (error) {
       console.error('❌ Erro inesperado no cadastro:', error)
-      return { 
-        success: false, 
-        error: error as AuthError 
+      return {
+        success: false,
+        error: error as AuthError
       }
     } finally {
       setLoading(false)
@@ -645,7 +645,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (!logoutSuccess) {
         console.error('❌ Erro no logout via SessionManager')
-        
+
         // Fallback: tentar logout direto no Supabase
         const { error } = await supabase.auth.signOut()
         if (error) {
@@ -665,7 +665,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             console.warn('⚠️ Erro ao invalidar cache no logout:', cacheError)
           }
         }
-        
+
         if (queryOptimizer) {
           try {
             queryOptimizer.invalidateUserCache(currentUserId)
@@ -679,23 +679,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null)
       setProfile(null)
       setSession(null)
-      
+
       // Reset do sistema
       resetSystemState()
 
       return { success: true, error: null }
     } catch (error) {
       console.error('❌ Erro inesperado no logout:', error)
-      
+
       // Mesmo com erro, limpar estado local
       setUser(null)
       setProfile(null)
       setSession(null)
       resetSystemState()
-      
-      return { 
-        success: false, 
-        error: error as AuthError 
+
+      return {
+        success: false,
+        error: error as AuthError
       }
     } finally {
       setLoading(false)
@@ -715,9 +715,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return { success: true, error: null }
     } catch (error) {
-      return { 
-        success: false, 
-        error: error as AuthError 
+      return {
+        success: false,
+        error: error as AuthError
       }
     }
   }
@@ -727,9 +727,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (!user) {
         console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
-        return { 
-          success: false, 
-          error: { message: 'Usuário não autenticado' } as AuthError 
+        return {
+          success: false,
+          error: { message: 'Usuário não autenticado' } as AuthError
         }
       }
 
@@ -760,7 +760,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Preparar dados para atualização na tabela profiles
       const profileUpdates = { ...updates }
-      
+
       // Adicionar timestamp de atualização
       profileUpdates.updated_at = new Date().toISOString()
 
@@ -790,16 +790,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Atualizar estado local
       setProfile(profileResult.data as UserProfile)
 
-      return { 
-        success: true, 
-        error: null, 
-        profile: profileResult.data as UserProfile 
+      return {
+        success: true,
+        error: null,
+        profile: profileResult.data as UserProfile
       }
     } catch (error) {
       console.error('❌ Erro inesperado ao atualizar perfil:', error)
-      return { 
-        success: false, 
-        error: error as AuthError 
+      return {
+        success: false,
+        error: error as AuthError
       }
     } finally {
       setLoading(false)
@@ -811,9 +811,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (!user) {
         console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
-        return { 
-          success: false, 
-          error: { message: 'Usuário não autenticado' } as AuthError 
+        return {
+          success: false,
+          error: { message: 'Usuário não autenticado' } as AuthError
         }
       }
 
@@ -838,16 +838,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Atualizar estado local
       setProfile(data as UserProfile)
 
-      return { 
-        success: true, 
-        error: null, 
-        profile: data as UserProfile 
+      return {
+        success: true,
+        error: null,
+        profile: data as UserProfile
       }
     } catch (error) {
       console.error('❌ Erro inesperado ao atualizar perfil:', error)
-      return { 
-        success: false, 
-        error: error as AuthError 
+      return {
+        success: false,
+        error: error as AuthError
       }
     } finally {
       setLoading(false)
@@ -859,19 +859,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     try {
       if (!user) {
         console.error('❌ Tentativa de upload sem usuário autenticado')
-        return { 
-          success: false, 
-          error: { message: 'Usuário não autenticado' } as AuthError 
+        return {
+          success: false,
+          error: { message: 'Usuário não autenticado' } as AuthError
         }
       }
 
-      console.log('🔄 Iniciando upload de avatar:', { 
-        userId: user.id, 
-        fileName: file.name, 
+      console.log('🔄 Iniciando upload de avatar:', {
+        userId: user.id,
+        fileName: file.name,
         fileSize: file.size,
-        fileType: file.type 
+        fileType: file.type
       })
-      
+
       setLoading(true)
 
       // Remover avatar antigo se existir
@@ -920,9 +920,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return updateResult
     } catch (error) {
       console.error('❌ Erro inesperado no upload de avatar:', error)
-      return { 
-        success: false, 
-        error: error as AuthError 
+      return {
+        success: false,
+        error: error as AuthError
       }
     } finally {
       setLoading(false)
@@ -934,10 +934,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     if (user) {
       // Invalidar cache do perfil antes de recarregar
       cacheManager.invalidateProfile(user.id)
-      
+
       const userProfile = await fetchUserProfile(user.id)
       setProfile(userProfile)
-      
+
       // Atualizar cache com novo perfil
       if (userProfile) {
         cacheManager.setProfile(user.id, userProfile)
@@ -985,10 +985,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     initialized,
     isAuthenticated: !!user,
-    
+
     // Estado de saúde do sistema
     systemHealth,
-    
+
     // Ações
     signIn,
     signUp,
@@ -997,12 +997,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateProfile,
     updateProfileSimple,
     uploadUserAvatar,
-    
+
     // Ações de sistema
     performHealthCheck,
     recoverFromError,
     resetSystemState,
-    
+
     // Helpers
     hasRole,
     hasPermission,
