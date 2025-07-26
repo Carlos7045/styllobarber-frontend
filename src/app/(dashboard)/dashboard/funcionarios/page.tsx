@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   description: 'Gestão de funcionários da barbearia.',
 }
 
-// Dados mockados para demonstração
+// Dados mockados para demonstração (apenas funcionários/barbeiros)
 const funcionarios = [
   {
     id: '1',
@@ -102,10 +102,10 @@ export default function FuncionariosPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-heading font-bold text-text-primary mb-2">
-                Funcionários
+                Gestão de Funcionários
               </h1>
               <p className="text-text-muted">
-                Gerencie os funcionários da barbearia
+                Gerencie os funcionários e barbeiros da sua barbearia
               </p>
             </div>
             
