@@ -72,6 +72,7 @@ export interface AuthResult {
   error?: AuthError | null
   user?: User | null
   profile?: UserProfile | null
+  message?: string // Para mensagens de feedback ao usuário
 }
 
 // Interface do contexto de autenticação
@@ -492,9 +493,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (authError) {
         console.error('❌ Erro no login:', authError)
+        
+        // Mensagem mais clara para erro de email não confirmado
+        let errorMessage = authError.message
+        if (authError.message?.includes('Email not confirmed')) {
+          errorMessage = 'Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.'
+        }
+        
         return {
           success: false,
-          error: authError
+          error: { ...authError, message: errorMessage }
         }
       }
 
@@ -586,6 +594,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const user = authData.user
       console.log('✅ Usuário cadastrado com sucesso:', user.id)
 
+      // Verificar se precisa de confirmação de email
+      if (!authData.session) {
+        console.log('� Usuárioo precisa confirmar email')
+        return {
+          success: true,
+          error: null,
+          user: authData.user,
+          profile: null,
+          // Adicionar mensagem específica para confirmação
+          message: 'Cadastro realizado com sucesso! Verifique seu email para confirmar a conta antes de fazer login.'
+        }
+      }
+
       // Se o usuário foi confirmado automaticamente, criar perfil
       if (authData.session && user) {
         console.log('🔄 Criando perfil para usuário confirmado...')
@@ -618,7 +639,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return {
         success: true,
         error: null,
-        user: authData.user
+        user: authData.user,
+        message: 'Cadastro realizado e confirmado com sucesso!'
       }
     } catch (error) {
       console.error('❌ Erro inesperado no cadastro:', error)

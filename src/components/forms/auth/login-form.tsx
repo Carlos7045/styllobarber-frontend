@@ -23,8 +23,26 @@ interface LoginFormProps {
 // Componente do formulário de login
 export function LoginForm({ onSuccess, className, redirectTo }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false)
+  const [message, setMessage] = useState<string | null>(null)
+  const [messageType, setMessageType] = useState<'success' | 'info' | 'error'>('info')
   const { signIn, loading } = useAuth()
   const router = useRouter()
+
+  // Verificar mensagens da URL
+  useState(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const urlMessage = urlParams.get('message')
+      
+      if (urlMessage === 'account-created') {
+        setMessage('Conta criada com sucesso! Faça login para continuar.')
+        setMessageType('success')
+      } else if (urlMessage === 'email-confirmation-needed') {
+        setMessage('Cadastro realizado! Verifique seu email e confirme sua conta antes de fazer login.')
+        setMessageType('info')
+      }
+    }
+  })
 
   // Configurar React Hook Form com validação Zod
   const {
@@ -81,6 +99,18 @@ export function LoginForm({ onSuccess, className, redirectTo }: LoginFormProps) 
           <p className="text-text-muted">
             Faça login para acessar sua conta
           </p>
+          
+          {/* Mensagem de feedback */}
+          {message && (
+            <div className={cn(
+              'mt-4 p-3 rounded-lg text-sm',
+              messageType === 'success' && 'bg-green-50 text-green-700 border border-green-200',
+              messageType === 'info' && 'bg-blue-50 text-blue-700 border border-blue-200',
+              messageType === 'error' && 'bg-red-50 text-red-700 border border-red-200'
+            )}>
+              {message}
+            </div>
+          )}
         </CardHeader>
 
         <CardContent>

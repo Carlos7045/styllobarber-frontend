@@ -60,8 +60,18 @@ export function SignUpForm({ onSuccess, className, redirectTo }: SignUpFormProps
       if (result.success) {
         onSuccess?.()
         
-        // Redirecionar para login
-        window.location.href = '/login?message=account-created'
+        // Verificar se precisa confirmar email
+        if (result.message?.includes('Verifique seu email')) {
+          // Redirecionar para login com mensagem de confirmação
+          window.location.href = '/login?message=email-confirmation-needed'
+        } else {
+          // Redirecionar para login normalmente
+          window.location.href = '/login?message=account-created'
+        }
+      } else {
+        // Mostrar erro
+        console.error('Erro no cadastro:', result.error)
+        // Aqui você pode adicionar um toast ou estado de erro
       }
     } catch (error) {
       console.error('Erro no cadastro:', error)
