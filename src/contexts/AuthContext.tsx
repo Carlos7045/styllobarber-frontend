@@ -493,13 +493,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (authError) {
         console.error('❌ Erro no login:', authError)
-        
+
         // Mensagem mais clara para erro de email não confirmado
         let errorMessage = authError.message
         if (authError.message?.includes('Email not confirmed')) {
           errorMessage = 'Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.'
         }
-        
+
         return {
           success: false,
           error: { ...authError, message: errorMessage }
