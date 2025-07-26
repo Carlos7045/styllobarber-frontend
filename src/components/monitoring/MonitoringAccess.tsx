@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { SaasOwnerDashboard } from '@/components/saas/SaasOwnerDashboard'
 import { SystemStatusCard } from '@/components/admin/SystemStatusCard'

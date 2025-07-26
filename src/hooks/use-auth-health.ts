@@ -2,7 +2,7 @@
  * Hook para monitorar a saúde do sistema de autenticação
  */
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useCallback, useEffect, useState } from 'react'
 
 export interface AuthHealthMetrics {

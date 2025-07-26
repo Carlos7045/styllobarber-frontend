@@ -5,7 +5,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { Card, CardContent, Button } from '@/components/ui'
 import { Crown, X, Sparkles, Shield, TrendingUp } from 'lucide-react'

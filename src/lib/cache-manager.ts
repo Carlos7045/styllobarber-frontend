@@ -1,277 +1,72 @@
 /**
- * Sistema de Cache para Autenticação
+ * Sistema de Cache Inteligente para Autenticação
  * Implementa cache em memória com TTL e invalidação automática
  */
 
-import { User } from '@supabase/supabase-js'
+import { UserProfile } from '@/contexts/AuthContext'
+import { User, Session } from '@supabase/supabase-js'
 
-// Tipos para o sistema de cache
-interface CacheEntry<T> {
+// Interface para item do cache
+interface CacheItem<T> {
   data: T
   timestamp: number
-  ttl: number
+  ttl: number // Time to live em milissegundos
   key: string
 }
 
+// Interface para estatísticas do cache
 interface CacheStats {
   hits: number
   misses: number
-  evictions: number
   size: number
+  hitRate: number
 }
 
-interface ProfileData {
-  id: string
-  nome: string
-  email: string
-  telefone?: string
-  role: 'admin' | 'barber' | 'client'
-  avatar_url?: string
-  pontos_fidelidade?: number
-  data_nascimento?: string
-  created_at: string
-  updated_at: string
+// Configurações do cache
+const CACHE_CONFIG = {
+  // TTL padrão: 5 minutos
+  DEFAULT_TTL: 5 * 60 * 1000,
+  
+  // TTL específicos por tipo
+  PROFILE_TTL: 10 * 60 * 1000, // 10 minutos para perfis
+  SESSION_TTL: 30 * 60 * 1000, // 30 minutos para sessões
+  USER_TTL: 15 * 60 * 1000,    // 15 minutos para dados de usuário
+  
+  // Tamanho máximo do cache
+  MAX_SIZE: 1000,
+  
+  // Intervalo de limpeza automática
+  CLEANUP_INTERVAL: 2 * 60 * 1000, // 2 minutos
 }
 
-/**
- * Gerenciador de Cache para Autenticação
- * Implementa cache em memória com TTL, invalidação e métricas
- */
-export class CacheManager {
-  private cache = new Map<string, CacheEntry<any>>()
+class CacheManager {
+  private cache = new Map<string, CacheItem<any>>()
   private stats: CacheStats = {
     hits: 0,
     misses: 0,
-    evictions: 0,
-    size: 0
+    size: 0,
+    hitRate: 0
   }
   private cleanupInterval: NodeJS.Timeout | null = null
 
-  // TTL padrão para diferentes tipos de dados (em ms)
-  private readonly DEFAULT_TTLS = {
-    session: 15 * 60 * 1000, // 15 minutos
-    profile: 30 * 60 * 1000, // 30 minutos
-    user: 10 * 60 * 1000,    // 10 minutos
-    permissions: 5 * 60 * 1000 // 5 minutos
-  }
-
   constructor() {
     this.startCleanupTimer()
-    console.log('✅ CacheManager inicializado', {
-      defaultTTLs: this.DEFAULT_TTLS
-    })
+    console.log('🗄️ CacheManager inicializado')
   }
 
   /**
-   * Armazena dados no cache com TTL
-   */
-  set<T>(key: string, data: T, ttl?: number): void {
-    const entry: CacheEntry<T> = {
-      data,
-      timestamp: Date.now(),
-      ttl: ttl || this.DEFAULT_TTLS.session,
-      key
-    }
-
-    this.cache.set(key, entry)
-    this.stats.size = this.cache.size
-
-    console.log('📦 Item adicionado ao cache', {
-      key,
-      ttl: entry.ttl,
-      size: this.stats.size
-    })
-  }
-
-  /**
-   * Recupera dados do cache
-   */
-  get<T>(key: string): T | null {
-    const entry = this.cache.get(key) as CacheEntry<T> | undefined
-
-    if (!entry) {
-      this.stats.misses++
-      console.log('❌ Cache miss', { key })
-      return null
-    }
-
-    // Verificar se expirou
-    if (this.isExpired(entry)) {
-      this.cache.delete(key)
-      this.stats.evictions++
-      this.stats.size = this.cache.size
-      this.stats.misses++
-      
-      console.log('⏰ Item expirado removido do cache', {
-        key,
-        age: Date.now() - entry.timestamp
-      })
-      return null
-    }
-
-    this.stats.hits++
-    console.log('✅ Cache hit', { key })
-    return entry.data
-  }
-
-  /**
-   * Remove item específico do cache
-   */
-  delete(key: string): boolean {
-    const deleted = this.cache.delete(key)
-    if (deleted) {
-      this.stats.size = this.cache.size
-      console.log('🗑️ Item removido do cache', { key })
-    }
-    return deleted
-  }
-
-  /**
-   * Limpa todo o cache
-   */
-  clear(): void {
-    const previousSize = this.cache.size
-    this.cache.clear()
-    this.stats.size = 0
-    this.stats.evictions += previousSize
-    
-    console.log('🧹 Cache limpo completamente', {
-      itemsRemovidos: previousSize
-    })
-  }
-
-  /**
-   * Invalida cache por padrão de chave
-   */
-  invalidatePattern(pattern: string): number {
-    let removed = 0
-    const regex = new RegExp(pattern)
-
-    for (const key of this.cache.keys()) {
-      if (regex.test(key)) {
-        this.cache.delete(key)
-        removed++
-      }
-    }
-
-    this.stats.size = this.cache.size
-    this.stats.evictions += removed
-
-    console.log('🔄 Cache invalidado por padrão', {
-      pattern,
-      itemsRemovidos: removed
-    })
-
-    return removed
-  }
-
-  /**
-   * Métodos específicos para cache de sessão
-   */
-  setSession(userId: string, sessionData: any): void {
-    this.set(`session:${userId}`, sessionData, this.DEFAULT_TTLS.session)
-  }
-
-  getSession(userId: string): any | null {
-    return this.get(`session:${userId}`)
-  }
-
-  invalidateSession(userId: string): void {
-    this.delete(`session:${userId}`)
-    console.log('🔐 Sessão invalidada', { userId })
-  }
-
-  /**
-   * Métodos específicos para cache de perfil
-   */
-  setProfile(userId: string, profile: ProfileData): void {
-    this.set(`profile:${userId}`, profile, this.DEFAULT_TTLS.profile)
-  }
-
-  getProfile(userId: string): ProfileData | null {
-    return this.get(`profile:${userId}`)
-  }
-
-  invalidateProfile(userId: string): void {
-    this.delete(`profile:${userId}`)
-    console.log('👤 Perfil invalidado', { userId })
-  }
-
-  /**
-   * Métodos específicos para cache de usuário
-   */
-  setUser(userId: string, user: User): void {
-    this.set(`user:${userId}`, user, this.DEFAULT_TTLS.user)
-  }
-
-  getUser(userId: string): User | null {
-    return this.get(`user:${userId}`)
-  }
-
-  invalidateUser(userId: string): void {
-    this.delete(`user:${userId}`)
-    this.invalidateSession(userId)
-    this.invalidateProfile(userId)
-    console.log('🚮 Usuário e dados relacionados invalidados', { userId })
-  }
-
-  /**
-   * Cache de permissões
-   */
-  setPermissions(userId: string, permissions: string[]): void {
-    this.set(`permissions:${userId}`, permissions, this.DEFAULT_TTLS.permissions)
-  }
-
-  getPermissions(userId: string): string[] | null {
-    return this.get(`permissions:${userId}`)
-  }
-
-  /**
-   * Verifica se um item expirou
-   */
-  private isExpired(entry: CacheEntry<any>): boolean {
-    return Date.now() - entry.timestamp > entry.ttl
-  }
-
-  /**
-   * Limpa itens expirados
-   */
-  private cleanup(): void {
-    let removed = 0
-    const now = Date.now()
-
-    for (const [key, entry] of this.cache.entries()) {
-      if (this.isExpired(entry)) {
-        this.cache.delete(key)
-        removed++
-      }
-    }
-
-    if (removed > 0) {
-      this.stats.size = this.cache.size
-      this.stats.evictions += removed
-      
-      console.log('🧽 Limpeza automática executada', {
-        itemsRemovidos: removed,
-        tamanhoAtual: this.stats.size
-      })
-    }
-  }
-
-  /**
-   * Inicia timer de limpeza automática
+   * Iniciar timer de limpeza automática
    */
   private startCleanupTimer(): void {
-    // Limpar a cada 5 minutos
     this.cleanupInterval = setInterval(() => {
       this.cleanup()
-    }, 5 * 60 * 1000)
+    }, CACHE_CONFIG.CLEANUP_INTERVAL)
   }
 
   /**
-   * Para o timer de limpeza
+   * Parar timer de limpeza
    */
-  stopCleanup(): void {
+  private stopCleanupTimer(): void {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval)
       this.cleanupInterval = null
@@ -279,83 +74,293 @@ export class CacheManager {
   }
 
   /**
-   * Retorna estatísticas do cache
+   * Gerar chave do cache
    */
-  getStats(): CacheStats & { hitRate: number } {
-    const total = this.stats.hits + this.stats.misses
-    const hitRate = total > 0 ? (this.stats.hits / total) * 100 : 0
+  private generateKey(type: string, id: string): string {
+    return `${type}:${id}`
+  }
 
-    return {
-      ...this.stats,
-      hitRate: Math.round(hitRate * 100) / 100
+  /**
+   * Verificar se item está expirado
+   */
+  private isExpired(item: CacheItem<any>): boolean {
+    return Date.now() - item.timestamp > item.ttl
+  }
+
+  /**
+   * Atualizar estatísticas
+   */
+  private updateStats(): void {
+    this.stats.size = this.cache.size
+    this.stats.hitRate = this.stats.hits + this.stats.misses > 0 
+      ? (this.stats.hits / (this.stats.hits + this.stats.misses)) * 100 
+      : 0
+  }
+
+  /**
+   * Armazenar item no cache
+   */
+  private set<T>(key: string, data: T, ttl: number = CACHE_CONFIG.DEFAULT_TTL): void {
+    // Verificar tamanho máximo
+    if (this.cache.size >= CACHE_CONFIG.MAX_SIZE) {
+      this.cleanup()
+    }
+
+    const item: CacheItem<T> = {
+      data,
+      timestamp: Date.now(),
+      ttl,
+      key
+    }
+
+    this.cache.set(key, item)
+    this.updateStats()
+
+    console.log(`📦 Cache SET: ${key} (TTL: ${ttl}ms)`)
+  }
+
+  /**
+   * Recuperar item do cache
+   */
+  private get<T>(key: string): T | null {
+    const item = this.cache.get(key)
+
+    if (!item) {
+      this.stats.misses++
+      this.updateStats()
+      console.log(`❌ Cache MISS: ${key}`)
+      return null
+    }
+
+    if (this.isExpired(item)) {
+      this.cache.delete(key)
+      this.stats.misses++
+      this.updateStats()
+      console.log(`⏰ Cache EXPIRED: ${key}`)
+      return null
+    }
+
+    this.stats.hits++
+    this.updateStats()
+    console.log(`✅ Cache HIT: ${key}`)
+    return item.data as T
+  }
+
+  /**
+   * Remover item do cache
+   */
+  private delete(key: string): boolean {
+    const deleted = this.cache.delete(key)
+    this.updateStats()
+    if (deleted) {
+      console.log(`🗑️ Cache DELETE: ${key}`)
+    }
+    return deleted
+  }
+
+  /**
+   * Limpeza automática de itens expirados
+   */
+  private cleanup(): void {
+    const before = this.cache.size
+    let cleaned = 0
+
+    for (const [key, item] of this.cache.entries()) {
+      if (this.isExpired(item)) {
+        this.cache.delete(key)
+        cleaned++
+      }
+    }
+
+    this.updateStats()
+
+    if (cleaned > 0) {
+      console.log(`🧹 Cache cleanup: ${cleaned} itens removidos (${before} → ${this.cache.size})`)
+    }
+  }
+
+  // ===== MÉTODOS PÚBLICOS PARA PERFIS =====
+
+  /**
+   * Armazenar perfil no cache
+   */
+  setProfile(userId: string, profile: UserProfile): void {
+    const key = this.generateKey('profile', userId)
+    this.set(key, profile, CACHE_CONFIG.PROFILE_TTL)
+  }
+
+  /**
+   * Recuperar perfil do cache
+   */
+  getProfile(userId: string): UserProfile | null {
+    const key = this.generateKey('profile', userId)
+    return this.get<UserProfile>(key)
+  }
+
+  /**
+   * Invalidar perfil do cache
+   */
+  invalidateProfile(userId: string): boolean {
+    const key = this.generateKey('profile', userId)
+    return this.delete(key)
+  }
+
+  // ===== MÉTODOS PÚBLICOS PARA SESSÕES =====
+
+  /**
+   * Armazenar sessão no cache
+   */
+  setSession(userId: string, session: Session): void {
+    const key = this.generateKey('session', userId)
+    this.set(key, session, CACHE_CONFIG.SESSION_TTL)
+  }
+
+  /**
+   * Recuperar sessão do cache
+   */
+  getSession(userId: string): Session | null {
+    const key = this.generateKey('session', userId)
+    return this.get<Session>(key)
+  }
+
+  /**
+   * Invalidar sessão do cache
+   */
+  invalidateSession(userId: string): boolean {
+    const key = this.generateKey('session', userId)
+    return this.delete(key)
+  }
+
+  // ===== MÉTODOS PÚBLICOS PARA USUÁRIOS =====
+
+  /**
+   * Armazenar usuário no cache
+   */
+  setUser(userId: string, user: User): void {
+    const key = this.generateKey('user', userId)
+    this.set(key, user, CACHE_CONFIG.USER_TTL)
+  }
+
+  /**
+   * Recuperar usuário do cache
+   */
+  getUser(userId: string): User | null {
+    const key = this.generateKey('user', userId)
+    return this.get<User>(key)
+  }
+
+  /**
+   * Invalidar usuário do cache
+   */
+  invalidateUser(userId: string): boolean {
+    const key = this.generateKey('user', userId)
+    return this.delete(key)
+  }
+
+  // ===== MÉTODOS DE GESTÃO GERAL =====
+
+  /**
+   * Invalidar todos os dados de um usuário
+   */
+  invalidateUserData(userId: string): void {
+    this.invalidateProfile(userId)
+    this.invalidateSession(userId)
+    this.invalidateUser(userId)
+    console.log(`🧹 Todos os dados do usuário ${userId} invalidados`)
+  }
+
+  /**
+   * Pré-aquecer cache com dados do usuário
+   */
+  async warmup(userId: string, data: {
+    user?: User
+    profile?: UserProfile
+    session?: Session
+  }): Promise<void> {
+    console.log(`🔥 Aquecendo cache para usuário: ${userId}`)
+
+    if (data.user) {
+      this.setUser(userId, data.user)
+    }
+
+    if (data.profile) {
+      this.setProfile(userId, data.profile)
+    }
+
+    if (data.session) {
+      this.setSession(userId, data.session)
     }
   }
 
   /**
-   * Retorna informações detalhadas do cache
+   * Limpar todo o cache
+   */
+  clear(): void {
+    const size = this.cache.size
+    this.cache.clear()
+    this.stats = {
+      hits: 0,
+      misses: 0,
+      size: 0,
+      hitRate: 0
+    }
+    console.log(`🗑️ Cache completamente limpo (${size} itens removidos)`)
+  }
+
+  /**
+   * Obter estatísticas do cache
+   */
+  getStats(): CacheStats {
+    return { ...this.stats }
+  }
+
+  /**
+   * Obter informações detalhadas do cache
    */
   getInfo(): {
-    stats: CacheStats & { hitRate: number }
-    entries: Array<{
+    stats: CacheStats
+    config: typeof CACHE_CONFIG
+    items: Array<{
       key: string
+      type: string
       age: number
       ttl: number
-      remainingTtl: number
+      expired: boolean
     }>
   } {
-    const now = Date.now()
-    const entries = Array.from(this.cache.entries()).map(([key, entry]) => ({
+    const items = Array.from(this.cache.entries()).map(([key, item]) => ({
       key,
-      age: now - entry.timestamp,
-      ttl: entry.ttl,
-      remainingTtl: Math.max(0, entry.ttl - (now - entry.timestamp))
+      type: key.split(':')[0],
+      age: Date.now() - item.timestamp,
+      ttl: item.ttl,
+      expired: this.isExpired(item)
     }))
 
     return {
       stats: this.getStats(),
-      entries
+      config: CACHE_CONFIG,
+      items
     }
   }
 
   /**
-   * Aquece o cache com dados frequentemente acessados
+   * Destruir cache manager
    */
-  async warmup(userId: string, userData?: {
-    user?: User
-    profile?: ProfileData
-    permissions?: string[]
-  }): Promise<void> {
-    if (!userData) return
-
-    if (userData.user) {
-      this.setUser(userId, userData.user)
-    }
-
-    if (userData.profile) {
-      this.setProfile(userId, userData.profile)
-    }
-
-    if (userData.permissions) {
-      this.setPermissions(userId, userData.permissions)
-    }
-
-    console.log('🔥 Cache aquecido para usuário', {
-      userId,
-      items: Object.keys(userData)
-    })
+  destroy(): void {
+    this.stopCleanupTimer()
+    this.clear()
+    console.log('🗄️ CacheManager destruído')
   }
 }
 
-// Instância singleton do cache manager
+// Instância singleton
 export const cacheManager = new CacheManager()
 
-// Cleanup ao encerrar a aplicação
-if (typeof window === 'undefined') {
-  process.on('SIGTERM', () => {
-    cacheManager.stopCleanup()
-  })
-
-  process.on('SIGINT', () => {
-    cacheManager.stopCleanup()
+// Limpar cache quando a página é fechada
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    cacheManager.destroy()
   })
 }
+
+export default cacheManager

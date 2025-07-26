@@ -56,6 +56,15 @@ export default function Home() {
                 </Button>
               </Link>
             </div>
+
+            {/* Setup SaaS Owner */}
+            <div className="mb-8">
+              <Link href="/setup-saas">
+                <Button variant="outline" size="sm" className="text-amber-400 border-amber-400 hover:bg-amber-400 hover:text-black">
+                  🔧 Setup SaaS Owner
+                </Button>
+              </Link>
+            </div>
           </div>
         </Container>
       </Section>

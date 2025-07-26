@@ -31,3 +31,26 @@ export {
 export {
   LogoutPage,
 } from './LogoutPage'
+
+// Componentes de UX e feedback
+export {
+  AuthFeedback,
+  useAuthFeedback,
+  AuthMessage,
+  type FeedbackType
+} from './AuthFeedback'
+
+export {
+  AuthLoadingState,
+  ButtonLoading,
+  FullPageLoading
+} from './AuthLoadingState'
+
+export {
+  useFieldValidation,
+  ValidationDisplay,
+  PasswordStrength,
+  validationRules,
+  type ValidationRule,
+  type ValidationResult
+} from './AuthValidation'

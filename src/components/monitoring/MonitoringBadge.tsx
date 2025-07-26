@@ -4,7 +4,7 @@
 
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { Crown, Code } from 'lucide-react'
 

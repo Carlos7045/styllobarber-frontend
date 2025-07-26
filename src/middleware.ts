@@ -5,13 +5,7 @@ import type { NextRequest } from 'next/server'
 // Rotas que requerem autenticação
 const protectedRoutes = [
   '/dashboard',
-  '/dashboard/agenda',
-  '/dashboard/clientes',
-  '/dashboard/servicos',
-  '/dashboard/funcionarios',
-  '/dashboard/financeiro',
-  '/dashboard/relatorios',
-  '/dashboard/configuracoes',
+  '/saas-admin', // Rotas do SaaS Owner
 ]
 
 // Rotas que só podem ser acessadas por usuários não autenticados
@@ -43,6 +37,7 @@ export async function middleware(request: NextRequest) {
     '/agendamento',
     '/termos',
     '/privacidade',
+    '/setup-saas', // Página de setup do SaaS Owner
   ]
 
   // Se é rota pública, permitir sempre
@@ -94,8 +89,20 @@ export async function middleware(request: NextRequest) {
       const hasPermission = checkRoutePermission(pathname, userRole)
       
       if (!hasPermission) {
-        const unauthorizedUrl = new URL('/dashboard/unauthorized', request.url)
-        return NextResponse.redirect(unauthorizedUrl)
+        // Redirecionar para a área apropriada baseada no role
+        let redirectPath = '/dashboard'
+        
+        if (userRole === 'saas_owner') {
+          redirectPath = '/saas-admin'
+        } else if (userRole === 'client') {
+          redirectPath = '/dashboard/clientes'
+        }
+        
+        const redirectUrl = new URL(redirectPath, request.url)
+        redirectUrl.searchParams.set('error', 'unauthorized')
+        redirectUrl.searchParams.set('attempted', pathname)
+        
+        return NextResponse.redirect(redirectUrl)
       }
     }
 
@@ -115,39 +122,36 @@ export async function middleware(request: NextRequest) {
 
 // Função para verificar permissões de rota baseada no role
 function checkRoutePermission(pathname: string, userRole: string): boolean {
-  // Definir permissões por role
+  // Definir permissões por role com hierarquia clara
   const rolePermissions: Record<string, string[]> = {
+    saas_owner: [
+      '/saas-admin', // Acesso exclusivo ao painel SaaS
+      '/dashboard', // Pode acessar dashboard normal também
+    ],
     admin: [
-      '/dashboard',
-      '/dashboard/agenda',
-      '/dashboard/clientes',
-      '/dashboard/servicos',
-      '/dashboard/funcionarios',
-      '/dashboard/financeiro',
-      '/dashboard/relatorios',
-      '/dashboard/configuracoes',
+      '/dashboard', // Acesso completo ao dashboard
     ],
     barber: [
-      '/dashboard',
-      '/dashboard/agenda',
-      '/dashboard/clientes',
-      '/dashboard/servicos',
-      '/dashboard/financeiro',
+      '/dashboard', // Acesso limitado ao dashboard
     ],
     client: [
-      '/dashboard',
-      '/dashboard/agendamentos',
-      '/dashboard/historico',
-      '/dashboard/perfil',
+      '/dashboard/clientes', // Apenas área do cliente
     ],
   }
 
   const allowedRoutes = rolePermissions[userRole] || []
   
   // Verificar se a rota está permitida para o role
-  return allowedRoutes.some(route => 
+  const hasPermission = allowedRoutes.some(route => 
     pathname === route || pathname.startsWith(route + '/')
   )
+
+  // Log para debug de permissões
+  if (!hasPermission) {
+    console.warn(`🚫 Acesso negado: ${userRole} tentou acessar ${pathname}`)
+  }
+
+  return hasPermission
 }
 
 // Configurar quais rotas o middleware deve processar

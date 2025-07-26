@@ -10,8 +10,8 @@ import { Shield, AlertTriangle, ArrowLeft } from 'lucide-react'
 // Interface para as props do RouteGuard
 interface RouteGuardProps {
   children: React.ReactNode
-  requiredRole?: 'admin' | 'barber' | 'client'
-  requiredRoles?: ('admin' | 'barber' | 'client')[]
+  requiredRole?: 'admin' | 'barber' | 'client' | 'saas_owner'
+  requiredRoles?: ('admin' | 'barber' | 'client' | 'saas_owner')[]
   fallbackUrl?: string
   showUnauthorized?: boolean
 }
@@ -84,60 +84,140 @@ export function RouteGuard({
   fallbackUrl = '/dashboard',
   showUnauthorized = true,
 }: RouteGuardProps) {
-  const { user, loading, isAuthenticated, initialized } = useAuth()
+  const { user, profile, loading, isAuthenticated, initialized } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
+  const [hasRedirected, setHasRedirected] = useState(false)
 
   // Verificar autorização quando o usuário ou rota mudar
   useEffect(() => {
-    if (!initialized || loading) {
+    console.log('🔄 RouteGuard useEffect iniciado:', {
+      initialized,
+      loading,
+      isAuthenticated,
+      hasUser: !!user,
+      hasProfile: !!profile,
+      pathname,
+      currentAuthorized: isAuthorized,
+      hasRedirected
+    })
+
+    // Reset do estado de redirecionamento quando a rota muda
+    if (hasRedirected) {
+      setHasRedirected(false)
+    }
+
+    // Aguardar inicialização completa
+    if (!initialized) {
+      console.log('⏳ Aguardando inicialização...')
+      setIsAuthorized(null)
+      return
+    }
+
+    // Se ainda está carregando, aguardar
+    if (loading) {
+      console.log('⏳ Aguardando carregamento...')
       setIsAuthorized(null)
       return
     }
 
     // Se não está autenticado, redirecionar para login
-    if (!isAuthenticated) {
-      const loginUrl = `/auth/login?redirect=${encodeURIComponent(pathname)}`
-      router.push(loginUrl)
+    if (!isAuthenticated || !user) {
+      if (!hasRedirected) {
+        const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`
+        console.log('🔐 Usuário não autenticado, redirecionando para:', loginUrl)
+        setHasRedirected(true)
+        router.push(loginUrl)
+      }
       return
     }
 
     // Se não há restrições de role, usuário está autorizado
     if (!requiredRole && !requiredRoles) {
+      console.log('✅ Sem restrições de role, acesso liberado')
       setIsAuthorized(true)
       return
     }
 
-    // Obter role do usuário
-    const userRole = user?.user_metadata?.role || 'client'
+    // Aguardar perfil carregar se necessário (mas não indefinidamente)
+    if (user && !profile && !user.user_metadata?.role) {
+      console.log('⏳ Aguardando perfil carregar...')
+      setIsAuthorized(null)
+      return
+    }
+
+    // Obter role do usuário (priorizar profile, fallback para user_metadata)
+    const userRole = profile?.role || user?.user_metadata?.role || 'client'
+
+    console.log('🔍 RouteGuard verificando permissões:', {
+      userRole,
+      requiredRole,
+      requiredRoles,
+      hasProfile: !!profile,
+      profileRole: profile?.role,
+      metadataRole: user?.user_metadata?.role,
+      userId: user?.id,
+      userEmail: user?.email,
+      pathname
+    })
 
     // Verificar se o usuário tem o role necessário
     let hasPermission = false
 
     if (requiredRole) {
       hasPermission = userRole === requiredRole
+      console.log(`🔐 Verificando role específico: ${userRole} === ${requiredRole} = ${hasPermission}`)
     }
 
     if (requiredRoles && requiredRoles.length > 0) {
-      hasPermission = requiredRoles.includes(userRole as 'admin' | 'barber' | 'client')
+      hasPermission = requiredRoles.includes(userRole as 'admin' | 'barber' | 'client' | 'saas_owner')
+      console.log(`🔐 Verificando roles permitidos: ${userRole} in [${requiredRoles.join(', ')}] = ${hasPermission}`)
     }
 
-    setIsAuthorized(hasPermission)
+    console.log('🔐 Resultado FINAL da verificação de permissão:', {
+      hasPermission,
+      userRole,
+      requiredRole,
+      requiredRoles,
+      willAuthorize: hasPermission,
+      currentIsAuthorized: isAuthorized,
+      willChangeState: isAuthorized !== hasPermission
+    })
+
+    // Só atualizar o estado se realmente mudou
+    if (isAuthorized !== hasPermission) {
+      console.log(`🔄 Mudando isAuthorized de ${isAuthorized} para ${hasPermission}`)
+      setIsAuthorized(hasPermission)
+    }
 
     // Se não tem permissão e não deve mostrar tela de não autorizado, redirecionar
-    if (!hasPermission && !showUnauthorized) {
+    if (!hasPermission && !showUnauthorized && !hasRedirected) {
+      console.log('🚫 Redirecionando para fallback:', fallbackUrl)
+      setHasRedirected(true)
       router.push(fallbackUrl)
     }
-  }, [user, loading, isAuthenticated, initialized, requiredRole, requiredRoles, pathname, router, fallbackUrl, showUnauthorized])
+  }, [user, profile, loading, isAuthenticated, initialized, requiredRole, requiredRoles, pathname, router, fallbackUrl, showUnauthorized, hasRedirected])
+
+  // Log do estado final antes de renderizar
+  console.log('🎯 RouteGuard - Estado final antes de renderizar:', {
+    initialized,
+    loading,
+    isAuthorized,
+    willShowLoading: !initialized || loading || isAuthorized === null,
+    willShowUnauthorized: isAuthorized === false && showUnauthorized,
+    willShowChildren: isAuthorized === true
+  })
 
   // Mostrar loading enquanto verifica autenticação
   if (!initialized || loading || isAuthorized === null) {
+    console.log('📺 Renderizando AuthLoadingScreen')
     return <AuthLoadingScreen />
   }
 
   // Se não está autorizado, mostrar tela de acesso negado
-  if (!isAuthorized) {
+  if (isAuthorized === false) {
+    console.log('📺 Renderizando UnauthorizedScreen')
     if (showUnauthorized) {
       return (
         <UnauthorizedScreen 
@@ -149,30 +229,32 @@ export function RouteGuard({
   }
 
   // Se está autorizado, renderizar o conteúdo
+  console.log('📺 Renderizando children (conteúdo autorizado)')
   return <>{children}</>
 }
 
 // Hook para verificar permissões
 export function usePermissions() {
-  const { user, isAuthenticated } = useAuth()
+  const { user, profile, isAuthenticated } = useAuth()
 
-  const hasRole = (role: 'admin' | 'barber' | 'client') => {
+  const hasRole = (role: 'admin' | 'barber' | 'client' | 'saas_owner') => {
     if (!isAuthenticated || !user) return false
-    const userRole = user.user_metadata?.role || 'client'
+    const userRole = profile?.role || user.user_metadata?.role || 'client'
     return userRole === role
   }
 
-  const hasAnyRole = (roles: ('admin' | 'barber' | 'client')[]) => {
+  const hasAnyRole = (roles: ('admin' | 'barber' | 'client' | 'saas_owner')[]) => {
     if (!isAuthenticated || !user) return false
-    const userRole = user.user_metadata?.role || 'client'
-    return roles.includes(userRole as 'admin' | 'barber' | 'client')
+    const userRole = profile?.role || user.user_metadata?.role || 'client'
+    return roles.includes(userRole as 'admin' | 'barber' | 'client' | 'saas_owner')
   }
 
   const isAdmin = () => hasRole('admin')
   const isBarber = () => hasRole('barber')
   const isClient = () => hasRole('client')
+  const isSaasOwner = () => hasRole('saas_owner')
 
-  const canAccess = (requiredRoles: ('admin' | 'barber' | 'client')[]) => {
+  const canAccess = (requiredRoles: ('admin' | 'barber' | 'client' | 'saas_owner')[]) => {
     return hasAnyRole(requiredRoles)
   }
 
@@ -182,16 +264,17 @@ export function usePermissions() {
     isAdmin,
     isBarber,
     isClient,
+    isSaasOwner,
     canAccess,
-    userRole: user?.user_metadata?.role || 'client',
+    userRole: profile?.role || user?.user_metadata?.role || 'client',
   }
 }
 
 // Componente para renderizar conteúdo baseado em permissões
 interface PermissionGateProps {
   children: React.ReactNode
-  requiredRole?: 'admin' | 'barber' | 'client'
-  requiredRoles?: ('admin' | 'barber' | 'client')[]
+  requiredRole?: 'admin' | 'barber' | 'client' | 'saas_owner'
+  requiredRoles?: ('admin' | 'barber' | 'client' | 'saas_owner')[]
   fallback?: React.ReactNode
 }
 

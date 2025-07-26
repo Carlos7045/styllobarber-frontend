@@ -10,31 +10,12 @@ import { sessionManager } from '@/lib/session-manager'
 import { profileSync } from '@/lib/profile-sync'
 import { errorRecovery } from '@/lib/error-recovery'
 import { useErrorRecovery } from '@/hooks/use-error-recovery'
-// Importações com verificação de disponibilidade
-let cacheManager: any = null
-let queryOptimizer: any = null
-let connectionPool: any = null
-
-try {
-  const cacheModule = require('@/lib/cache-manager')
-  cacheManager = cacheModule.cacheManager
-} catch (error) {
-  console.warn('⚠️ CacheManager não disponível:', error)
-}
-
-try {
-  const queryModule = require('@/lib/query-optimizer')
-  queryOptimizer = queryModule.queryOptimizer
-} catch (error) {
-  console.warn('⚠️ QueryOptimizer não disponível:', error)
-}
-
-try {
-  const poolModule = require('@/lib/connection-pool')
-  connectionPool = poolModule.connectionPool
-} catch (error) {
-  console.warn('⚠️ ConnectionPool não disponível:', error)
-}
+import { securityLogger } from '@/lib/security-logger'
+import { checkLoginRateLimit, recordLoginAttempt } from '@/lib/rate-limiter-enhanced'
+// Importações de otimização de performance
+import { cacheManager } from '@/lib/cache-manager'
+import { queryOptimizer } from '@/lib/query-optimizer'
+import { connectionPool } from '@/lib/connection-pool'
 
 // Interfaces para dados de autenticação
 export interface LoginData {
@@ -59,7 +40,7 @@ export interface UserProfile {
   nome: string
   email: string
   telefone?: string
-  role: 'admin' | 'barber' | 'client'
+  role: 'admin' | 'barber' | 'client' | 'saas_owner'
   avatar_url?: string
   pontos_fidelidade?: number
   data_nascimento?: string
@@ -75,8 +56,17 @@ export interface AuthResult {
   message?: string // Para mensagens de feedback ao usuário
 }
 
+// Helper para criar AuthError de forma consistente
+function createAuthError(message: string, code?: string, status?: number): AuthError {
+  const error = new Error(message) as AuthError
+  error.name = 'AuthError'
+  error.code = code || 'CUSTOM_ERROR'
+  error.status = status || 400
+  return error
+}
+
 // Interface do contexto de autenticação
-interface AuthContextType {
+export interface AuthContextType {
   // Estado
   user: User | null
   profile: UserProfile | null
@@ -111,7 +101,7 @@ interface AuthContextType {
   resetSystemState: () => void
 
   // Helpers
-  hasRole: (role: 'admin' | 'barber' | 'client') => boolean
+  hasRole: (role: 'admin' | 'barber' | 'client' | 'saas_owner') => boolean
   hasPermission: (permission: string) => boolean
   refreshProfile: () => Promise<void>
 }
@@ -268,7 +258,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('✅ Estado do sistema resetado')
   }
 
-  // Função para buscar perfil do usuário com cache, ProfileSync e AuthInterceptor
+  // Função para buscar perfil do usuário com otimizações de performance
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       if (!userId) {
@@ -276,20 +266,33 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return null
       }
 
-      // Verificar cache primeiro (se disponível)
-      if (cacheManager) {
-        try {
-          const cachedProfile = cacheManager.getProfile(userId)
-          if (cachedProfile) {
-            console.log('✅ Perfil obtido do cache')
-            return cachedProfile
-          }
-        } catch (cacheError) {
-          console.warn('⚠️ Erro ao acessar cache, continuando sem cache:', cacheError)
-        }
+      console.log('🔍 Buscando perfil para usuário:', userId)
+
+      // Usar QueryOptimizer para busca otimizada
+      const result = await queryOptimizer.getProfile(userId, {
+        enableCache: true,
+        cacheTTL: 10 * 60 * 1000, // 10 minutos
+        timeout: 8000,
+        retries: 2
+      })
+
+      if (result.data) {
+        console.log('✅ Perfil obtido via QueryOptimizer:', {
+          id: result.data.id,
+          nome: result.data.nome,
+          email: result.data.email,
+          role: result.data.role,
+          fromCache: result.fromCache,
+          executionTime: result.executionTime
+        })
+        return result.data
       }
 
-      // Tentar query direta primeiro (mais simples e confiável)
+      if (result.error) {
+        console.warn('⚠️ Erro no QueryOptimizer, tentando fallback:', result.error)
+      }
+
+      // Fallback: query direta
       try {
         const { data: profile, error } = await supabase
           .from('profiles')
@@ -300,17 +303,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (error) {
           console.warn('⚠️ Erro na query direta do perfil:', error)
         } else if (profile) {
-          console.log('✅ Perfil obtido via query direta')
+          console.log('✅ Perfil obtido via fallback direto:', {
+            id: profile.id,
+            nome: profile.nome,
+            email: profile.email,
+            role: profile.role
+          })
 
-          // Tentar armazenar no cache (se disponível)
-          if (cacheManager) {
-            try {
-              cacheManager.setProfile(userId, profile)
-            } catch (cacheError) {
-              console.warn('⚠️ Erro ao armazenar no cache:', cacheError)
-            }
-          }
-
+          // Armazenar no cache para próximas consultas
+          cacheManager.setProfile(userId, profile)
           return profile
         }
       } catch (directQueryError) {
@@ -474,13 +475,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return () => clearInterval(healthCheckInterval)
   }, [initialized, user?.id]) // Usar user.id em vez de user completo
 
-  // Função de login simplificada para debug
+  // Função de login com rate limiting e segurança
   const signIn = async (data: LoginData): Promise<AuthResult> => {
     try {
       setLoading(true)
       console.log('🔐 Tentando fazer login com:', { email: data.email })
 
-      // Login direto no Supabase sem interceptor para debug
+      // Verificar rate limiting
+      const rateLimitResult = checkLoginRateLimit(data.email)
+      if (!rateLimitResult.allowed) {
+        console.warn('🚫 Login bloqueado por rate limiting:', rateLimitResult)
+        
+        securityLogger.logLoginBlocked(data.email, {
+          retryAfter: rateLimitResult.retryAfter,
+          requests: rateLimitResult.info.requests,
+          maxRequests: rateLimitResult.info.requests
+        })
+
+        return {
+          success: false,
+          error: createAuthError(
+            `Muitas tentativas de login. Tente novamente em ${Math.ceil(rateLimitResult.retryAfter! / 60)} minutos.`,
+            'RATE_LIMIT_EXCEEDED',
+            429
+          )
+        }
+      }
+
+      // Login direto no Supabase
       const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.senha,
@@ -496,15 +518,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (authError) {
         console.error('❌ Erro no login:', authError)
 
+        // Registrar tentativa falhada no rate limiter
+        recordLoginAttempt(data.email, false)
+
+        // Log de segurança para tentativa falhada
+        securityLogger.logLoginFailed(
+          data.email,
+          authError.message || 'Erro desconhecido',
+          {
+            errorCode: authError.status,
+            timestamp: Date.now()
+          }
+        )
+
         // Mensagem mais clara para erro de email não confirmado
-        let errorMessage = authError.message
+        let errorToReturn = authError
         if (authError.message?.includes('Email not confirmed')) {
-          errorMessage = 'Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.'
+          errorToReturn = createAuthError(
+            'Email não confirmado. Verifique sua caixa de entrada e confirme seu email antes de fazer login.',
+            authError.code || 'EMAIL_NOT_CONFIRMED',
+            authError.status || 400
+          )
         }
 
         return {
           success: false,
-          error: { ...authError, message: errorMessage }
+          error: errorToReturn
         }
       }
 
@@ -512,12 +551,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Login sem usuário retornado')
         return {
           success: false,
-          error: { message: 'Usuário não retornado pelo login' } as AuthError
+          error: createAuthError('Usuário não retornado pelo login')
         }
       }
 
       const user = authData.user
       console.log('✅ Login bem-sucedido para usuário:', user.id)
+
+      // Registrar tentativa bem-sucedida no rate limiter
+      recordLoginAttempt(data.email, true)
 
       // Buscar perfil do usuário
       let userProfile: UserProfile | null = null
@@ -528,12 +570,28 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('⚠️ Erro ao buscar perfil após login:', profileError)
       }
 
-      // Cache opcional (se disponível)
-      if (cacheManager && user) {
+      // Log de segurança para login bem-sucedido
+      securityLogger.logLoginSuccess(
+        user.id,
+        data.email,
+        {
+          userRole: userProfile?.role || user.user_metadata?.role,
+          profileFound: !!userProfile,
+          timestamp: Date.now()
+        }
+      )
+
+      // Cache warming para melhor performance
+      if (user && userProfile) {
         try {
-          await cacheManager.warmup(user.id, { user })
+          await cacheManager.warmup(user.id, { 
+            user, 
+            profile: userProfile,
+            session: authData.session 
+          })
+          console.log('🔥 Cache aquecido para usuário:', user.id)
         } catch (cacheError) {
-          console.warn('⚠️ Erro ao gerenciar cache no login:', cacheError)
+          console.warn('⚠️ Erro ao aquecer cache no login:', cacheError)
         }
       }
 
@@ -589,7 +647,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Cadastro sem usuário retornado')
         return {
           success: false,
-          error: { message: 'Usuário não foi criado' } as AuthError
+          error: createAuthError('Usuário não foi criado')
         }
       }
 
@@ -680,9 +738,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (!authData?.user) {
-        return { 
-          success: false, 
-          error: { message: 'Administrador não foi criado' } as AuthError 
+        return {
+          success: false,
+          error: createAuthError('Administrador não foi criado')
         }
       }
 
@@ -759,9 +817,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       if (!authData?.user) {
-        return { 
-          success: false, 
-          error: { message: 'Funcionário não foi criado' } as AuthError 
+        return {
+          success: false,
+          error: createAuthError('Funcionário não foi criado')
         }
       }
 
@@ -813,72 +871,84 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função de logout usando SessionManager e limpeza de cache
+  // Função de logout simplificada e robusta
   const signOut = async (): Promise<AuthResult> => {
     try {
       setLoading(true)
-
-      console.log('🔄 Iniciando logout usando SessionManager...')
+      console.log('🔄 Iniciando logout...')
 
       const currentUserId = user?.id
 
-      // Usar SessionManager para logout robusto
-      const logoutSuccess = await sessionManager.signOut()
-
-      if (!logoutSuccess) {
-        console.error('❌ Erro no logout via SessionManager')
-
-        // Fallback: tentar logout direto no Supabase
-        const { error } = await supabase.auth.signOut()
-        if (error) {
-          console.error('❌ Erro no logout fallback:', error)
-          return { success: false, error }
-        }
+      // Logout direto no Supabase (mais confiável)
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('❌ Erro no logout Supabase:', error)
+        // Mesmo com erro, continuar limpeza local
+      } else {
+        console.log('✅ Logout Supabase realizado com sucesso')
       }
 
-      console.log('✅ Logout realizado com sucesso')
-
-      // Limpar cache do usuário (se disponível)
-      if (currentUserId) {
-        if (cacheManager) {
-          try {
-            cacheManager.invalidateUser(currentUserId)
-          } catch (cacheError) {
-            console.warn('⚠️ Erro ao invalidar cache no logout:', cacheError)
-          }
+      // Log de segurança (sem bloquear o logout)
+      try {
+        if (currentUserId && profile?.email) {
+          securityLogger.logLogout(
+            currentUserId,
+            profile.email,
+            {
+              userRole: profile.role,
+              timestamp: Date.now()
+            }
+          )
         }
-
-        if (queryOptimizer) {
-          try {
-            queryOptimizer.invalidateUserCache(currentUserId)
-          } catch (queryError) {
-            console.warn('⚠️ Erro ao invalidar query cache no logout:', queryError)
-          }
-        }
+      } catch (logError) {
+        console.warn('⚠️ Erro no log de segurança (não crítico):', logError)
       }
 
-      // Limpar estado local imediatamente
+      // Limpar cache (sem bloquear o logout)
+      try {
+        if (currentUserId) {
+          cacheManager.invalidateUserData(currentUserId)
+          queryOptimizer.invalidateUserCache(currentUserId)
+          console.log('🧹 Cache do usuário limpo')
+        }
+      } catch (cacheError) {
+        console.warn('⚠️ Erro ao limpar cache (não crítico):', cacheError)
+      }
+
+      // Limpar estado local SEMPRE
       setUser(null)
       setProfile(null)
       setSession(null)
 
-      // Reset do sistema
-      resetSystemState()
+      // Reset do sistema (sem bloquear)
+      try {
+        resetSystemState()
+      } catch (resetError) {
+        console.warn('⚠️ Erro no reset do sistema (não crítico):', resetError)
+      }
 
+      console.log('✅ Logout concluído com sucesso')
       return { success: true, error: null }
+
     } catch (error) {
       console.error('❌ Erro inesperado no logout:', error)
 
-      // Mesmo com erro, limpar estado local
+      // SEMPRE limpar estado local, mesmo com erro
       setUser(null)
       setProfile(null)
       setSession(null)
-      resetSystemState()
 
-      return {
-        success: false,
-        error: error as AuthError
+      // Tentar reset mesmo com erro
+      try {
+        resetSystemState()
+      } catch (resetError) {
+        console.warn('⚠️ Erro no reset após falha:', resetError)
       }
+
+      // Retornar sucesso mesmo com erro (logout local funcionou)
+      return { success: true, error: null }
+
     } finally {
       setLoading(false)
     }
@@ -911,7 +981,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
         return {
           success: false,
-          error: { message: 'Usuário não autenticado' } as AuthError
+          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401)
         }
       }
 
@@ -995,7 +1065,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
         return {
           success: false,
-          error: { message: 'Usuário não autenticado' } as AuthError
+          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401)
         }
       }
 
@@ -1043,7 +1113,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Tentativa de upload sem usuário autenticado')
         return {
           success: false,
-          error: { message: 'Usuário não autenticado' } as AuthError
+          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401)
         }
       }
 
@@ -1081,7 +1151,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Erro no upload (incluindo fallback):', uploadResult.error)
         return {
           success: false,
-          error: { message: uploadResult.error || 'Erro no upload' } as AuthError
+          error: createAuthError(uploadResult.error || 'Erro no upload', 'UPLOAD_ERROR', 500)
         }
       }
 
@@ -1114,21 +1184,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Função para recarregar perfil com cache
   const refreshProfile = async (): Promise<void> => {
     if (user) {
-      // Invalidar cache do perfil antes de recarregar
-      cacheManager.invalidateProfile(user.id)
+      // Invalidar cache do perfil antes de recarregar (se disponível)
+      if (cacheManager) {
+        try {
+          cacheManager.invalidateProfile(user.id)
+        } catch (error) {
+          console.warn('⚠️ Erro ao invalidar cache:', error)
+        }
+      }
 
       const userProfile = await fetchUserProfile(user.id)
       setProfile(userProfile)
 
-      // Atualizar cache com novo perfil
-      if (userProfile) {
-        cacheManager.setProfile(user.id, userProfile)
+      // Atualizar cache com novo perfil (se disponível)
+      if (userProfile && cacheManager) {
+        try {
+          cacheManager.setProfile(user.id, userProfile)
+        } catch (error) {
+          console.warn('⚠️ Erro ao atualizar cache:', error)
+        }
       }
     }
   }
 
   // Helper para verificar role
-  const hasRole = (role: 'admin' | 'barber' | 'client'): boolean => {
+  const hasRole = (role: 'admin' | 'barber' | 'client' | 'saas_owner'): boolean => {
     return profile?.role === role
   }
 
@@ -1138,6 +1218,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Definir permissões por role
     const rolePermissions: Record<string, string[]> = {
+      saas_owner: ['*'], // SaaS Owner tem todas as permissões
       admin: ['*'], // Admin tem todas as permissões
       barber: [
         'view_appointments',

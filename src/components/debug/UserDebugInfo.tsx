@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Bug } from 'lucide-react'

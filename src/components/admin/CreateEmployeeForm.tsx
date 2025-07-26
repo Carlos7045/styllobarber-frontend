@@ -110,7 +110,7 @@ export function CreateEmployeeForm({
             {...register('nome')}
             type="text"
             placeholder="Nome completo"
-            icon={User}
+            leftIcon={<User className="h-4 w-4" />}
             error={errors.nome?.message}
             disabled={loading}
           />
@@ -120,7 +120,7 @@ export function CreateEmployeeForm({
             {...register('email')}
             type="email"
             placeholder="Email"
-            icon={Mail}
+            leftIcon={<Mail className="h-4 w-4" />}
             error={errors.email?.message}
             disabled={loading}
           />
@@ -130,7 +130,7 @@ export function CreateEmployeeForm({
             {...register('telefone')}
             type="tel"
             placeholder="Telefone"
-            icon={Phone}
+            leftIcon={<Phone className="h-4 w-4" />}
             value={telefoneValue}
             onChange={(e) => {
               const formatted = formatarTelefone(e.target.value)
@@ -145,8 +145,8 @@ export function CreateEmployeeForm({
             {...register('senha')}
             type={showPassword ? 'text' : 'password'}
             placeholder="Senha"
-            icon={Lock}
-            rightIcon={showPassword ? EyeOff : Eye}
+            leftIcon={<Lock className="h-4 w-4" />}
+            rightIcon={showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             onRightIconClick={() => setShowPassword(!showPassword)}
             error={errors.senha?.message}
             disabled={loading}
@@ -157,8 +157,8 @@ export function CreateEmployeeForm({
             {...register('confirmarSenha')}
             type={showConfirmPassword ? 'text' : 'password'}
             placeholder="Confirmar senha"
-            icon={Lock}
-            rightIcon={showConfirmPassword ? EyeOff : Eye}
+            leftIcon={<Lock className="h-4 w-4" />}
+            rightIcon={showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             onRightIconClick={() => setShowConfirmPassword(!showConfirmPassword)}
             error={errors.confirmarSenha?.message}
             disabled={loading}

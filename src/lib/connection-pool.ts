@@ -1,510 +1,419 @@
 /**
- * Sistema de Connection Pooling para Supabase
- * Gerencia conexões de forma eficiente e monitora saúde
+ * Connection Pool para Supabase
+ * Gerencia conexões de forma eficiente para melhorar performance
  */
 
-import { SupabaseClient, createClient } from '@supabase/supabase-js'
+import { createClient, SupabaseClient } from '@supabase/supabase-js'
 
-interface PoolConnection {
-  id: string
-  client: SupabaseClient
-  isActive: boolean
-  lastUsed: number
-  createdAt: number
-  errorCount: number
-}
-
+// Interface para configuração do pool
 interface PoolConfig {
   minConnections: number
   maxConnections: number
+  acquireTimeout: number
   idleTimeout: number
-  maxLifetime: number
-  healthCheckInterval: number
-  maxErrors: number
+  maxRetries: number
 }
 
+// Interface para conexão do pool
+interface PoolConnection {
+  id: string
+  client: SupabaseClient
+  inUse: boolean
+  createdAt: number
+  lastUsed: number
+  usageCount: number
+}
+
+// Interface para estatísticas do pool
 interface PoolStats {
   totalConnections: number
   activeConnections: number
   idleConnections: number
-  totalRequests: number
-  queuedRequests: number
-  errors: number
-  avgWaitTime: number
+  waitingRequests: number
+  totalAcquired: number
+  totalReleased: number
+  totalCreated: number
+  totalDestroyed: number
+  avgUsagePerConnection: number
 }
 
-/**
- * Pool de Conexões para Supabase
- */
-export class ConnectionPool {
+// Configuração padrão
+const DEFAULT_CONFIG: PoolConfig = {
+  minConnections: 2,
+  maxConnections: 10,
+  acquireTimeout: 5000, // 5 segundos
+  idleTimeout: 30000,   // 30 segundos
+  maxRetries: 3
+}
+
+class ConnectionPool {
+  private config: PoolConfig
   private connections: Map<string, PoolConnection> = new Map()
-  private queue: Array<{
-    resolve: (client: SupabaseClient) => void
+  private waitingQueue: Array<{
+    resolve: (connection: PoolConnection) => void
     reject: (error: Error) => void
     timestamp: number
   }> = []
-  
-  private config: PoolConfig
   private stats: PoolStats = {
     totalConnections: 0,
     activeConnections: 0,
     idleConnections: 0,
-    totalRequests: 0,
-    queuedRequests: 0,
-    errors: 0,
-    avgWaitTime: 0
+    waitingRequests: 0,
+    totalAcquired: 0,
+    totalReleased: 0,
+    totalCreated: 0,
+    totalDestroyed: 0,
+    avgUsagePerConnection: 0
   }
-  
-  private healthCheckTimer: NodeJS.Timeout | null = null
-  private cleanupTimer: NodeJS.Timeout | null = null
-  private waitTimes: number[] = []
+  private cleanupInterval: NodeJS.Timeout | null = null
+  private initialized = false
 
   constructor(config: Partial<PoolConfig> = {}) {
-    this.config = {
-      minConnections: 2,
-      maxConnections: 10,
-      idleTimeout: 30000, // 30 segundos
-      maxLifetime: 3600000, // 1 hora
-      healthCheckInterval: 60000, // 1 minuto
-      maxErrors: 5,
-      ...config
+    this.config = { ...DEFAULT_CONFIG, ...config }
+    console.log('🏊 ConnectionPool criado com configuração:', this.config)
+  }
+
+  /**
+   * Inicializar o pool
+   */
+  async initialize(): Promise<void> {
+    if (this.initialized) return
+
+    console.log('🚀 Inicializando ConnectionPool...')
+
+    // Criar conexões mínimas
+    for (let i = 0; i < this.config.minConnections; i++) {
+      await this.createConnection()
     }
 
-    this.initialize()
+    // Iniciar limpeza automática
+    this.startCleanupTimer()
+
+    this.initialized = true
+    console.log(`✅ ConnectionPool inicializado com ${this.connections.size} conexões`)
   }
 
   /**
-   * Inicializa o pool de conexões
-   */
-  private async initialize(): Promise<void> {
-    try {
-      // Criar conexões mínimas
-      for (let i = 0; i < this.config.minConnections; i++) {
-        await this.createConnection()
-      }
-
-      // Iniciar timers de manutenção
-      this.startHealthCheck()
-      this.startCleanup()
-
-      console.log('🏊 Connection pool inicializado', {
-        config: this.config,
-        initialConnections: this.connections.size
-      })
-
-    } catch (error) {
-      console.error('❌ Erro ao inicializar connection pool', { error })
-      throw error
-    }
-  }
-
-  /**
-   * Obtém uma conexão do pool
-   */
-  async getConnection(): Promise<SupabaseClient> {
-    const startTime = Date.now()
-    this.stats.totalRequests++
-
-    return new Promise((resolve, reject) => {
-      // Tentar obter conexão disponível
-      const connection = this.getAvailableConnection()
-      
-      if (connection) {
-        connection.isActive = true
-        connection.lastUsed = Date.now()
-        this.updateStats()
-        
-        const waitTime = Date.now() - startTime
-        this.recordWaitTime(waitTime)
-        
-        console.log('🔗 Conexão obtida do pool', {
-          connectionId: connection.id,
-          waitTime
-        })
-        
-        resolve(connection.client)
-        return
-      }
-
-      // Se pode criar nova conexão
-      if (this.connections.size < this.config.maxConnections) {
-        this.createConnection()
-          .then(connection => {
-            connection.isActive = true
-            connection.lastUsed = Date.now()
-            this.updateStats()
-            
-            const waitTime = Date.now() - startTime
-            this.recordWaitTime(waitTime)
-            
-            resolve(connection.client)
-          })
-          .catch(reject)
-        return
-      }
-
-      // Adicionar à fila
-      this.queue.push({
-        resolve,
-        reject,
-        timestamp: startTime
-      })
-      
-      this.stats.queuedRequests++
-      
-      console.log('⏳ Conexão adicionada à fila', {
-        queueSize: this.queue.length
-      })
-
-      // Timeout para requisições na fila
-      setTimeout(() => {
-        const index = this.queue.findIndex(item => item.resolve === resolve)
-        if (index !== -1) {
-          this.queue.splice(index, 1)
-          this.stats.queuedRequests--
-          this.stats.errors++
-          reject(new Error('Connection timeout'))
-        }
-      }, 10000) // 10 segundos timeout
-    })
-  }
-
-  /**
-   * Libera uma conexão de volta para o pool
-   */
-  releaseConnection(client: SupabaseClient): void {
-    const connection = this.findConnectionByClient(client)
-    
-    if (!connection) {
-      console.warn('⚠️ Tentativa de liberar conexão não encontrada')
-      return
-    }
-
-    connection.isActive = false
-    connection.lastUsed = Date.now()
-    this.updateStats()
-
-    console.log('🔓 Conexão liberada', {
-      connectionId: connection.id
-    })
-
-    // Processar fila se houver requisições pendentes
-    this.processQueue()
-  }
-
-  /**
-   * Executa operação com conexão automática
-   */
-  async withConnection<T>(
-    operation: (client: SupabaseClient) => Promise<T>
-  ): Promise<T> {
-    const client = await this.getConnection()
-    
-    try {
-      const result = await operation(client)
-      this.releaseConnection(client)
-      return result
-    } catch (error) {
-      this.releaseConnection(client)
-      
-      // Incrementar contador de erros da conexão
-      const connection = this.findConnectionByClient(client)
-      if (connection) {
-        connection.errorCount++
-        
-        // Remover conexão se muitos erros
-        if (connection.errorCount >= this.config.maxErrors) {
-          this.removeConnection(connection.id)
-        }
-      }
-      
-      this.stats.errors++
-      throw error
-    }
-  }
-
-  /**
-   * Cria nova conexão
+   * Criar nova conexão
    */
   private async createConnection(): Promise<PoolConnection> {
     const id = `conn_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     
-    try {
-      const client = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-        {
-          auth: {
-            persistSession: false // Pool connections não persistem sessão
+    const client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        auth: {
+          persistSession: false, // Não persistir sessão em conexões do pool
+          autoRefreshToken: false
+        },
+        realtime: {
+          params: {
+            eventsPerSecond: 10 // Limitar eventos em tempo real
           }
         }
-      )
-
-      const connection: PoolConnection = {
-        id,
-        client,
-        isActive: false,
-        lastUsed: Date.now(),
-        createdAt: Date.now(),
-        errorCount: 0
       }
+    )
 
-      this.connections.set(id, connection)
-      this.stats.totalConnections++
-      
-      console.log('🆕 Nova conexão criada', {
-        connectionId: id,
-        totalConnections: this.connections.size
-      })
-
-      return connection
-
-    } catch (error) {
-      console.error('❌ Erro ao criar conexão', { error, connectionId: id })
-      throw error
+    const connection: PoolConnection = {
+      id,
+      client,
+      inUse: false,
+      createdAt: Date.now(),
+      lastUsed: Date.now(),
+      usageCount: 0
     }
+
+    this.connections.set(id, connection)
+    this.stats.totalCreated++
+    this.updateStats()
+
+    console.log(`🔗 Nova conexão criada: ${id}`)
+    return connection
   }
 
   /**
-   * Obtém conexão disponível
+   * Destruir conexão
    */
-  private getAvailableConnection(): PoolConnection | null {
-    for (const connection of this.connections.values()) {
-      if (!connection.isActive) {
-        return connection
-      }
-    }
-    return null
-  }
-
-  /**
-   * Encontra conexão pelo client
-   */
-  private findConnectionByClient(client: SupabaseClient): PoolConnection | null {
-    for (const connection of this.connections.values()) {
-      if (connection.client === client) {
-        return connection
-      }
-    }
-    return null
-  }
-
-  /**
-   * Remove conexão do pool
-   */
-  private removeConnection(connectionId: string): void {
+  private async destroyConnection(connectionId: string): Promise<void> {
     const connection = this.connections.get(connectionId)
-    if (connection) {
-      this.connections.delete(connectionId)
-      this.stats.totalConnections--
-      
-      console.log('🗑️ Conexão removida', {
-        connectionId,
-        reason: 'max_errors_exceeded'
-      })
-    }
-  }
-
-  /**
-   * Processa fila de requisições
-   */
-  private processQueue(): void {
-    if (this.queue.length === 0) return
-
-    const connection = this.getAvailableConnection()
     if (!connection) return
 
-    const request = this.queue.shift()
-    if (!request) return
+    // Não destruir conexões em uso
+    if (connection.inUse) {
+      console.warn(`⚠️ Tentativa de destruir conexão em uso: ${connectionId}`)
+      return
+    }
 
-    this.stats.queuedRequests--
-    connection.isActive = true
-    connection.lastUsed = Date.now()
-    
-    const waitTime = Date.now() - request.timestamp
-    this.recordWaitTime(waitTime)
-    
-    console.log('✅ Requisição da fila processada', {
-      connectionId: connection.id,
-      waitTime,
-      remainingQueue: this.queue.length
-    })
+    this.connections.delete(connectionId)
+    this.stats.totalDestroyed++
+    this.updateStats()
 
-    request.resolve(connection.client)
+    console.log(`💥 Conexão destruída: ${connectionId}`)
   }
 
   /**
-   * Health check das conexões
+   * Adquirir conexão do pool
    */
-  private async healthCheck(): Promise<void> {
+  async acquire(): Promise<PoolConnection> {
+    if (!this.initialized) {
+      await this.initialize()
+    }
+
+    this.stats.totalAcquired++
+
+    // Procurar conexão idle
+    for (const connection of this.connections.values()) {
+      if (!connection.inUse) {
+        connection.inUse = true
+        connection.lastUsed = Date.now()
+        connection.usageCount++
+        this.updateStats()
+        
+        console.log(`📤 Conexão adquirida: ${connection.id}`)
+        return connection
+      }
+    }
+
+    // Se não há conexões idle, criar nova se possível
+    if (this.connections.size < this.config.maxConnections) {
+      const connection = await this.createConnection()
+      connection.inUse = true
+      connection.usageCount++
+      this.updateStats()
+      
+      console.log(`📤 Nova conexão criada e adquirida: ${connection.id}`)
+      return connection
+    }
+
+    // Se chegou ao limite, aguardar na fila
+    console.log('⏳ Pool cheio, aguardando na fila...')
+    return this.waitForConnection()
+  }
+
+  /**
+   * Aguardar conexão disponível
+   */
+  private async waitForConnection(): Promise<PoolConnection> {
+    return new Promise((resolve, reject) => {
+      const request = {
+        resolve,
+        reject,
+        timestamp: Date.now()
+      }
+
+      this.waitingQueue.push(request)
+      this.stats.waitingRequests = this.waitingQueue.length
+      this.updateStats()
+
+      // Timeout para requisição
+      setTimeout(() => {
+        const index = this.waitingQueue.indexOf(request)
+        if (index !== -1) {
+          this.waitingQueue.splice(index, 1)
+          this.stats.waitingRequests = this.waitingQueue.length
+          this.updateStats()
+          reject(new Error('Connection acquire timeout'))
+        }
+      }, this.config.acquireTimeout)
+    })
+  }
+
+  /**
+   * Liberar conexão de volta ao pool
+   */
+  release(connection: PoolConnection): void {
+    if (!this.connections.has(connection.id)) {
+      console.warn(`⚠️ Tentativa de liberar conexão inexistente: ${connection.id}`)
+      return
+    }
+
+    connection.inUse = false
+    connection.lastUsed = Date.now()
+    this.stats.totalReleased++
+    this.updateStats()
+
+    console.log(`📥 Conexão liberada: ${connection.id}`)
+
+    // Processar fila de espera
+    if (this.waitingQueue.length > 0) {
+      const request = this.waitingQueue.shift()!
+      connection.inUse = true
+      connection.usageCount++
+      this.stats.waitingRequests = this.waitingQueue.length
+      this.updateStats()
+      
+      console.log(`📤 Conexão da fila adquirida: ${connection.id}`)
+      request.resolve(connection)
+    }
+  }
+
+  /**
+   * Executar operação com conexão do pool
+   */
+  async withConnection<T>(
+    operation: (client: SupabaseClient) => Promise<T>
+  ): Promise<T> {
+    const connection = await this.acquire()
+    
+    try {
+      const result = await operation(connection.client)
+      return result
+    } finally {
+      this.release(connection)
+    }
+  }
+
+  /**
+   * Iniciar timer de limpeza
+   */
+  private startCleanupTimer(): void {
+    this.cleanupInterval = setInterval(() => {
+      this.cleanup()
+    }, 10000) // Limpeza a cada 10 segundos
+  }
+
+  /**
+   * Parar timer de limpeza
+   */
+  private stopCleanupTimer(): void {
+    if (this.cleanupInterval) {
+      clearInterval(this.cleanupInterval)
+      this.cleanupInterval = null
+    }
+  }
+
+  /**
+   * Limpeza de conexões idle
+   */
+  private async cleanup(): Promise<void> {
     const now = Date.now()
-    const connectionsToRemove: string[] = []
+    const connectionsToDestroy: string[] = []
 
     for (const [id, connection] of this.connections.entries()) {
-      try {
-        // Verificar se conexão expirou
-        if (now - connection.createdAt > this.config.maxLifetime) {
-          connectionsToRemove.push(id)
-          continue
-        }
+      // Não limpar conexões em uso
+      if (connection.inUse) continue
 
-        // Verificar se está idle há muito tempo
-        if (!connection.isActive && 
-            now - connection.lastUsed > this.config.idleTimeout) {
-          // Manter conexões mínimas
-          if (this.connections.size > this.config.minConnections) {
-            connectionsToRemove.push(id)
-            continue
-          }
-        }
-
-        // Teste básico de conectividade
-        if (!connection.isActive) {
-          await connection.client.from('profiles').select('count').limit(1)
-        }
-
-      } catch (error) {
-        console.warn('⚠️ Conexão falhou no health check', {
-          connectionId: id,
-          error
-        })
-        
-        connection.errorCount++
-        if (connection.errorCount >= this.config.maxErrors) {
-          connectionsToRemove.push(id)
+      // Verificar se está idle há muito tempo
+      const idleTime = now - connection.lastUsed
+      if (idleTime > this.config.idleTimeout) {
+        // Manter pelo menos o mínimo de conexões
+        if (this.connections.size > this.config.minConnections) {
+          connectionsToDestroy.push(id)
         }
       }
     }
 
-    // Remover conexões problemáticas
-    for (const id of connectionsToRemove) {
-      this.removeConnection(id)
+    // Destruir conexões idle
+    for (const id of connectionsToDestroy) {
+      await this.destroyConnection(id)
     }
 
-    // Garantir conexões mínimas
-    while (this.connections.size < this.config.minConnections) {
-      try {
-        await this.createConnection()
-      } catch (error) {
-        console.error('❌ Erro ao criar conexão mínima', { error })
-        break
-      }
+    if (connectionsToDestroy.length > 0) {
+      console.log(`🧹 Limpeza: ${connectionsToDestroy.length} conexões idle removidas`)
     }
-
-    this.updateStats()
   }
 
   /**
-   * Inicia health check periódico
-   */
-  private startHealthCheck(): void {
-    this.healthCheckTimer = setInterval(() => {
-      this.healthCheck().catch(error => {
-        console.error('❌ Erro no health check', { error })
-      })
-    }, this.config.healthCheckInterval)
-  }
-
-  /**
-   * Inicia limpeza periódica
-   */
-  private startCleanup(): void {
-    this.cleanupTimer = setInterval(() => {
-      // Limpar estatísticas antigas
-      if (this.waitTimes.length > 1000) {
-        this.waitTimes = this.waitTimes.slice(-100)
-      }
-
-      // Log de estatísticas
-      console.log('📊 Estatísticas do connection pool', this.getStats())
-    }, 5 * 60 * 1000) // A cada 5 minutos
-  }
-
-  /**
-   * Registra tempo de espera
-   */
-  private recordWaitTime(waitTime: number): void {
-    this.waitTimes.push(waitTime)
-    
-    if (this.waitTimes.length > 100) {
-      this.waitTimes.shift()
-    }
-
-    this.stats.avgWaitTime = 
-      this.waitTimes.reduce((a, b) => a + b, 0) / this.waitTimes.length
-  }
-
-  /**
-   * Atualiza estatísticas
+   * Atualizar estatísticas
    */
   private updateStats(): void {
-    this.stats.activeConnections = Array.from(this.connections.values())
-      .filter(conn => conn.isActive).length
-    
-    this.stats.idleConnections = this.connections.size - this.stats.activeConnections
     this.stats.totalConnections = this.connections.size
+    this.stats.activeConnections = Array.from(this.connections.values())
+      .filter(conn => conn.inUse).length
+    this.stats.idleConnections = this.stats.totalConnections - this.stats.activeConnections
+
+    // Calcular uso médio por conexão
+    const totalUsage = Array.from(this.connections.values())
+      .reduce((sum, conn) => sum + conn.usageCount, 0)
+    this.stats.avgUsagePerConnection = this.stats.totalConnections > 0 
+      ? totalUsage / this.stats.totalConnections 
+      : 0
   }
 
   /**
-   * Retorna estatísticas do pool
+   * Obter estatísticas do pool
    */
-  getStats(): PoolStats & {
+  getStats(): PoolStats {
+    this.updateStats()
+    return { ...this.stats }
+  }
+
+  /**
+   * Obter informações detalhadas
+   */
+  getInfo(): {
     config: PoolConfig
-    healthStatus: 'healthy' | 'degraded' | 'critical'
+    stats: PoolStats
+    connections: Array<{
+      id: string
+      inUse: boolean
+      age: number
+      idleTime: number
+      usageCount: number
+    }>
   } {
-    let healthStatus: 'healthy' | 'degraded' | 'critical' = 'healthy'
-    
-    if (this.stats.errors > 10 || this.stats.queuedRequests > 5) {
-      healthStatus = 'degraded'
-    }
-    
-    if (this.stats.errors > 50 || this.stats.queuedRequests > 20) {
-      healthStatus = 'critical'
-    }
+    const now = Date.now()
+    const connections = Array.from(this.connections.values()).map(conn => ({
+      id: conn.id,
+      inUse: conn.inUse,
+      age: now - conn.createdAt,
+      idleTime: now - conn.lastUsed,
+      usageCount: conn.usageCount
+    }))
 
     return {
-      ...this.stats,
       config: this.config,
-      healthStatus
+      stats: this.getStats(),
+      connections
     }
   }
 
   /**
-   * Encerra o pool
+   * Destruir pool
    */
-  async shutdown(): Promise<void> {
-    // Parar timers
-    if (this.healthCheckTimer) {
-      clearInterval(this.healthCheckTimer)
+  async destroy(): Promise<void> {
+    console.log('💥 Destruindo ConnectionPool...')
+
+    this.stopCleanupTimer()
+
+    // Aguardar conexões ativas terminarem (com timeout)
+    const maxWait = 5000 // 5 segundos
+    const startTime = Date.now()
+
+    while (this.stats.activeConnections > 0 && (Date.now() - startTime) < maxWait) {
+      await new Promise(resolve => setTimeout(resolve, 100))
+      this.updateStats()
     }
-    
-    if (this.cleanupTimer) {
-      clearInterval(this.cleanupTimer)
+
+    // Destruir todas as conexões
+    const connectionIds = Array.from(this.connections.keys())
+    for (const id of connectionIds) {
+      await this.destroyConnection(id)
     }
 
     // Rejeitar requisições pendentes
-    for (const request of this.queue) {
-      request.reject(new Error('Connection pool shutting down'))
-    }
-    this.queue.length = 0
+    this.waitingQueue.forEach(request => {
+      request.reject(new Error('Connection pool destroyed'))
+    })
+    this.waitingQueue.length = 0
 
-    // Limpar conexões
-    this.connections.clear()
-    
-    console.log('🔚 Connection pool encerrado')
+    this.initialized = false
+    console.log('✅ ConnectionPool destruído')
   }
 }
 
 // Instância singleton
 export const connectionPool = new ConnectionPool()
 
-// Cleanup ao encerrar aplicação
-if (typeof window === 'undefined') {
-  process.on('SIGTERM', () => {
-    connectionPool.shutdown()
-  })
-
-  process.on('SIGINT', () => {
-    connectionPool.shutdown()
+// Inicializar automaticamente
+if (typeof window !== 'undefined') {
+  connectionPool.initialize().catch(console.error)
+  
+  // Destruir pool quando a página é fechada
+  window.addEventListener('beforeunload', () => {
+    connectionPool.destroy().catch(console.error)
   })
 }
+
+export default connectionPool

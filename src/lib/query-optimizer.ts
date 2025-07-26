@@ -1,421 +1,398 @@
 /**
  * Otimizador de Queries para Supabase
- * Implementa connection pooling, query caching e otimizações
+ * Implementa cache de queries, batching e otimizações de performance
  */
 
-import { SupabaseClient } from '@supabase/supabase-js'
-import { supabase } from './supabase'
-import { cacheManager } from './cache-manager'
+import { supabase } from '@/lib/supabase'
+import { cacheManager } from '@/lib/cache-manager'
+import { UserProfile } from '@/contexts/AuthContext'
 
-interface QueryOptions {
-  cache?: boolean
+// Interface para resultado de query
+interface QueryResult<T> {
+  data: T | null
+  error: any
+  fromCache: boolean
+  executionTime: number
+}
+
+// Interface para configuração de query
+interface QueryConfig {
+  cacheKey?: string
   cacheTTL?: number
-  retries?: number
+  enableCache?: boolean
   timeout?: number
+  retries?: number
 }
 
-interface QueryStats {
-  totalQueries: number
-  cacheHits: number
-  cacheMisses: number
-  avgResponseTime: number
-  errors: number
+// Configurações padrão
+const DEFAULT_CONFIG = {
+  CACHE_TTL: 5 * 60 * 1000, // 5 minutos
+  TIMEOUT: 10000, // 10 segundos
+  RETRIES: 3,
+  BATCH_SIZE: 10,
+  BATCH_DELAY: 100, // 100ms
 }
 
-interface ConnectionPoolConfig {
-  maxConnections: number
-  idleTimeout: number
-  connectionTimeout: number
-}
-
-/**
- * Otimizador de Queries com cache e connection pooling
- */
-export class QueryOptimizer {
-  private client: SupabaseClient
-  private stats: QueryStats = {
+class QueryOptimizer {
+  private queryCache = new Map<string, any>()
+  private batchQueue = new Map<string, Array<{
+    resolve: (value: any) => void
+    reject: (error: any) => void
+    config: QueryConfig
+  }>>()
+  private batchTimer: NodeJS.Timeout | null = null
+  private stats = {
     totalQueries: 0,
     cacheHits: 0,
     cacheMisses: 0,
-    avgResponseTime: 0,
-    errors: 0
-  }
-  private responseTimes: number[] = []
-
-  // Pool de conexões simulado (Supabase gerencia isso internamente)
-  private connectionPool: ConnectionPoolConfig = {
-    maxConnections: 10,
-    idleTimeout: 30000,
-    connectionTimeout: 5000
+    errors: 0,
+    avgExecutionTime: 0
   }
 
-  constructor(client: SupabaseClient = supabase) {
-    this.client = client
-    console.log('⚡ QueryOptimizer inicializado', {
-      connectionPool: this.connectionPool
-    })
+  constructor() {
+    console.log('⚡ QueryOptimizer inicializado')
   }
 
   /**
-   * Executa query otimizada com cache
+   * Gerar chave de cache para query
    */
-  async query<T>(
-    table: string,
-    queryBuilder: (client: SupabaseClient) => any,
-    options: QueryOptions = {}
-  ): Promise<T | null> {
+  private generateCacheKey(table: string, filters: any): string {
+    const filterStr = JSON.stringify(filters)
+    return `query:${table}:${btoa(filterStr)}`
+  }
+
+  /**
+   * Executar query com timeout
+   */
+  private async executeWithTimeout<T>(
+    queryPromise: Promise<T>, 
+    timeout: number = DEFAULT_CONFIG.TIMEOUT
+  ): Promise<T> {
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Query timeout')), timeout)
+    })
+
+    return Promise.race([queryPromise, timeoutPromise])
+  }
+
+  /**
+   * Executar query com retry
+   */
+  private async executeWithRetry<T>(
+    queryFn: () => Promise<T>,
+    retries: number = DEFAULT_CONFIG.RETRIES
+  ): Promise<T> {
+    let lastError: any
+
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        return await queryFn()
+      } catch (error) {
+        lastError = error
+        console.warn(`⚠️ Query falhou (tentativa ${attempt}/${retries}):`, error)
+        
+        if (attempt < retries) {
+          // Backoff exponencial
+          const delay = Math.pow(2, attempt) * 1000
+          await new Promise(resolve => setTimeout(resolve, delay))
+        }
+      }
+    }
+
+    throw lastError
+  }
+
+  /**
+   * Processar batch de queries
+   */
+  private async processBatch(): Promise<void> {
+    if (this.batchQueue.size === 0) return
+
+    console.log(`📦 Processando batch de ${this.batchQueue.size} queries`)
+
+    for (const [key, requests] of this.batchQueue.entries()) {
+      try {
+        // Executar query uma vez para todos os requests
+        const result = await this.executeQuery(key, requests[0].config)
+        
+        // Resolver todos os requests com o mesmo resultado
+        requests.forEach(request => request.resolve(result))
+      } catch (error) {
+        // Rejeitar todos os requests com o mesmo erro
+        requests.forEach(request => request.reject(error))
+      }
+    }
+
+    this.batchQueue.clear()
+  }
+
+  /**
+   * Executar query real
+   */
+  private async executeQuery(queryKey: string, config: QueryConfig): Promise<any> {
+    // Implementar lógica específica baseada na chave da query
+    // Por enquanto, retorna um placeholder
+    throw new Error('Query execution not implemented for key: ' + queryKey)
+  }
+
+  /**
+   * Buscar perfil otimizado
+   */
+  async getProfile(userId: string, config: QueryConfig = {}): Promise<QueryResult<UserProfile>> {
     const startTime = Date.now()
-    const queryKey = this.generateQueryKey(table, queryBuilder.toString())
-    
     this.stats.totalQueries++
 
-    try {
-      // Verificar cache se habilitado
-      if (options.cache !== false) {
-        const cached = cacheManager.get<T>(queryKey)
-        if (cached) {
-          this.stats.cacheHits++
-          console.log('✅ Query cache hit', { table, queryKey })
-          return cached
+    const finalConfig = {
+      enableCache: true,
+      cacheTTL: DEFAULT_CONFIG.CACHE_TTL,
+      timeout: DEFAULT_CONFIG.TIMEOUT,
+      retries: DEFAULT_CONFIG.RETRIES,
+      ...config
+    }
+
+    const cacheKey = `profile:${userId}`
+
+    // Verificar cache primeiro
+    if (finalConfig.enableCache) {
+      const cached = cacheManager.getProfile(userId)
+      if (cached) {
+        this.stats.cacheHits++
+        return {
+          data: cached,
+          error: null,
+          fromCache: true,
+          executionTime: Date.now() - startTime
         }
-        this.stats.cacheMisses++
+      }
+    }
+
+    this.stats.cacheMisses++
+
+    try {
+      // Executar query com otimizações
+      const queryFn = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
+
+        if (error) throw error
+        return data as UserProfile
       }
 
-      // Executar query com timeout
       const result = await this.executeWithTimeout(
-        queryBuilder(this.client),
-        options.timeout || 10000
+        this.executeWithRetry(queryFn, finalConfig.retries),
+        finalConfig.timeout
       )
 
-      if (result.error) {
-        this.stats.errors++
-        console.error('❌ Erro na query', {
-          table,
-          error: result.error,
-          queryKey
-        })
-        throw result.error
+      // Armazenar no cache
+      if (finalConfig.enableCache && result) {
+        cacheManager.setProfile(userId, result)
       }
 
-      // Armazenar no cache se habilitado
-      if (options.cache !== false && result.data) {
-        cacheManager.set(queryKey, result.data, options.cacheTTL)
+      const executionTime = Date.now() - startTime
+      this.updateAvgExecutionTime(executionTime)
+
+      return {
+        data: result,
+        error: null,
+        fromCache: false,
+        executionTime
       }
-
-      // Atualizar estatísticas
-      const responseTime = Date.now() - startTime
-      this.updateStats(responseTime)
-
-      console.log('✅ Query executada com sucesso', {
-        table,
-        responseTime,
-        cached: false
-      })
-
-      return result.data
 
     } catch (error) {
       this.stats.errors++
-      const responseTime = Date.now() - startTime
-      this.updateStats(responseTime)
+      console.error('❌ Erro na query otimizada de perfil:', error)
 
-      console.error('❌ Falha na execução da query', {
-        table,
+      return {
+        data: null,
         error,
-        responseTime,
-        queryKey
-      })
+        fromCache: false,
+        executionTime: Date.now() - startTime
+      }
+    }
+  }
 
-      // Retry se configurado
-      if (options.retries && options.retries > 0) {
-        console.log('🔄 Tentando novamente query', {
-          table,
-          retriesLeft: options.retries
-        })
-        
-        await this.delay(1000) // Aguardar 1s antes do retry
-        return this.query(table, queryBuilder, {
-          ...options,
-          retries: options.retries - 1
+  /**
+   * Buscar múltiplos perfis otimizado
+   */
+  async getProfiles(userIds: string[], config: QueryConfig = {}): Promise<QueryResult<UserProfile[]>> {
+    const startTime = Date.now()
+    this.stats.totalQueries++
+
+    const finalConfig = {
+      enableCache: true,
+      cacheTTL: DEFAULT_CONFIG.CACHE_TTL,
+      timeout: DEFAULT_CONFIG.TIMEOUT,
+      retries: DEFAULT_CONFIG.RETRIES,
+      ...config
+    }
+
+    // Verificar cache para cada usuário
+    const cachedProfiles: UserProfile[] = []
+    const uncachedUserIds: string[] = []
+
+    if (finalConfig.enableCache) {
+      for (const userId of userIds) {
+        const cached = cacheManager.getProfile(userId)
+        if (cached) {
+          cachedProfiles.push(cached)
+          this.stats.cacheHits++
+        } else {
+          uncachedUserIds.push(userId)
+          this.stats.cacheMisses++
+        }
+      }
+    } else {
+      uncachedUserIds.push(...userIds)
+    }
+
+    // Se todos estão em cache, retornar
+    if (uncachedUserIds.length === 0) {
+      return {
+        data: cachedProfiles,
+        error: null,
+        fromCache: true,
+        executionTime: Date.now() - startTime
+      }
+    }
+
+    try {
+      // Buscar perfis não cacheados
+      const queryFn = async () => {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', uncachedUserIds)
+
+        if (error) throw error
+        return data as UserProfile[]
+      }
+
+      const uncachedProfiles = await this.executeWithTimeout(
+        this.executeWithRetry(queryFn, finalConfig.retries),
+        finalConfig.timeout
+      )
+
+      // Armazenar no cache
+      if (finalConfig.enableCache && uncachedProfiles) {
+        uncachedProfiles.forEach(profile => {
+          cacheManager.setProfile(profile.id, profile)
         })
       }
 
-      throw error
-    }
-  }
+      const allProfiles = [...cachedProfiles, ...uncachedProfiles]
+      const executionTime = Date.now() - startTime
+      this.updateAvgExecutionTime(executionTime)
 
-  /**
-   * Queries otimizadas específicas para autenticação
-   */
-  async getUserProfile(userId: string): Promise<any> {
-    return this.query(
-      'profiles',
-      (client) => client
-        .from('profiles')
-        .select('*')
-        .eq('user_id', userId)
-        .single(),
-      { cache: true, cacheTTL: 30 * 60 * 1000 } // 30 min cache
-    )
-  }
-
-  async getUserWithProfile(userId: string): Promise<any> {
-    const cacheKey = `user_with_profile:${userId}`
-    const cached = cacheManager.get(cacheKey)
-    
-    if (cached) {
-      this.stats.cacheHits++
-      return cached
-    }
-
-    // Query otimizada com JOIN
-    const result = await this.query(
-      'profiles',
-      (client) => client
-        .from('profiles')
-        .select(`
-          *,
-          user:auth.users(*)
-        `)
-        .eq('user_id', userId)
-        .single(),
-      { cache: true, cacheTTL: 15 * 60 * 1000 }
-    )
-
-    return result
-  }
-
-  async getActiveUserSessions(userId: string): Promise<any> {
-    return this.query(
-      'user_sessions',
-      (client) => client
-        .from('user_sessions')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('is_active', true)
-        .order('created_at', { ascending: false }),
-      { cache: true, cacheTTL: 5 * 60 * 1000 } // 5 min cache
-    )
-  }
-
-  async getUserPermissions(userId: string): Promise<string[]> {
-    const result = await this.query(
-      'user_permissions',
-      (client) => client
-        .from('user_permissions')
-        .select('permission')
-        .eq('user_id', userId),
-      { cache: true, cacheTTL: 10 * 60 * 1000 }
-    )
-
-    return result ? result.map((p: any) => p.permission) : []
-  }
-
-  /**
-   * Batch queries para reduzir round trips
-   */
-  async batchUserData(userId: string): Promise<{
-    profile: any
-    sessions: any[]
-    permissions: string[]
-  }> {
-    const cacheKey = `batch_user_data:${userId}`
-    const cached = cacheManager.get(cacheKey)
-    
-    if (cached) {
-      this.stats.cacheHits++
-      return cached
-    }
-
-    try {
-      // Executar queries em paralelo
-      const [profile, sessions, permissions] = await Promise.all([
-        this.getUserProfile(userId),
-        this.getActiveUserSessions(userId),
-        this.getUserPermissions(userId)
-      ])
-
-      const result = { profile, sessions, permissions }
-      
-      // Cache por 10 minutos
-      cacheManager.set(cacheKey, result, 10 * 60 * 1000)
-      
-      return result
+      return {
+        data: allProfiles,
+        error: null,
+        fromCache: cachedProfiles.length > 0,
+        executionTime
+      }
 
     } catch (error) {
-      console.error('❌ Erro no batch de dados do usuário', {
-        userId,
-        error
-      })
-      throw error
+      this.stats.errors++
+      console.error('❌ Erro na query otimizada de perfis:', error)
+
+      return {
+        data: cachedProfiles.length > 0 ? cachedProfiles : null,
+        error,
+        fromCache: cachedProfiles.length > 0,
+        executionTime: Date.now() - startTime
+      }
     }
   }
 
   /**
-   * Invalidação inteligente de cache
+   * Atualizar tempo médio de execução
+   */
+  private updateAvgExecutionTime(executionTime: number): void {
+    this.stats.avgExecutionTime = (
+      (this.stats.avgExecutionTime * (this.stats.totalQueries - 1)) + executionTime
+    ) / this.stats.totalQueries
+  }
+
+  /**
+   * Invalidar cache de usuário
    */
   invalidateUserCache(userId: string): void {
-    // Invalidar todos os caches relacionados ao usuário
-    cacheManager.invalidatePattern(`.*${userId}.*`)
+    cacheManager.invalidateProfile(userId)
+    console.log(`🗑️ Cache de usuário ${userId} invalidado`)
+  }
+
+  /**
+   * Invalidar cache de múltiplos usuários
+   */
+  invalidateUsersCache(userIds: string[]): void {
+    userIds.forEach(userId => this.invalidateUserCache(userId))
+  }
+
+  /**
+   * Pré-carregar perfis
+   */
+  async preloadProfiles(userIds: string[]): Promise<void> {
+    console.log(`🔥 Pré-carregando ${userIds.length} perfis`)
     
-    console.log('🗑️ Cache do usuário invalidado', { userId })
-  }
+    // Dividir em batches para não sobrecarregar
+    const batches = []
+    for (let i = 0; i < userIds.length; i += DEFAULT_CONFIG.BATCH_SIZE) {
+      batches.push(userIds.slice(i, i + DEFAULT_CONFIG.BATCH_SIZE))
+    }
 
-  /**
-   * Preparar queries frequentes (warm up)
-   */
-  async warmupQueries(userId: string): Promise<void> {
-    try {
-      // Pre-carregar dados frequentemente acessados
-      await Promise.all([
-        this.getUserProfile(userId),
-        this.getUserPermissions(userId)
-      ])
-
-      console.log('🔥 Queries aquecidas para usuário', { userId })
-    } catch (error) {
-      console.error('❌ Erro ao aquecer queries', { userId, error })
+    // Processar batches sequencialmente
+    for (const batch of batches) {
+      await this.getProfiles(batch, { enableCache: true })
+      
+      // Pequeno delay entre batches
+      if (batches.length > 1) {
+        await new Promise(resolve => setTimeout(resolve, DEFAULT_CONFIG.BATCH_DELAY))
+      }
     }
   }
 
   /**
-   * Otimizações específicas para diferentes tipos de query
+   * Obter estatísticas
    */
-  async optimizedSelect<T>(
-    table: string,
-    columns: string,
-    filters: Record<string, any>,
-    options: QueryOptions = {}
-  ): Promise<T[]> {
-    return this.query(
-      table,
-      (client) => {
-        let query = client.from(table).select(columns)
-        
-        // Aplicar filtros
-        Object.entries(filters).forEach(([key, value]) => {
-          if (Array.isArray(value)) {
-            query = query.in(key, value)
-          } else {
-            query = query.eq(key, value)
-          }
-        })
-
-        return query
-      },
-      options
-    ) as Promise<T[]>
-  }
-
-  async optimizedCount(
-    table: string,
-    filters: Record<string, any> = {}
-  ): Promise<number> {
-    const result = await this.query(
-      table,
-      (client) => {
-        let query = client.from(table).select('*', { count: 'exact', head: true })
-        
-        Object.entries(filters).forEach(([key, value]) => {
-          query = query.eq(key, value)
-        })
-
-        return query
-      },
-      { cache: true, cacheTTL: 2 * 60 * 1000 } // 2 min cache para counts
-    )
-
-    return result?.count || 0
-  }
-
-  /**
-   * Utilitários privados
-   */
-  private generateQueryKey(table: string, query: string): string {
-    // Gerar chave única para a query
-    const hash = this.simpleHash(query)
-    return `query:${table}:${hash}`
-  }
-
-  private simpleHash(str: string): string {
-    let hash = 0
-    for (let i = 0; i < str.length; i++) {
-      const char = str.charCodeAt(i)
-      hash = ((hash << 5) - hash) + char
-      hash = hash & hash // Convert to 32bit integer
-    }
-    return Math.abs(hash).toString(36)
-  }
-
-  private async executeWithTimeout<T>(
-    promise: Promise<T>,
-    timeout: number
-  ): Promise<T> {
-    return Promise.race([
-      promise,
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('Query timeout')), timeout)
-      )
-    ])
-  }
-
-  private delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms))
-  }
-
-  private updateStats(responseTime: number): void {
-    this.responseTimes.push(responseTime)
-    
-    // Manter apenas os últimos 100 tempos de resposta
-    if (this.responseTimes.length > 100) {
-      this.responseTimes.shift()
-    }
-
-    // Calcular média
-    this.stats.avgResponseTime = 
-      this.responseTimes.reduce((a, b) => a + b, 0) / this.responseTimes.length
-  }
-
-  /**
-   * Estatísticas e monitoramento
-   */
-  getStats(): QueryStats & {
-    cacheHitRate: number
-    connectionPoolStatus: ConnectionPoolConfig
-  } {
-    const totalCacheQueries = this.stats.cacheHits + this.stats.cacheMisses
-    const cacheHitRate = totalCacheQueries > 0 
-      ? (this.stats.cacheHits / totalCacheQueries) * 100 
-      : 0
-
+  getStats() {
     return {
       ...this.stats,
-      cacheHitRate: Math.round(cacheHitRate * 100) / 100,
-      connectionPoolStatus: this.connectionPool
+      cacheHitRate: this.stats.totalQueries > 0 
+        ? (this.stats.cacheHits / this.stats.totalQueries) * 100 
+        : 0,
+      errorRate: this.stats.totalQueries > 0 
+        ? (this.stats.errors / this.stats.totalQueries) * 100 
+        : 0
     }
   }
 
   /**
-   * Limpeza e otimização periódica
+   * Resetar estatísticas
    */
-  async optimize(): Promise<void> {
-    // Limpar estatísticas antigas
-    if (this.responseTimes.length > 1000) {
-      this.responseTimes = this.responseTimes.slice(-100)
+  resetStats(): void {
+    this.stats = {
+      totalQueries: 0,
+      cacheHits: 0,
+      cacheMisses: 0,
+      errors: 0,
+      avgExecutionTime: 0
     }
+    console.log('📊 Estatísticas do QueryOptimizer resetadas')
+  }
 
-    // Log de estatísticas
-    const stats = this.getStats()
-    console.log('📊 Estatísticas do QueryOptimizer', stats)
+  /**
+   * Limpar todos os caches
+   */
+  clearCache(): void {
+    this.queryCache.clear()
+    cacheManager.clear()
+    console.log('🗑️ Cache do QueryOptimizer limpo')
   }
 }
 
 // Instância singleton
 export const queryOptimizer = new QueryOptimizer()
 
-// Executar otimização a cada 30 minutos
-if (typeof window === 'undefined') {
-  setInterval(() => {
-    queryOptimizer.optimize()
-  }, 30 * 60 * 1000)
-}
+export default queryOptimizer

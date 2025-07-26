@@ -6,7 +6,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { AuthHealthDashboard } from '@/components/debug/AuthHealthDashboard'
 import { SystemStatusCard } from '@/components/admin/SystemStatusCard'

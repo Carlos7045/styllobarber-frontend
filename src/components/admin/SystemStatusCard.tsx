@@ -6,7 +6,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { performanceMonitor } from '@/lib/performance-monitor'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'

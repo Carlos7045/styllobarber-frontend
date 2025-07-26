@@ -32,20 +32,34 @@ export function UserMenu({ className }: UserMenuProps) {
   // Handler para logout
   const handleLogout = async () => {
     setIsOpen(false)
-    await signOut()
-    router.push('/login')
+    try {
+      console.log('🔄 Iniciando logout via UserMenu...')
+      const result = await signOut()
+      if (result.success) {
+        console.log('✅ Logout bem-sucedido, redirecionando...')
+        router.push('/login')
+      } else {
+        console.error('❌ Erro no logout:', result.error)
+        // Mesmo com erro, redirecionar para login
+        router.push('/login')
+      }
+    } catch (error) {
+      console.error('❌ Erro inesperado no logout:', error)
+      // Forçar redirecionamento mesmo com erro
+      router.push('/login')
+    }
   }
 
   // Handler para ir ao perfil
   const handleProfile = () => {
     setIsOpen(false)
-    router.push('/perfil')
+    router.push('/dashboard/perfil')
   }
 
   // Handler para configurações
   const handleSettings = () => {
     setIsOpen(false)
-    router.push('/configuracoes')
+    router.push('/dashboard/configuracoes')
   }
 
   if (!user || !profile) {
@@ -55,7 +69,9 @@ export function UserMenu({ className }: UserMenuProps) {
   const userName = profile.nome || user.email || 'Usuário'
   const userInitial = userName.charAt(0).toUpperCase()
   const userRole = profile.role === 'admin' ? 'Administrador' : 
-                   profile.role === 'barber' ? 'Barbeiro' : 'Cliente'
+                   profile.role === 'barber' ? 'Barbeiro' : 
+                   profile.role === 'client' ? 'Cliente' :
+                   profile.role === 'saas_owner' ? 'SaaS Owner' : 'Usuário'
 
   return (
     <div className={cn('relative', className)} ref={menuRef}>

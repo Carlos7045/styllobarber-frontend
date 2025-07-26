@@ -3,7 +3,7 @@
 import { User } from '@supabase/supabase-js'
 import { supabase } from './supabase'
 import { sessionManager } from './session-manager'
-import type { UserProfile } from '@/contexts/AuthContext'
+import type { UserProfile } from '@/hooks/use-auth'
 
 export interface ProfileSyncResult {
   success: boolean
