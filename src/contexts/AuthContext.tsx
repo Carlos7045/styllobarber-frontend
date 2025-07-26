@@ -4,6 +4,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
 import { uploadAvatar, removeAvatar, type UploadResult } from '@/lib/storage'
+import { uploadAvatarFallback, removeAvatarFallback } from '@/lib/storage-fallback'
+import { authInterceptor } from '@/lib/auth-interceptor'
+import { sessionManager } from '@/lib/session-manager'
+import { profileSync } from '@/lib/profile-sync'
 
 // Interfaces para dados de autenticação
 export interface LoginData {
@@ -59,6 +63,7 @@ interface AuthContextType {
   signOut: () => Promise<AuthResult>
   resetPassword: (data: ResetPasswordData) => Promise<AuthResult>
   updateProfile: (updates: Partial<UserProfile>) => Promise<AuthResult>
+  updateProfileSimple: (updates: Partial<UserProfile>) => Promise<AuthResult>
   uploadUserAvatar: (file: File) => Promise<AuthResult>
   
   // Helpers
@@ -91,72 +96,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
 
-  // Função de teste para debugging
-  const testProfileAccess = async (userId: string) => {
-    console.log('🔍 Testando acesso ao perfil para userId:', userId)
-    
-    try {
-      // Teste 1: Verificar se o usuário está autenticado
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      console.log('👤 Usuário autenticado:', {
-        userId: user?.id,
-        email: user?.email,
-        authError: authError,
-        sessionUserId: userId,
-        idsMatch: user?.id === userId
-      })
-      
-      // Teste 2: Verificar auth.uid() diretamente
-      const { data: authUidTest, error: authUidError } = await supabase
-        .rpc('get_current_user_id')
-        .single()
-      
-      console.log('🔑 Teste auth.uid():', { data: authUidTest, error: authUidError })
-      
-      // Teste 3: Tentar buscar sem filtro (para testar RLS)
-      const { data: allProfiles, error: allError } = await supabase
-        .from('profiles')
-        .select('id, nome, email, role')
-        .limit(1)
-      
-      console.log('📋 Teste busca geral (RLS):', { 
-        data: allProfiles, 
-        error: allError,
-        count: allProfiles?.length || 0
-      })
-      
-      // Teste 4: Buscar perfil específico
-      const { data: specificProfile, error: specificError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
-      
-      console.log('🎯 Teste busca específica:', { 
-        data: specificProfile, 
-        error: specificError,
-        errorCode: specificError?.code,
-        errorMessage: specificError?.message
-      })
-      
-      // Teste 5: Verificar se o perfil existe na tabela
-      const { data: profileExists, error: existsError } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('id', userId)
-        .maybeSingle()
-      
-      console.log('📍 Teste existência do perfil:', { 
-        exists: !!profileExists, 
-        error: existsError 
-      })
-      
-    } catch (error) {
-      console.error('❌ Erro no teste de acesso:', error)
-    }
-  }
 
-  // Função para buscar perfil do usuário
+
+  // Função para buscar perfil do usuário com ProfileSync e AuthInterceptor
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       if (!userId) {
@@ -164,34 +106,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return null
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single()
+      // Usar AuthInterceptor para operação com retry e recovery
+      const result = await authInterceptor.intercept(async () => {
+        const syncResult = await profileSync.syncProfile(userId)
 
-      if (error) {
-        console.error('Erro ao buscar perfil do Supabase:', {
-          code: error.code,
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          userId: userId,
-          errorObject: error,
-        })
+        if (!syncResult.success) {
+          throw new Error(syncResult.error || 'Erro ao sincronizar perfil')
+        }
+
+        return syncResult.profile
+      }, 'fetchUserProfile')
+
+      if (!result.success) {
+        console.error('Erro ao buscar perfil com interceptor:', result.error)
         
-        // Log adicional para debugging
-        console.log('Detalhes completos do erro:', JSON.stringify(error, null, 2))
+        // Tentar recuperação manual como fallback
+        const recoveredProfile = await profileSync.recoverProfile(userId)
+        if (recoveredProfile) {
+          console.log('✅ Perfil recuperado com fallback')
+          return recoveredProfile
+        }
         
         return null
       }
 
-      if (!data) {
-        console.warn('Perfil não encontrado para userId:', userId)
-        return null
-      }
-
-      return data as UserProfile
+      return result.data || null
     } catch (error) {
       console.error('Erro inesperado ao buscar perfil:', {
         error,
@@ -202,17 +141,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função para atualizar estado de autenticação
+  // Função para atualizar estado de autenticação com AuthInterceptor
   const updateAuthState = async (session: Session | null) => {
     setSession(session)
     setUser(session?.user ?? null)
 
     if (session?.user) {
-      // Executar teste de debugging
-      await testProfileAccess(session.user.id)
-      
-      const userProfile = await fetchUserProfile(session.user.id)
-      setProfile(userProfile)
+      try {
+        // Usar AuthInterceptor para validar sessão com retry
+        const validationResult = await authInterceptor.intercept(async () => {
+          return await sessionManager.validateSession()
+        }, 'validateSession')
+        
+        if (!validationResult.success || !validationResult.data) {
+          console.warn('⚠️ Sessão inválida detectada pelo interceptor')
+          setProfile(null)
+          setLoading(false)
+          setInitialized(true)
+          return
+        }
+
+        const userProfile = await fetchUserProfile(session.user.id)
+        setProfile(userProfile)
+      } catch (error) {
+        console.error('❌ Erro ao atualizar estado de auth:', error)
+        setProfile(null)
+      }
     } else {
       setProfile(null)
     }
@@ -265,24 +219,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
-  // Função de login
+  // Função de login com AuthInterceptor
   const signIn = async (data: LoginData): Promise<AuthResult> => {
     try {
       setLoading(true)
 
-      const { data: authData, error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.senha,
-      })
+      const result = await authInterceptor.wrapSupabaseOperation(
+        () => supabase.auth.signInWithPassword({
+          email: data.email,
+          password: data.senha,
+        }),
+        'signIn'
+      )
 
-      if (error) {
-        return { success: false, error }
+      if (!result.success) {
+        return { success: false, error: result.error as any }
       }
 
       return { 
         success: true, 
         error: null, 
-        user: authData.user,
+        user: result.data?.user,
         profile: profile 
       }
     } catch (error) {
@@ -390,34 +347,99 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função para atualizar perfil
+  // Função para atualizar perfil com AuthInterceptor
   const updateProfile = async (updates: Partial<UserProfile>): Promise<AuthResult> => {
     try {
       if (!user) {
+        console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
         return { 
           success: false, 
           error: { message: 'Usuário não autenticado' } as AuthError 
         }
       }
 
+      console.log('🔄 Atualizando perfil:', { userId: user.id, updates })
       setLoading(true)
 
-      // Atualizar no Supabase Auth se necessário
+      // Atualizar no Supabase Auth se necessário com interceptor
       const authUpdates: any = {}
       if (updates.nome) authUpdates.nome = updates.nome
-      if (updates.telefone) authUpdates.telefone = updates.telefone
+      if (updates.telefone !== undefined) authUpdates.telefone = updates.telefone
 
       if (Object.keys(authUpdates).length > 0) {
-        const { error: authError } = await supabase.auth.updateUser({
-          data: authUpdates,
-        })
+        console.log('🔄 Atualizando dados do auth:', authUpdates)
+        const authResult = await authInterceptor.wrapSupabaseOperation(
+          () => supabase.auth.updateUser({ data: authUpdates }),
+          'updateUserAuth'
+        )
 
-        if (authError) {
-          return { success: false, error: authError }
+        if (!authResult.success) {
+          console.error('❌ Erro ao atualizar auth:', authResult.error)
+          return { success: false, error: authResult.error as any }
+        }
+        console.log('✅ Auth atualizado com sucesso')
+      }
+
+      // Preparar dados para atualização na tabela profiles
+      const profileUpdates = { ...updates }
+      
+      // Adicionar timestamp de atualização
+      profileUpdates.updated_at = new Date().toISOString()
+
+      console.log('🔄 Atualizando tabela profiles:', profileUpdates)
+
+      // Atualizar na tabela profiles com interceptor
+      const profileResult = await authInterceptor.wrapSupabaseOperation(
+        () => supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', user.id)
+          .select()
+          .single(),
+        'updateProfile'
+      )
+
+      if (!profileResult.success) {
+        console.error('❌ Erro ao atualizar profiles:', profileResult.error)
+        return { success: false, error: profileResult.error as any }
+      }
+
+      console.log('✅ Perfil atualizado na tabela:', profileResult.data)
+
+      // Atualizar estado local
+      setProfile(profileResult.data as UserProfile)
+
+      return { 
+        success: true, 
+        error: null, 
+        profile: profileResult.data as UserProfile 
+      }
+    } catch (error) {
+      console.error('❌ Erro inesperado ao atualizar perfil:', error)
+      return { 
+        success: false, 
+        error: error as AuthError 
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função simplificada para atualizar perfil sem interceptor (evita loops)
+  const updateProfileSimple = async (updates: Partial<UserProfile>): Promise<AuthResult> => {
+    try {
+      if (!user) {
+        console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
+        return { 
+          success: false, 
+          error: { message: 'Usuário não autenticado' } as AuthError 
         }
       }
 
-      // Atualizar na tabela profiles
+      console.log('🔄 Atualizando perfil (simples):', { userId: user.id, updates })
+      setLoading(true)
+
+      // Atualizar diretamente na tabela profiles sem interceptor
       const { data, error } = await supabase
         .from('profiles')
         .update(updates)
@@ -426,8 +448,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         .single()
 
       if (error) {
+        console.error('❌ Erro ao atualizar profiles:', error)
         return { success: false, error: error as any }
       }
+
+      console.log('✅ Perfil atualizado na tabela:', data)
 
       // Atualizar estado local
       setProfile(data as UserProfile)
@@ -438,6 +463,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         profile: data as UserProfile 
       }
     } catch (error) {
+      console.error('❌ Erro inesperado ao atualizar perfil:', error)
       return { 
         success: false, 
         error: error as AuthError 
@@ -451,36 +477,68 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const uploadUserAvatar = async (file: File): Promise<AuthResult> => {
     try {
       if (!user) {
+        console.error('❌ Tentativa de upload sem usuário autenticado')
         return { 
           success: false, 
           error: { message: 'Usuário não autenticado' } as AuthError 
         }
       }
 
+      console.log('🔄 Iniciando upload de avatar:', { 
+        userId: user.id, 
+        fileName: file.name, 
+        fileSize: file.size,
+        fileType: file.type 
+      })
+      
       setLoading(true)
 
       // Remover avatar antigo se existir
       if (profile?.avatar_url) {
-        await removeAvatar(profile.avatar_url)
+        console.log('🗑️ Removendo avatar antigo:', profile.avatar_url)
+        try {
+          await removeAvatar(profile.avatar_url)
+          console.log('✅ Avatar antigo removido')
+        } catch (removeError) {
+          console.warn('⚠️ Erro ao remover avatar antigo (continuando):', removeError)
+        }
       }
 
       // Fazer upload do novo avatar
-      const uploadResult: UploadResult = await uploadAvatar(user.id, file)
+      console.log('📤 Fazendo upload do novo avatar...')
+      let uploadResult: UploadResult = await uploadAvatar(user.id, file)
+
+      // Se falhar, tentar fallback
+      if (!uploadResult.success) {
+        console.log('⚠️ Upload principal falhou, tentando fallback...')
+        uploadResult = await uploadAvatarFallback(user.id, file)
+      }
 
       if (!uploadResult.success) {
+        console.error('❌ Erro no upload (incluindo fallback):', uploadResult.error)
         return {
           success: false,
           error: { message: uploadResult.error || 'Erro no upload' } as AuthError
         }
       }
 
+      console.log('✅ Upload realizado com sucesso:', uploadResult.url)
+
       // Atualizar perfil com nova URL do avatar
+      console.log('🔄 Atualizando perfil com nova URL do avatar...')
       const updateResult = await updateProfile({
         avatar_url: uploadResult.url
       })
 
+      if (updateResult.success) {
+        console.log('✅ Avatar atualizado no perfil com sucesso')
+      } else {
+        console.error('❌ Erro ao atualizar perfil com nova URL:', updateResult.error)
+      }
+
       return updateResult
     } catch (error) {
+      console.error('❌ Erro inesperado no upload de avatar:', error)
       return { 
         success: false, 
         error: error as AuthError 
@@ -545,6 +603,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     signOut,
     resetPassword,
     updateProfile,
+    updateProfileSimple,
     uploadUserAvatar,
     
     // Helpers

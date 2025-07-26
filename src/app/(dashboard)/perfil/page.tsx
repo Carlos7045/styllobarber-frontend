@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
-import { UserProfile } from '@/components/profile/UserProfile'
+import { UserProfile } from '@/components/profile/UserProfileSimple'
+import { ProfileSummary } from '@/components/profile/ProfileSummary'
+import { ProfileHistory } from '@/components/profile/ProfileHistory'
 import { Container } from '@/components/layout'
 
 export const metadata: Metadata = {
@@ -24,7 +26,18 @@ export default function PerfilPage() {
           </p>
         </div>
 
+        {/* Resumo do perfil */}
+        <div className="mb-8">
+          <ProfileSummary />
+        </div>
+
+        {/* Componente principal de edição */}
         <UserProfile />
+
+        {/* Histórico de alterações */}
+        <div className="mt-8">
+          <ProfileHistory />
+        </div>
       </div>
     </Container>
   )
