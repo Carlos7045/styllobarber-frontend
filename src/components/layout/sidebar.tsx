@@ -18,13 +18,13 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  LogOut,
   Home
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { useAuth } from '@/hooks/use-auth'
+import { LogoutButton } from '@/components/auth/LogoutButton'
 
 // Variantes do sidebar
 const sidebarVariants = cva(
@@ -197,7 +197,7 @@ export function Sidebar({
   ...props
 }: SidebarProps) {
   const pathname = usePathname()
-  const { user, signOut } = useAuth()
+  const { user } = useAuth()
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
 
   // Obter itens de navegação baseado no role
@@ -209,12 +209,6 @@ export function Sidebar({
       return pathname === '/dashboard'
     }
     return pathname.startsWith(href)
-  }
-
-  // Função para lidar com logout
-  const handleLogout = async () => {
-    await signOut()
-    window.location.href = '/auth/login'
   }
 
   return (
@@ -313,15 +307,17 @@ export function Sidebar({
           </Button>
 
           {/* Logout */}
-          <Button
+          <LogoutButton
             variant="ghost"
             size={isCollapsed ? 'icon' : 'sm'}
-            onClick={handleLogout}
-            className="w-full justify-start text-error hover:text-error-dark hover:bg-error/10"
-          >
-            <LogOut className="h-4 w-4" />
-            {!isCollapsed && <span className="ml-2">Sair</span>}
-          </Button>
+            showText={!isCollapsed}
+            showConfirmation={true}
+            redirectTo="/login"
+            className="w-full justify-start"
+            onLogoutStart={() => console.log('Logout iniciado')}
+            onLogoutComplete={() => console.log('Logout concluído')}
+            onLogoutError={(error) => console.error('Erro no logout:', error)}
+          />
         </div>
       </aside>
 

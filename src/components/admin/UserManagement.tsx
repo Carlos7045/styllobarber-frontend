@@ -1,0 +1,500 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { Users, Search, Filter, MoreHorizontal, Edit, Trash2, UserCheck, UserX, Plus, Download, RefreshCw } from 'lucide-react'
+
+import { useAuth, UserProfile } from '@/hooks/use-auth'
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { supabase } from '@/lib/supabase'
+import { UserEditModal } from './UserEditModal'
+import { ConfirmDialog } from './ConfirmDialog'
+
+interface UserManagementProps {
+  className?: string
+}
+
+export function UserManagement({ className }: UserManagementProps) {
+  const { hasRole } = useAuth()
+  const [users, setUsers] = useState<UserProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [roleFilter, setRoleFilter] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    action: () => void
+    variant?: 'danger' | 'warning' | 'info'
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: () => {},
+  })
+  const [actionLoading, setActionLoading] = useState(false)
+
+  // Carregar usuários
+  useEffect(() => {
+    if (hasRole('admin')) {
+      loadUsers()
+    }
+  }, [hasRole])
+
+  // Verificar se é admin
+  if (!hasRole('admin')) {
+    return (
+      <Card className={className}>
+        <CardContent className="flex items-center justify-center py-12">
+          <p className="text-text-muted">Acesso negado. Apenas administradores podem gerenciar usuários.</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('Erro ao carregar usuários:', error)
+        alert('Erro ao carregar usuários: ' + error.message)
+        return
+      }
+
+      setUsers(data as UserProfile[])
+    } catch (error) {
+      console.error('Erro ao carregar usuários:', error)
+      alert('Erro inesperado ao carregar usuários')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função para recarregar usuários
+  const handleRefresh = () => {
+    loadUsers()
+  }
+
+  // Função para exportar usuários (CSV)
+  const handleExportUsers = () => {
+    const csvContent = [
+      ['Nome', 'Email', 'Telefone', 'Role', 'Data de Criação'].join(','),
+      ...filteredUsers.map(user => [
+        user.nome,
+        user.email,
+        user.telefone || '',
+        getRoleName(user.role),
+        new Date(user.created_at).toLocaleDateString('pt-BR')
+      ].join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `usuarios_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  // Filtrar usuários
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = user.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         (user.telefone && user.telefone.includes(searchTerm))
+    const matchesRole = roleFilter === 'all' || user.role === roleFilter
+    // TODO: Implementar filtro de status quando campo ativo estiver no banco
+    const matchesStatus = statusFilter === 'all' || true
+    return matchesSearch && matchesRole && matchesStatus
+  })
+
+  // Alterar role do usuário
+  const handleRoleChange = async (userId: string, newRole: 'admin' | 'barber' | 'client') => {
+    const user = users.find(u => u.id === userId)
+    if (!user) return
+
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Alterar Perfil de Acesso',
+      message: `Tem certeza que deseja alterar o perfil de "${user.nome}" para "${getRoleName(newRole)}"?`,
+      variant: 'warning',
+      action: async () => {
+        try {
+          setActionLoading(true)
+          
+          const { error } = await supabase
+            .from('profiles')
+            .update({ 
+              role: newRole,
+              updated_at: new Date().toISOString()
+            })
+            .eq('id', userId)
+
+          if (error) {
+            console.error('Erro ao alterar role:', error)
+            alert('Erro ao alterar perfil: ' + error.message)
+            return
+          }
+
+          // Atualizar lista local
+          setUsers(users.map(user => 
+            user.id === userId ? { 
+              ...user, 
+              role: newRole,
+              updated_at: new Date().toISOString()
+            } : user
+          ))
+
+          alert('Perfil alterado com sucesso!')
+        } catch (error) {
+          console.error('Erro ao alterar role:', error)
+          alert('Erro inesperado ao alterar perfil')
+        } finally {
+          setActionLoading(false)
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+        }
+      }
+    })
+  }
+
+  // Desativar/ativar usuário
+  const handleToggleUserStatus = async (userId: string, activate: boolean) => {
+    const user = users.find(u => u.id === userId)
+    if (!user) return
+
+    setConfirmDialog({
+      isOpen: true,
+      title: activate ? 'Ativar Usuário' : 'Desativar Usuário',
+      message: `Tem certeza que deseja ${activate ? 'ativar' : 'desativar'} o usuário "${user.nome}"?`,
+      variant: activate ? 'info' : 'danger',
+      action: async () => {
+        try {
+          setActionLoading(true)
+          
+          // TODO: Implementar campo ativo no banco de dados
+          // Por enquanto, apenas simular a ação
+          console.log(`${activate ? 'Ativando' : 'Desativando'} usuário:`, userId)
+          
+          alert(`Usuário ${activate ? 'ativado' : 'desativado'} com sucesso!`)
+        } catch (error) {
+          console.error('Erro ao alterar status:', error)
+          alert('Erro inesperado ao alterar status do usuário')
+        } finally {
+          setActionLoading(false)
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+        }
+      }
+    })
+  }
+
+  // Função para deletar usuário (ação perigosa)
+  const handleDeleteUser = async (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    if (!user) return
+
+    setConfirmDialog({
+      isOpen: true,
+      title: 'Deletar Usuário',
+      message: `ATENÇÃO: Esta ação é irreversível! Tem certeza que deseja deletar permanentemente o usuário "${user.nome}"?`,
+      variant: 'danger',
+      action: async () => {
+        try {
+          setActionLoading(true)
+          
+          // Deletar do banco
+          const { error } = await supabase
+            .from('profiles')
+            .delete()
+            .eq('id', userId)
+
+          if (error) {
+            console.error('Erro ao deletar usuário:', error)
+            alert('Erro ao deletar usuário: ' + error.message)
+            return
+          }
+
+          // Remover da lista local
+          setUsers(users.filter(u => u.id !== userId))
+          alert('Usuário deletado com sucesso!')
+        } catch (error) {
+          console.error('Erro ao deletar usuário:', error)
+          alert('Erro inesperado ao deletar usuário')
+        } finally {
+          setActionLoading(false)
+          setConfirmDialog(prev => ({ ...prev, isOpen: false }))
+        }
+      }
+    })
+  }
+
+  // Callback para quando usuário é editado
+  const handleUserSaved = (updatedUser: UserProfile) => {
+    setUsers(users.map(user => 
+      user.id === updatedUser.id ? updatedUser : user
+    ))
+  }
+
+  // Obter cor do badge baseado no role
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'bg-error text-white'
+      case 'barber':
+        return 'bg-primary-gold text-primary-black'
+      case 'client':
+        return 'bg-info text-white'
+      default:
+        return 'bg-neutral-medium-gray text-white'
+    }
+  }
+
+  // Obter nome do role em português
+  const getRoleName = (role: string) => {
+    switch (role) {
+      case 'admin':
+        return 'Administrador'
+      case 'barber':
+        return 'Barbeiro'
+      case 'client':
+        return 'Cliente'
+      default:
+        return role
+    }
+  }
+
+  return (
+    <Card className={className}>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Gestão de Usuários
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            <div className="text-sm text-text-muted mr-4">
+              {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={loading}
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportUsers}
+              disabled={loading || filteredUsers.length === 0}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-6">
+        {/* Filtros */}
+        <div className="flex flex-col sm:flex-row gap-4">
+          <div className="flex-1">
+            <Input
+              placeholder="Buscar por nome, email ou telefone..."
+              leftIcon={<Search className="h-4 w-4" />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+          <div className="sm:w-48">
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
+            >
+              <option value="all">Todos os perfis</option>
+              <option value="admin">Administradores</option>
+              <option value="barber">Barbeiros</option>
+              <option value="client">Clientes</option>
+            </select>
+          </div>
+          <div className="sm:w-48">
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              disabled={loading}
+              className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
+            >
+              <option value="all">Todos os status</option>
+              <option value="active">Ativos</option>
+              <option value="inactive">Inativos</option>
+            </select>
+          </div>
+        </div>
+
+        {/* Lista de usuários */}
+        {loading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-text-muted">Carregando usuários...</p>
+          </div>
+        ) : filteredUsers.length === 0 ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-text-muted">Nenhum usuário encontrado</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredUsers.map((user) => (
+              <div
+                key={user.id}
+                className="flex items-center justify-between p-4 border border-border-default rounded-lg hover:bg-background-secondary transition-colors"
+              >
+                <div className="flex items-center gap-4">
+                  {/* Avatar */}
+                  <div className="w-10 h-10 bg-primary-gold rounded-full flex items-center justify-center text-primary-black font-semibold">
+                    {user.avatar_url ? (
+                      <img
+                        src={user.avatar_url}
+                        alt={user.nome}
+                        className="w-full h-full rounded-full object-cover"
+                      />
+                    ) : (
+                      user.nome.charAt(0).toUpperCase()
+                    )}
+                  </div>
+
+                  {/* Informações do usuário */}
+                  <div>
+                    <h4 className="font-medium text-text-primary">{user.nome}</h4>
+                    <p className="text-sm text-text-muted">{user.email}</p>
+                    {user.telefone && (
+                      <p className="text-xs text-text-muted">{user.telefone}</p>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  {/* Badge do role */}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
+                    {getRoleName(user.role)}
+                  </span>
+
+                  {/* Data de criação */}
+                  <div className="text-xs text-text-muted hidden sm:block">
+                    {new Date(user.created_at).toLocaleDateString('pt-BR')}
+                  </div>
+
+                  {/* Ações */}
+                  <div className="flex items-center gap-1">
+                    {/* Alterar role */}
+                    <select
+                      value={user.role}
+                      onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
+                      disabled={loading || actionLoading}
+                      className="text-xs px-2 py-1 border border-border-default rounded bg-background-primary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-gold disabled:opacity-50"
+                    >
+                      <option value="client">Cliente</option>
+                      <option value="barber">Barbeiro</option>
+                      <option value="admin">Admin</option>
+                    </select>
+
+                    {/* Botão de editar */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setSelectedUser(user)
+                        setIsEditModalOpen(true)
+                      }}
+                      disabled={loading || actionLoading}
+                      title="Editar usuário"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+
+                    {/* Botão de ativar/desativar */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleUserStatus(user.id, false)}
+                      disabled={loading || actionLoading}
+                      title="Desativar usuário"
+                      className="text-warning hover:text-warning hover:bg-warning/10"
+                    >
+                      <UserX className="h-4 w-4" />
+                    </Button>
+
+                    {/* Botão de deletar */}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteUser(user.id)}
+                      disabled={loading || actionLoading}
+                      title="Deletar usuário"
+                      className="text-error hover:text-error hover:bg-error/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-border-default">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-error">
+              {users.filter(u => u.role === 'admin').length}
+            </div>
+            <div className="text-sm text-text-muted">Administradores</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-primary-gold">
+              {users.filter(u => u.role === 'barber').length}
+            </div>
+            <div className="text-sm text-text-muted">Barbeiros</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-info">
+              {users.filter(u => u.role === 'client').length}
+            </div>
+            <div className="text-sm text-text-muted">Clientes</div>
+          </div>
+        </div>
+      </CardContent>
+
+      {/* Modal de edição */}
+      <UserEditModal
+        user={selectedUser}
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false)
+          setSelectedUser(null)
+        }}
+        onSave={handleUserSaved}
+      />
+
+      {/* Dialog de confirmação */}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        variant={confirmDialog.variant}
+        loading={actionLoading}
+        onConfirm={confirmDialog.action}
+        onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
+    </Card>
+  )
+}

@@ -43,15 +43,15 @@ export function formatarMoeda(valor: number): string {
  * Formata telefone brasileiro
  */
 export function formatarTelefone(telefone: string): string {
-  const apenasNumeros = telefone.replace(/\D/g, '')
+  const apenasNumeros = telefone.replace(/\D/g, '').substring(0, 11)
   
-  if (apenasNumeros.length === 11) {
-    return apenasNumeros.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3')
-  } else if (apenasNumeros.length === 10) {
-    return apenasNumeros.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3')
-  }
+  if (apenasNumeros.length === 0) return ''
+  if (apenasNumeros.length === 1) return `(${apenasNumeros}`
+  if (apenasNumeros.length <= 2) return `(${apenasNumeros}`
+  if (apenasNumeros.length <= 6) return `(${apenasNumeros.substring(0, 2)}) ${apenasNumeros.substring(2)}`
+  if (apenasNumeros.length <= 10) return `(${apenasNumeros.substring(0, 2)}) ${apenasNumeros.substring(2, 6)}-${apenasNumeros.substring(6)}`
   
-  return telefone
+  return `(${apenasNumeros.substring(0, 2)}) ${apenasNumeros.substring(2, 7)}-${apenasNumeros.substring(7)}`
 }
 
 /**

@@ -1,0 +1,310 @@
+'use client'
+
+import { useEffect, useRef, useCallback, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { supabase } from '@/lib/supabase'
+import { useAuth } from './use-auth'
+import { clearAuthLocalData } from '@/lib/auth-utils'
+
+interface SessionManagerOptions {
+  checkInterval?: number // Intervalo de verificação em ms (padrão: 30s)
+  warningThreshold?: number // Tempo antes da expiração para avisar (padrão: 5min)
+  autoRefresh?: boolean // Renovação automática de tokens (padrão: true)
+  onSessionExpired?: () => void
+  onSessionWarning?: (timeLeft: number) => void
+  onTokenRefreshed?: () => void
+  onSessionError?: (error: string) => void
+}
+
+interface SessionState {
+  isValid: boolean
+  expiresAt: number | null
+  timeUntilExpiry: number | null
+  isRefreshing: boolean
+  lastRefresh: number | null
+  warningShown: boolean
+}
+
+export function useSessionManager(options: SessionManagerOptions = {}) {
+  const {
+    checkInterval = 30000, // 30 segundos
+    warningThreshold = 300000, // 5 minutos
+    autoRefresh = true,
+    onSessionExpired,
+    onSessionWarning,
+    onTokenRefreshed,
+    onSessionError,
+  } = options
+
+  const { session, signOut, loading } = useAuth()
+  const router = useRouter()
+  
+  const [sessionState, setSessionState] = useState<SessionState>({
+    isValid: false,
+    expiresAt: null,
+    timeUntilExpiry: null,
+    isRefreshing: false,
+    lastRefresh: null,
+    warningShown: false,
+  })
+
+  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const refreshTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Função para calcular tempo até expiração
+  const calculateTimeUntilExpiry = useCallback((expiresAt: number): number => {
+    return Math.max(0, expiresAt * 1000 - Date.now())
+  }, [])
+
+  // Função para verificar se a sessão é válida
+  const isSessionValid = useCallback((session: any): boolean => {
+    if (!session?.access_token || !session?.expires_at) {
+      return false
+    }
+
+    const timeUntilExpiry = calculateTimeUntilExpiry(session.expires_at)
+    return timeUntilExpiry > 0
+  }, [calculateTimeUntilExpiry])
+
+  // Função para renovar token
+  const refreshToken = useCallback(async (): Promise<boolean> => {
+    try {
+      console.log('🔄 Tentando renovar token...')
+      setSessionState(prev => ({ ...prev, isRefreshing: true }))
+
+      const { data, error } = await supabase.auth.refreshSession()
+
+      if (error) {
+        console.error('❌ Erro ao renovar token:', error)
+        onSessionError?.(error.message)
+        return false
+      }
+
+      if (data.session) {
+        console.log('✅ Token renovado com sucesso')
+        setSessionState(prev => ({
+          ...prev,
+          isRefreshing: false,
+          lastRefresh: Date.now(),
+          warningShown: false,
+        }))
+        onTokenRefreshed?.()
+        return true
+      }
+
+      return false
+    } catch (error) {
+      console.error('❌ Erro inesperado ao renovar token:', error)
+      setSessionState(prev => ({ ...prev, isRefreshing: false }))
+      onSessionError?.(error instanceof Error ? error.message : 'Erro inesperado')
+      return false
+    }
+  }, [onSessionError, onTokenRefreshed])
+
+  // Função para lidar com sessão expirada
+  const handleSessionExpired = useCallback(async () => {
+    console.log('⚠️ Sessão expirada detectada')
+    
+    try {
+      // Tentar renovar uma última vez
+      if (autoRefresh) {
+        const renewed = await refreshToken()
+        if (renewed) {
+          console.log('✅ Sessão renovada após expiração')
+          return
+        }
+      }
+
+      // Se não conseguiu renovar, fazer logout
+      console.log('🚪 Fazendo logout por sessão expirada')
+      
+      // Limpar dados locais
+      clearAuthLocalData()
+      
+      // Callback personalizado
+      onSessionExpired?.()
+      
+      // Fazer logout no Supabase
+      await signOut()
+      
+      // Redirecionar para login com parâmetro de sessão expirada
+      router.replace('/login?reason=session-expired')
+      
+    } catch (error) {
+      console.error('❌ Erro ao lidar com sessão expirada:', error)
+      
+      // Forçar limpeza e redirecionamento mesmo com erro
+      clearAuthLocalData()
+      router.replace('/login?reason=session-error')
+    }
+  }, [autoRefresh, refreshToken, onSessionExpired, signOut, router])
+
+  // Função para verificar estado da sessão
+  const checkSessionState = useCallback(async () => {
+    if (loading || !session) {
+      setSessionState(prev => ({
+        ...prev,
+        isValid: false,
+        expiresAt: null,
+        timeUntilExpiry: null,
+      }))
+      return
+    }
+
+    const expiresAt = session.expires_at
+    const timeUntilExpiry = expiresAt ? calculateTimeUntilExpiry(expiresAt) : null
+    const isValid = isSessionValid(session)
+
+    setSessionState(prev => ({
+      ...prev,
+      isValid,
+      expiresAt,
+      timeUntilExpiry,
+    }))
+
+    // Se a sessão expirou
+    if (!isValid && expiresAt) {
+      await handleSessionExpired()
+      return
+    }
+
+    // Se está próximo da expiração e deve avisar
+    if (
+      isValid && 
+      timeUntilExpiry !== null && 
+      timeUntilExpiry <= warningThreshold && 
+      !sessionState.warningShown &&
+      !sessionState.isRefreshing
+    ) {
+      console.log(`⚠️ Sessão expira em ${Math.round(timeUntilExpiry / 1000)}s`)
+      setSessionState(prev => ({ ...prev, warningShown: true }))
+      onSessionWarning?.(timeUntilExpiry)
+
+      // Se deve renovar automaticamente
+      if (autoRefresh) {
+        await refreshToken()
+      }
+    }
+
+  }, [
+    loading,
+    session,
+    calculateTimeUntilExpiry,
+    isSessionValid,
+    handleSessionExpired,
+    warningThreshold,
+    sessionState.warningShown,
+    sessionState.isRefreshing,
+    onSessionWarning,
+    autoRefresh,
+    refreshToken,
+  ])
+
+  // Função para agendar renovação automática
+  const scheduleTokenRefresh = useCallback(() => {
+    if (!session?.expires_at || !autoRefresh) return
+
+    const expiresAt = session.expires_at * 1000
+    const now = Date.now()
+    const timeUntilExpiry = expiresAt - now
+
+    // Renovar 2 minutos antes da expiração
+    const refreshTime = Math.max(0, timeUntilExpiry - 120000)
+
+    if (refreshTimeoutRef.current) {
+      clearTimeout(refreshTimeoutRef.current)
+    }
+
+    refreshTimeoutRef.current = setTimeout(async () => {
+      console.log('⏰ Renovação automática agendada executada')
+      await refreshToken()
+    }, refreshTime)
+
+    console.log(`⏰ Renovação agendada para ${Math.round(refreshTime / 1000)}s`)
+  }, [session, autoRefresh, refreshToken])
+
+  // Inicializar verificação periódica
+  useEffect(() => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current)
+    }
+
+    intervalRef.current = setInterval(checkSessionState, checkInterval)
+    
+    // Verificar imediatamente
+    checkSessionState()
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+    }
+  }, [checkSessionState, checkInterval])
+
+  // Agendar renovação automática quando sessão muda
+  useEffect(() => {
+    scheduleTokenRefresh()
+
+    return () => {
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [scheduleTokenRefresh])
+
+  // Limpar timers ao desmontar
+  useEffect(() => {
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+      if (refreshTimeoutRef.current) {
+        clearTimeout(refreshTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Função para forçar verificação
+  const forceCheck = useCallback(() => {
+    checkSessionState()
+  }, [checkSessionState])
+
+  // Função para forçar renovação
+  const forceRefresh = useCallback(async (): Promise<boolean> => {
+    return await refreshToken()
+  }, [refreshToken])
+
+  // Função para invalidar sessão manualmente
+  const invalidateSession = useCallback(async (reason: string = 'manual') => {
+    console.log(`🚪 Invalidando sessão: ${reason}`)
+    await handleSessionExpired()
+  }, [handleSessionExpired])
+
+  return {
+    // Estado da sessão
+    sessionState,
+    
+    // Funções de controle
+    forceCheck,
+    forceRefresh,
+    invalidateSession,
+    
+    // Informações úteis
+    isSessionValid: sessionState.isValid,
+    timeUntilExpiry: sessionState.timeUntilExpiry,
+    isRefreshing: sessionState.isRefreshing,
+    
+    // Formatadores úteis
+    formatTimeUntilExpiry: (ms: number | null): string => {
+      if (!ms) return 'Desconhecido'
+      
+      const minutes = Math.floor(ms / 60000)
+      const seconds = Math.floor((ms % 60000) / 1000)
+      
+      if (minutes > 0) {
+        return `${minutes}m ${seconds}s`
+      }
+      return `${seconds}s`
+    },
+  }
+}

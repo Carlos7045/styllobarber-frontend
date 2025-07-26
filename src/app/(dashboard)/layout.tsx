@@ -5,6 +5,7 @@ import { Sidebar, useSidebar } from '@/components/layout/sidebar'
 import { Header, HeaderContent } from '@/components/layout/header'
 import { Container } from '@/components/layout'
 import { RouteGuard } from '@/components/auth'
+// import { SessionProvider } from '@/components/auth/SessionProvider' // Removido temporariamente
 import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
 

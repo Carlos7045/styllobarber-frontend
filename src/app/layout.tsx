@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat, Poppins } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Configuração das fontes do StylloBarber
 const inter = Inter({
@@ -72,9 +73,11 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className={`${inter.variable} ${montserrat.variable} ${poppins.variable}`}>
       <body className="antialiased" suppressHydrationWarning={true}>
-        <div id="root">
-          {children}
-        </div>
+        <AuthProvider>
+          <div id="root">
+            {children}
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );

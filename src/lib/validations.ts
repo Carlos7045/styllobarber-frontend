@@ -31,6 +31,30 @@ export const schemaCadastro = schemaUsuario.extend({
   path: ['confirmarSenha'],
 })
 
+// Schema para atualização de perfil
+export const schemaPerfilUsuario = z.object({
+  nome: z
+    .string()
+    .min(VALIDACAO.NOME_MIN_LENGTH, 'Nome deve ter pelo menos 2 caracteres')
+    .max(VALIDACAO.NOME_MAX_LENGTH, 'Nome deve ter no máximo 100 caracteres'),
+  telefone: z
+    .string()
+    .regex(VALIDACAO.TELEFONE_REGEX, 'Formato de telefone inválido: (XX) XXXXX-XXXX')
+    .optional()
+    .or(z.literal('')),
+  data_nascimento: z
+    .string()
+    .optional()
+    .refine((date) => {
+      if (!date) return true
+      const birthDate = new Date(date)
+      const today = new Date()
+      const age = today.getFullYear() - birthDate.getFullYear()
+      return age >= 13 && age <= 120
+    }, 'Idade deve estar entre 13 e 120 anos'),
+  avatar_url: z.string().url().optional().or(z.literal('')),
+})
+
 // Schema para cliente
 export const schemaCliente = schemaUsuario.extend({
   dataNascimento: z.date().optional(),
@@ -82,6 +106,7 @@ export const schemaHorarioTrabalho = z.object({
 export type DadosUsuario = z.infer<typeof schemaUsuario>
 export type DadosLogin = z.infer<typeof schemaLogin>
 export type DadosCadastro = z.infer<typeof schemaCadastro>
+export type DadosPerfilUsuario = z.infer<typeof schemaPerfilUsuario>
 export type DadosCliente = z.infer<typeof schemaCliente>
 export type DadosServico = z.infer<typeof schemaServico>
 export type DadosAgendamento = z.infer<typeof schemaAgendamento>

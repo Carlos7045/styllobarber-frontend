@@ -1,4 +1,5 @@
-import { Metadata } from 'next'
+'use client'
+
 import { 
   Calendar, 
   Users, 
@@ -19,12 +20,6 @@ import {
   Badge 
 } from '@/components/ui'
 import { Container, Grid, Stack } from '@/components/layout'
-
-// Metadados da página
-export const metadata: Metadata = {
-  title: 'Dashboard - StylloBarber',
-  description: 'Painel principal do StylloBarber com métricas e informações importantes.',
-}
 
 // Dados mockados para demonstração
 const dashboardData = {
@@ -283,28 +278,40 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <Grid cols={4} gap="md">
-              <button className="flex flex-col items-center gap-2 p-4 bg-primary-gold/10 hover:bg-primary-gold/20 rounded-lg transition-colors group">
+              <button 
+                onClick={() => alert('Novo Agendamento clicado!')}
+                className="flex flex-col items-center gap-2 p-4 bg-primary-gold/10 hover:bg-primary-gold/20 rounded-lg transition-colors group"
+              >
                 <Calendar className="h-6 w-6 text-primary-gold group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-text-primary">
                   Novo Agendamento
                 </span>
               </button>
 
-              <button className="flex flex-col items-center gap-2 p-4 bg-info/10 hover:bg-info/20 rounded-lg transition-colors group">
+              <button 
+                onClick={() => alert('Cadastrar Cliente clicado!')}
+                className="flex flex-col items-center gap-2 p-4 bg-info/10 hover:bg-info/20 rounded-lg transition-colors group"
+              >
                 <Users className="h-6 w-6 text-info group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-text-primary">
                   Cadastrar Cliente
                 </span>
               </button>
 
-              <button className="flex flex-col items-center gap-2 p-4 bg-success/10 hover:bg-success/20 rounded-lg transition-colors group">
+              <button 
+                onClick={() => alert('Registrar Pagamento clicado!')}
+                className="flex flex-col items-center gap-2 p-4 bg-success/10 hover:bg-success/20 rounded-lg transition-colors group"
+              >
                 <DollarSign className="h-6 w-6 text-success group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-text-primary">
                   Registrar Pagamento
                 </span>
               </button>
 
-              <button className="flex flex-col items-center gap-2 p-4 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors group">
+              <button 
+                onClick={() => alert('Gerenciar Serviços clicado!')}
+                className="flex flex-col items-center gap-2 p-4 bg-warning/10 hover:bg-warning/20 rounded-lg transition-colors group"
+              >
                 <Scissors className="h-6 w-6 text-warning group-hover:scale-110 transition-transform" />
                 <span className="text-sm font-medium text-text-primary">
                   Gerenciar Serviços

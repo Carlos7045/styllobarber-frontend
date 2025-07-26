@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '@/components/ui'
 import { Container, Section, Grid, Header, HeaderContent, HeaderLogo } from '@/components/layout'
 import { Calendar, Users, BarChart3 } from 'lucide-react'
@@ -44,12 +45,16 @@ export default function Home() {
             
             {/* Botões de ação */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-              <Button size="lg" className="animate-scale-in">
-                Começar Agora
-              </Button>
-              <Button variant="outline" size="lg" className="animate-scale-in">
-                Ver Demo
-              </Button>
+              <Link href="/login">
+                <Button size="lg" className="animate-scale-in">
+                  Começar Agora
+                </Button>
+              </Link>
+              <Link href="/cadastro">
+                <Button variant="outline" size="lg" className="animate-scale-in">
+                  Ver Demo
+                </Button>
+              </Link>
             </div>
           </div>
         </Container>

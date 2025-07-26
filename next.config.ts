@@ -19,13 +19,35 @@ const nextConfig: NextConfig = {
   
   // Otimizações de imagem
   images: {
-    domains: ['localhost'],
+    domains: ['localhost', 'qekicxjdhehwzisjpupt.supabase.co'],
     formats: ['image/webp', 'image/avif'],
   },
   
   // Configurações experimentais
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+  },
+  
+  // Configurações de webpack para resolver problemas com pacotes ES modules
+  webpack: (config, { isServer }) => {
+    // Resolver problemas com o pacote jose
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        crypto: false,
+        stream: false,
+        util: false,
+      }
+    }
+    
+    // Configurar externals para evitar problemas de bundling
+    config.externals = config.externals || []
+    config.externals.push({
+      'utf-8-validate': 'commonjs utf-8-validate',
+      'bufferutil': 'commonjs bufferutil',
+    })
+    
+    return config
   },
   
   // Headers de segurança
