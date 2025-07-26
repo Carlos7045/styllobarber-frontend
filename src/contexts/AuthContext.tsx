@@ -96,7 +96,9 @@ interface AuthContextType {
 
   // Ações
   signIn: (data: LoginData) => Promise<AuthResult>
-  signUp: (data: SignUpData) => Promise<AuthResult>
+  signUp: (data: SignUpData) => Promise<AuthResult> // Cadastro público (clientes)
+  createAdmin: (data: SignUpData & { barbeariaId?: string }) => Promise<AuthResult> // SaaS Owner cria admin
+  createEmployee: (data: SignUpData & { barbeariaId: string }) => Promise<AuthResult> // Admin cria funcionário
   signOut: () => Promise<AuthResult>
   resetPassword: (data: ResetPasswordData) => Promise<AuthResult>
   updateProfile: (updates: Partial<UserProfile>) => Promise<AuthResult>
@@ -553,7 +555,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função de cadastro com criação de perfil
+  // Função de cadastro público (apenas clientes)
   const signUp = async (data: SignUpData): Promise<AuthResult> => {
     try {
       setLoading(true)
@@ -644,6 +646,164 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch (error) {
       console.error('❌ Erro inesperado no cadastro:', error)
+      return {
+        success: false,
+        error: error as AuthError
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função para cadastrar administrador (apenas SaaS Owner)
+  const createAdmin = async (data: SignUpData & { barbeariaId?: string }): Promise<AuthResult> => {
+    try {
+      setLoading(true)
+      console.log('👨‍💼 Criando administrador:', { email: data.email, nome: data.nome })
+
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.senha,
+        options: {
+          data: {
+            nome: data.nome,
+            telefone: data.telefone,
+            role: 'admin',
+            barbeariaId: data.barbeariaId
+          },
+        },
+      })
+
+      if (error) {
+        console.error('❌ Erro ao criar admin:', error)
+        return { success: false, error }
+      }
+
+      if (!authData?.user) {
+        return { 
+          success: false, 
+          error: { message: 'Administrador não foi criado' } as AuthError 
+        }
+      }
+
+      const user = authData.user
+      console.log('✅ Administrador criado com sucesso:', user.id)
+
+      // Criar perfil de administrador
+      if (user) {
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              nome: data.nome,
+              email: data.email,
+              telefone: data.telefone,
+              role: 'admin',
+              barbearia_id: data.barbeariaId,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+          if (profileError) {
+            console.warn('⚠️ Erro ao criar perfil de admin:', profileError)
+          } else {
+            console.log('✅ Perfil de admin criado:', profileData)
+          }
+        } catch (profileError) {
+          console.warn('⚠️ Erro inesperado ao criar perfil de admin:', profileError)
+        }
+      }
+
+      return {
+        success: true,
+        error: null,
+        user: authData.user,
+        message: 'Administrador criado com sucesso!'
+      }
+    } catch (error) {
+      console.error('❌ Erro inesperado ao criar admin:', error)
+      return {
+        success: false,
+        error: error as AuthError
+      }
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Função para cadastrar funcionário/barbeiro (apenas Admin)
+  const createEmployee = async (data: SignUpData & { barbeariaId: string }): Promise<AuthResult> => {
+    try {
+      setLoading(true)
+      console.log('✂️ Criando funcionário:', { email: data.email, nome: data.nome })
+
+      const { data: authData, error } = await supabase.auth.signUp({
+        email: data.email,
+        password: data.senha,
+        options: {
+          data: {
+            nome: data.nome,
+            telefone: data.telefone,
+            role: 'barber',
+            barbeariaId: data.barbeariaId
+          },
+        },
+      })
+
+      if (error) {
+        console.error('❌ Erro ao criar funcionário:', error)
+        return { success: false, error }
+      }
+
+      if (!authData?.user) {
+        return { 
+          success: false, 
+          error: { message: 'Funcionário não foi criado' } as AuthError 
+        }
+      }
+
+      const user = authData.user
+      console.log('✅ Funcionário criado com sucesso:', user.id)
+
+      // Criar perfil de funcionário
+      if (user) {
+        try {
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              nome: data.nome,
+              email: data.email,
+              telefone: data.telefone,
+              role: 'barber',
+              barbearia_id: data.barbeariaId,
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+          if (profileError) {
+            console.warn('⚠️ Erro ao criar perfil de funcionário:', profileError)
+          } else {
+            console.log('✅ Perfil de funcionário criado:', profileData)
+          }
+        } catch (profileError) {
+          console.warn('⚠️ Erro inesperado ao criar perfil de funcionário:', profileError)
+        }
+      }
+
+      return {
+        success: true,
+        error: null,
+        user: authData.user,
+        message: 'Funcionário criado com sucesso!'
+      }
+    } catch (error) {
+      console.error('❌ Erro inesperado ao criar funcionário:', error)
       return {
         success: false,
         error: error as AuthError
@@ -1013,7 +1173,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     // Ações
     signIn,
-    signUp,
+    signUp, // Cadastro público (clientes)
+    createAdmin, // SaaS Owner cria admin
+    createEmployee, // Admin cria funcionário
     signOut,
     resetPassword,
     updateProfile,
