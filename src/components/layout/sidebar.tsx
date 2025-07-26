@@ -18,7 +18,8 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Home
+  Home,
+  User
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -76,44 +77,50 @@ const navigationItems: Record<string, NavItem[]> = {
     {
       id: 'agenda',
       label: 'Agenda',
-      href: '/dashboard/agenda',
+      href: '/agenda',
       icon: Calendar,
       badge: '3',
     },
     {
       id: 'clientes',
       label: 'Clientes',
-      href: '/dashboard/clientes',
+      href: '/usuarios',
       icon: Users,
     },
     {
       id: 'servicos',
       label: 'Serviços',
-      href: '/dashboard/servicos',
+      href: '/servicos',
       icon: Scissors,
     },
     {
       id: 'funcionarios',
       label: 'Funcionários',
-      href: '/dashboard/funcionarios',
+      href: '/usuarios',
       icon: UserCheck,
     },
     {
       id: 'financeiro',
       label: 'Financeiro',
-      href: '/dashboard/financeiro',
+      href: '/financeiro',
       icon: DollarSign,
     },
     {
       id: 'relatorios',
       label: 'Relatórios',
-      href: '/dashboard/relatorios',
+      href: '/relatorios',
       icon: BarChart3,
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil',
+      href: '/perfil',
+      icon: User,
     },
     {
       id: 'configuracoes',
       label: 'Configurações',
-      href: '/dashboard/configuracoes',
+      href: '/configuracoes',
       icon: Settings,
     },
   ],
@@ -127,47 +134,59 @@ const navigationItems: Record<string, NavItem[]> = {
     {
       id: 'agenda',
       label: 'Agenda',
-      href: '/dashboard/agenda',
+      href: '/agenda',
       icon: Calendar,
       badge: '2',
     },
     {
       id: 'clientes',
       label: 'Clientes',
-      href: '/dashboard/clientes',
+      href: '/usuarios',
       icon: Users,
     },
     {
       id: 'servicos',
       label: 'Serviços',
-      href: '/dashboard/servicos',
+      href: '/servicos',
       icon: Scissors,
     },
     {
       id: 'financeiro',
       label: 'Financeiro',
-      href: '/dashboard/financeiro',
+      href: '/financeiro',
       icon: DollarSign,
+    },
+    {
+      id: 'perfil',
+      label: 'Perfil',
+      href: '/perfil',
+      icon: User,
     },
   ],
   client: [
     {
+      id: 'dashboard',
+      label: 'Dashboard',
+      href: '/dashboard',
+      icon: Home,
+    },
+    {
       id: 'agendamentos',
       label: 'Agendamentos',
-      href: '/dashboard/agendamentos',
+      href: '/agendamentos',
       icon: Calendar,
     },
     {
       id: 'historico',
       label: 'Histórico',
-      href: '/dashboard/historico',
+      href: '/historico',
       icon: BarChart3,
     },
     {
       id: 'perfil',
       label: 'Perfil',
-      href: '/dashboard/perfil',
-      icon: Settings,
+      href: '/perfil',
+      icon: User,
     },
   ],
 }

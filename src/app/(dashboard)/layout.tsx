@@ -4,6 +4,7 @@ import { Suspense } from 'react'
 import { Sidebar, useSidebar } from '@/components/layout/sidebar'
 import { Header, HeaderContent } from '@/components/layout/header'
 import { Container } from '@/components/layout'
+import { UserMenu } from '@/components/layout/UserMenu'
 import { RouteGuard } from '@/components/auth'
 // import { SessionProvider } from '@/components/auth/SessionProvider' // Removido temporariamente
 import { useAuth } from '@/hooks/use-auth'
@@ -100,17 +101,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="flex items-center gap-4">
-                {/* Notificações, perfil, etc. serão adicionados aqui */}
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-text-muted">
-                    Olá, {user?.user_metadata?.nome || user?.email}
-                  </span>
-                  <div className="w-8 h-8 bg-primary-gold rounded-full flex items-center justify-center">
-                    <span className="text-xs font-semibold text-primary-black">
-                      {(user?.user_metadata?.nome || user?.email || 'U').charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                </div>
+                {/* User Menu */}
+                <UserMenu />
               </div>
             </HeaderContent>
           </Container>

@@ -42,6 +42,45 @@ export function validateFile(file: File): { valid: boolean; error?: string } {
 }
 
 /**
+ * Verifica se o bucket existe e cria se necessário
+ */
+async function ensureBucketExists(): Promise<boolean> {
+  try {
+    // Verificar se o bucket existe
+    const { data: buckets, error: listError } = await supabase.storage.listBuckets()
+    
+    if (listError) {
+      console.error('Erro ao listar buckets:', listError)
+      return false
+    }
+
+    const bucketExists = buckets?.some(bucket => bucket.name === AVATAR_BUCKET)
+    
+    if (!bucketExists) {
+      console.log('Bucket não existe, tentando criar...')
+      // Tentar criar o bucket
+      const { error: createError } = await supabase.storage.createBucket(AVATAR_BUCKET, {
+        public: true,
+        allowedMimeTypes: ALLOWED_TYPES,
+        fileSizeLimit: MAX_FILE_SIZE
+      })
+
+      if (createError) {
+        console.error('Erro ao criar bucket:', createError)
+        return false
+      }
+
+      console.log('Bucket criado com sucesso')
+    }
+
+    return true
+  } catch (error) {
+    console.error('Erro ao verificar/criar bucket:', error)
+    return false
+  }
+}
+
+/**
  * Faz upload de avatar para o Supabase Storage
  */
 export async function uploadAvatar(
@@ -49,19 +88,33 @@ export async function uploadAvatar(
   file: File
 ): Promise<UploadResult> {
   try {
+    console.log('🔄 Iniciando upload de avatar:', { userId, fileName: file.name, fileSize: file.size })
+
     // Validar arquivo
     const validation = validateFile(file)
     if (!validation.valid) {
+      console.error('❌ Arquivo inválido:', validation.error)
       return {
         success: false,
         error: validation.error
       }
     }
 
+    // Verificar se bucket existe
+    const bucketReady = await ensureBucketExists()
+    if (!bucketReady) {
+      return {
+        success: false,
+        error: 'Erro na configuração do storage'
+      }
+    }
+
     // Gerar nome único para o arquivo
     const fileExt = file.name.split('.').pop()
     const fileName = `${userId}-${Date.now()}.${fileExt}`
-    const filePath = `avatars/${fileName}`
+    const filePath = `${fileName}` // Remover pasta avatars/ pois já está no bucket
+
+    console.log('📁 Fazendo upload para:', filePath)
 
     // Fazer upload
     const { data, error } = await supabase.storage
@@ -72,24 +125,28 @@ export async function uploadAvatar(
       })
 
     if (error) {
-      console.error('Erro no upload:', error)
+      console.error('❌ Erro no upload:', error)
       return {
         success: false,
-        error: 'Erro ao fazer upload do arquivo'
+        error: `Erro no upload: ${error.message}`
       }
     }
+
+    console.log('✅ Upload realizado:', data)
 
     // Obter URL pública
     const { data: urlData } = supabase.storage
       .from(AVATAR_BUCKET)
       .getPublicUrl(data.path)
 
+    console.log('🔗 URL pública gerada:', urlData.publicUrl)
+
     return {
       success: true,
       url: urlData.publicUrl
     }
   } catch (error) {
-    console.error('Erro no upload de avatar:', error)
+    console.error('❌ Erro inesperado no upload de avatar:', error)
     return {
       success: false,
       error: 'Erro inesperado no upload'

@@ -32,21 +32,12 @@ export {
   type CardProps,
 } from './card'
 
-// Componentes Toast
+// Componentes Toast (simplificado)
 export {
-  Toast,
   ToastProvider,
-  ToastProviderCustom,
-  ToastViewport,
-  ToastTitle,
-  ToastDescription,
-  ToastClose,
-  ToastAction,
-  ToastWithIcon,
-  ToastIcon,
   useToast,
-  type ToastProps,
-  type ToastActionElement,
+  type Toast,
+  type ToastType,
 } from './toast'
 
 // Componente Textarea

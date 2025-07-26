@@ -46,12 +46,28 @@ export const schemaPerfilUsuario = z.object({
     .string()
     .optional()
     .refine((date) => {
-      if (!date) return true
+      if (!date || date.trim() === '') return true
+      
+      // Verificar formato básico da data
+      const dateRegex = /^\d{4}-\d{2}-\d{2}$/
+      if (!dateRegex.test(date)) return false
+      
+      // Verificar se é uma data válida
       const birthDate = new Date(date)
+      if (isNaN(birthDate.getTime())) return false
+      
+      // Verificar idade
       const today = new Date()
       const age = today.getFullYear() - birthDate.getFullYear()
-      return age >= 13 && age <= 120
-    }, 'Idade deve estar entre 13 e 120 anos'),
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      
+      let finalAge = age
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        finalAge--
+      }
+      
+      return finalAge >= 13 && finalAge <= 120
+    }, 'Data inválida ou idade deve estar entre 13 e 120 anos'),
   avatar_url: z.string().url().optional().or(z.literal('')),
 })
 
