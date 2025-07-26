@@ -23,7 +23,7 @@ const publicRoutes = [
   '/privacidade',
 ]
 
-// Middleware de autenticação corrigido
+// Middleware de autenticação com prevenção de loops
 export async function middleware(request: NextRequest) {
   const response = NextResponse.next()
   const pathname = request.nextUrl.pathname
@@ -38,10 +38,18 @@ export async function middleware(request: NextRequest) {
     '/termos',
     '/privacidade',
     '/setup-saas', // Página de setup do SaaS Owner
+    '/logout', // Permitir acesso à página de logout
   ]
 
   // Se é rota pública, permitir sempre
   if (publicRoutes.some(route => pathname === route || pathname.startsWith(route))) {
+    return response
+  }
+
+  // Verificar se logout está em andamento (prevenir loops)
+  const logoutInProgress = request.headers.get('x-logout-in-progress') === 'true'
+  if (logoutInProgress) {
+    console.log('🔄 Logout em andamento, permitindo acesso temporário')
     return response
   }
 
@@ -59,7 +67,7 @@ export async function middleware(request: NextRequest) {
   const supabase = createMiddlewareClient({ req: request, res: response })
 
   try {
-    // Verificar sessão atual
+    // Verificar sessão atual (sem timeout para evitar problemas)
     const {
       data: { session },
       error,
@@ -110,9 +118,13 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error('Erro no middleware:', error)
     
-    // Em caso de erro, redirecionar rotas protegidas para login
+    // Em caso de erro, redirecionar rotas protegidas para login (com proteção contra loop)
     if (protectedRoutes.some(route => pathname.startsWith(route))) {
       const loginUrl = new URL('/login', request.url)
+      // Não adicionar redirect se já estamos em um erro para evitar loops
+      if (!request.nextUrl.searchParams.get('error')) {
+        loginUrl.searchParams.set('error', 'middleware-error')
+      }
       return NextResponse.redirect(loginUrl)
     }
     

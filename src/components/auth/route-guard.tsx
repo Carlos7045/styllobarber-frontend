@@ -88,10 +88,18 @@ export function RouteGuard({
   const router = useRouter()
   const pathname = usePathname()
   const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null)
-  const [hasRedirected, setHasRedirected] = useState(false)
 
   // Verificar autorização quando o usuário ou rota mudar
   useEffect(() => {
+    // Verificar se logout está em andamento para evitar loops
+    const logoutInProgress = typeof window !== 'undefined' && 
+      sessionStorage.getItem('logout-in-progress') === 'true'
+    
+    if (logoutInProgress) {
+      console.log('🔄 Logout em andamento, pulando verificação do RouteGuard')
+      return
+    }
+
     console.log('🔄 RouteGuard useEffect iniciado:', {
       initialized,
       loading,
@@ -99,36 +107,35 @@ export function RouteGuard({
       hasUser: !!user,
       hasProfile: !!profile,
       pathname,
-      currentAuthorized: isAuthorized,
-      hasRedirected
+      currentAuthorized: isAuthorized
     })
-
-    // Reset do estado de redirecionamento quando a rota muda
-    if (hasRedirected) {
-      setHasRedirected(false)
-    }
 
     // Aguardar inicialização completa
     if (!initialized) {
       console.log('⏳ Aguardando inicialização...')
-      setIsAuthorized(null)
+      if (isAuthorized !== null) {
+        setIsAuthorized(null)
+      }
       return
     }
 
     // Se ainda está carregando, aguardar
     if (loading) {
       console.log('⏳ Aguardando carregamento...')
-      setIsAuthorized(null)
+      if (isAuthorized !== null) {
+        setIsAuthorized(null)
+      }
       return
     }
 
-    // Se não está autenticado, redirecionar para login
+    // Se não está autenticado, redirecionar para login (apenas uma vez)
     if (!isAuthenticated || !user) {
-      if (!hasRedirected) {
+      if (pathname !== '/login' && !pathname.startsWith('/login')) {
         const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`
         console.log('🔐 Usuário não autenticado, redirecionando para:', loginUrl)
-        setHasRedirected(true)
-        router.push(loginUrl)
+        
+        // Usar window.location.replace para evitar loops
+        window.location.replace(loginUrl)
       }
       return
     }
@@ -136,14 +143,18 @@ export function RouteGuard({
     // Se não há restrições de role, usuário está autorizado
     if (!requiredRole && !requiredRoles) {
       console.log('✅ Sem restrições de role, acesso liberado')
-      setIsAuthorized(true)
+      if (isAuthorized !== true) {
+        setIsAuthorized(true)
+      }
       return
     }
 
     // Aguardar perfil carregar se necessário (mas não indefinidamente)
     if (user && !profile && !user.user_metadata?.role) {
       console.log('⏳ Aguardando perfil carregar...')
-      setIsAuthorized(null)
+      if (isAuthorized !== null) {
+        setIsAuthorized(null)
+      }
       return
     }
 
@@ -192,12 +203,13 @@ export function RouteGuard({
     }
 
     // Se não tem permissão e não deve mostrar tela de não autorizado, redirecionar
-    if (!hasPermission && !showUnauthorized && !hasRedirected) {
+    if (!hasPermission && !showUnauthorized) {
       console.log('🚫 Redirecionando para fallback:', fallbackUrl)
-      setHasRedirected(true)
-      router.push(fallbackUrl)
+      
+      // Usar window.location.replace para evitar loops
+      window.location.replace(fallbackUrl)
     }
-  }, [user, profile, loading, isAuthenticated, initialized, requiredRole, requiredRoles, pathname, router, fallbackUrl, showUnauthorized, hasRedirected])
+  }, [user, profile, loading, isAuthenticated, initialized, requiredRole, requiredRoles, pathname, fallbackUrl, showUnauthorized])
 
   // Log do estado final antes de renderizar
   console.log('🎯 RouteGuard - Estado final antes de renderizar:', {

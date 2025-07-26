@@ -6,6 +6,7 @@ import { User, Settings, LogOut, ChevronDown } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui'
 import { cn } from '@/lib/utils'
+import { logoutManager } from '@/lib/logout-manager'
 
 interface UserMenuProps {
   className?: string
@@ -29,24 +30,27 @@ export function UserMenu({ className }: UserMenuProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
 
-  // Handler para logout
+  // Handler para logout usando LogoutManager
   const handleLogout = async () => {
     setIsOpen(false)
+    
     try {
       console.log('🔄 Iniciando logout via UserMenu...')
-      const result = await signOut()
-      if (result.success) {
-        console.log('✅ Logout bem-sucedido, redirecionando...')
-        router.push('/login')
-      } else {
-        console.error('❌ Erro no logout:', result.error)
-        // Mesmo com erro, redirecionar para login
-        router.push('/login')
+      
+      // Verificar se logout já está em andamento
+      if (logoutManager.isLogoutInProgress()) {
+        console.log('⚠️ Logout já em andamento, ignorando...')
+        return
       }
+      
+      // Usar LogoutManager para logout seguro
+      await logoutManager.logoutAndRedirect()
+      
     } catch (error) {
-      console.error('❌ Erro inesperado no logout:', error)
-      // Forçar redirecionamento mesmo com erro
-      router.push('/login')
+      console.error('❌ Erro no logout via UserMenu:', error)
+      
+      // Em caso de erro, forçar logout
+      logoutManager.forceLogout()
     }
   }
 

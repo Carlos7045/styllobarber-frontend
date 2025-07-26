@@ -6,7 +6,7 @@ import { LogOut, CheckCircle, AlertCircle, Loader2 } from 'lucide-react'
 
 import { useAuth } from '@/hooks/use-auth'
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import { clearAuthLocalData, prepareForLogout } from '@/lib/auth-utils'
+import { clearAuthLocalData, prepareForLogout, finalizeLogout } from '@/lib/auth-utils'
 
 type LogoutState = 'idle' | 'logging-out' | 'success' | 'error'
 
@@ -60,8 +60,12 @@ export function LogoutPage() {
 
       // Mesmo com erro, limpar dados e redirecionar após um tempo
       clearAuthLocalData()
+      
+      // Remover flag de logout
+      sessionStorage.removeItem('logout-in-progress')
+      
       setTimeout(() => {
-        router.replace(redirectTo)
+        window.location.replace(redirectTo)
       }, 3000)
     }
   }

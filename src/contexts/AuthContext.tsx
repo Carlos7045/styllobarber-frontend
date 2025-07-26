@@ -871,23 +871,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função de logout simplificada e robusta
+  // Função de logout simplificada que limpa apenas o estado local
   const signOut = async (): Promise<AuthResult> => {
     try {
       setLoading(true)
-      console.log('🔄 Iniciando logout...')
+      console.log('🔄 AuthContext: Limpando estado local...')
 
       const currentUserId = user?.id
 
-      // Logout direto no Supabase (mais confiável)
-      const { error } = await supabase.auth.signOut()
-      
-      if (error) {
-        console.error('❌ Erro no logout Supabase:', error)
-        // Mesmo com erro, continuar limpeza local
-      } else {
-        console.log('✅ Logout Supabase realizado com sucesso')
-      }
+      // Limpar estado local IMEDIATAMENTE
+      setUser(null)
+      setProfile(null)
+      setSession(null)
 
       // Log de segurança (sem bloquear o logout)
       try {
@@ -916,11 +911,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('⚠️ Erro ao limpar cache (não crítico):', cacheError)
       }
 
-      // Limpar estado local SEMPRE
-      setUser(null)
-      setProfile(null)
-      setSession(null)
-
       // Reset do sistema (sem bloquear)
       try {
         resetSystemState()
@@ -928,11 +918,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.warn('⚠️ Erro no reset do sistema (não crítico):', resetError)
       }
 
-      console.log('✅ Logout concluído com sucesso')
+      console.log('✅ AuthContext: Estado local limpo')
       return { success: true, error: null }
 
     } catch (error) {
-      console.error('❌ Erro inesperado no logout:', error)
+      console.error('❌ Erro no AuthContext signOut:', error)
 
       // SEMPRE limpar estado local, mesmo com erro
       setUser(null)

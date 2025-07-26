@@ -234,6 +234,11 @@ export function shouldShowLogoutConfirmation(): boolean {
 export function prepareForLogout(): Promise<void> {
   return new Promise((resolve) => {
     try {
+      console.log('🔧 Preparando ambiente para logout...')
+      
+      // Marcar que logout está em andamento
+      sessionStorage.setItem('logout-in-progress', 'true')
+      
       // Cancelar requisições pendentes (se houver um sistema de cancelamento)
       if (window.AbortController) {
         // Implementar cancelamento de requisições se necessário
@@ -248,10 +253,65 @@ export function prepareForLogout(): Promise<void> {
       saveTemporaryData(importantData)
 
       // Aguardar um pouco para garantir que operações assíncronas terminem
-      setTimeout(resolve, 100)
+      setTimeout(() => {
+        console.log('✅ Ambiente preparado para logout')
+        resolve()
+      }, 100)
     } catch (error) {
       console.warn('Erro na preparação para logout:', error)
       resolve()
     }
   })
+}
+
+/**
+ * Finaliza o processo de logout
+ */
+export function finalizeLogout(): void {
+  try {
+    console.log('🏁 Finalizando processo de logout...')
+    
+    // Limpar dados locais
+    clearAuthLocalData()
+    
+    // Remover flag de logout em andamento
+    sessionStorage.removeItem('logout-in-progress')
+    
+    console.log('✅ Logout finalizado')
+  } catch (error) {
+    console.warn('Erro na finalização do logout:', error)
+  }
+}
+
+/**
+ * Verifica se logout está em andamento
+ */
+export function isLogoutInProgress(): boolean {
+  try {
+    return sessionStorage.getItem('logout-in-progress') === 'true'
+  } catch (error) {
+    return false
+  }
+}
+
+/**
+ * Força logout completo (para casos de emergência)
+ */
+export function forceLogout(): void {
+  try {
+    console.log('🚨 Forçando logout completo...')
+    
+    // Limpar tudo
+    forceCleanup()
+    
+    // Remover flags
+    sessionStorage.removeItem('logout-in-progress')
+    
+    // Redirecionar imediatamente
+    window.location.replace('/login?forced=true')
+  } catch (error) {
+    console.error('Erro no logout forçado:', error)
+    // Último recurso
+    window.location.href = '/login'
+  }
 }

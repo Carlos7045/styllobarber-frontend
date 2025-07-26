@@ -9,6 +9,10 @@ export {
   usePermissions,
 } from './route-guard'
 
+export {
+  SimpleRouteGuard,
+} from './SimpleRouteGuard'
+
 // Componente de logout
 export {
   LogoutButton,

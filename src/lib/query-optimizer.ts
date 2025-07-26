@@ -69,7 +69,10 @@ class QueryOptimizer {
     timeout: number = DEFAULT_CONFIG.TIMEOUT
   ): Promise<T> {
     const timeoutPromise = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('Query timeout')), timeout)
+      const timeoutId = setTimeout(() => reject(new Error('Query timeout')), timeout)
+      
+      // Limpar timeout se a promise resolver primeiro
+      queryPromise.finally(() => clearTimeout(timeoutId))
     })
 
     return Promise.race([queryPromise, timeoutPromise])
