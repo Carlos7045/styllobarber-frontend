@@ -8,6 +8,33 @@ import { uploadAvatarFallback, removeAvatarFallback } from '@/lib/storage-fallba
 import { authInterceptor } from '@/lib/auth-interceptor'
 import { sessionManager } from '@/lib/session-manager'
 import { profileSync } from '@/lib/profile-sync'
+import { errorRecovery } from '@/lib/error-recovery'
+import { useErrorRecovery } from '@/hooks/use-error-recovery'
+// Importações com verificação de disponibilidade
+let cacheManager: any = null
+let queryOptimizer: any = null
+let connectionPool: any = null
+
+try {
+  const cacheModule = require('@/lib/cache-manager')
+  cacheManager = cacheModule.cacheManager
+} catch (error) {
+  console.warn('⚠️ CacheManager não disponível:', error)
+}
+
+try {
+  const queryModule = require('@/lib/query-optimizer')
+  queryOptimizer = queryModule.queryOptimizer
+} catch (error) {
+  console.warn('⚠️ QueryOptimizer não disponível:', error)
+}
+
+try {
+  const poolModule = require('@/lib/connection-pool')
+  connectionPool = poolModule.connectionPool
+} catch (error) {
+  console.warn('⚠️ ConnectionPool não disponível:', error)
+}
 
 // Interfaces para dados de autenticação
 export interface LoginData {
@@ -57,6 +84,15 @@ interface AuthContextType {
   initialized: boolean
   isAuthenticated: boolean
   
+  // Estado de saúde do sistema
+  systemHealth: {
+    isHealthy: boolean
+    circuitState: string
+    failureCount: number
+    isInFallbackMode: boolean
+    lastHealthCheck: Date | null
+  }
+  
   // Ações
   signIn: (data: LoginData) => Promise<AuthResult>
   signUp: (data: SignUpData) => Promise<AuthResult>
@@ -65,6 +101,11 @@ interface AuthContextType {
   updateProfile: (updates: Partial<UserProfile>) => Promise<AuthResult>
   updateProfileSimple: (updates: Partial<UserProfile>) => Promise<AuthResult>
   uploadUserAvatar: (file: File) => Promise<AuthResult>
+  
+  // Ações de sistema
+  performHealthCheck: () => Promise<void>
+  recoverFromError: (error: Error) => Promise<boolean>
+  resetSystemState: () => void
   
   // Helpers
   hasRole: (role: 'admin' | 'barber' | 'client') => boolean
@@ -95,10 +136,136 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [initialized, setInitialized] = useState(false)
+  
+  // Estado de saúde do sistema
+  const [systemHealth, setSystemHealth] = useState({
+    isHealthy: true,
+    circuitState: 'closed',
+    failureCount: 0,
+    isInFallbackMode: false,
+    lastHealthCheck: null as Date | null
+  })
+  
+  // Hook de error recovery
+  const errorRecoveryHook = useErrorRecovery()
 
 
 
-  // Função para buscar perfil do usuário com ProfileSync e AuthInterceptor
+  // Função para realizar health check do sistema
+  const performHealthCheck = async (): Promise<void> => {
+    try {
+      console.log('🔍 Realizando health check do sistema de autenticação...')
+      
+      const health = {
+        isHealthy: true,
+        circuitState: 'closed',
+        failureCount: 0,
+        isInFallbackMode: false,
+        lastHealthCheck: new Date()
+      }
+      
+      // Verificar errorRecovery com try-catch
+      try {
+        health.circuitState = errorRecovery.getCircuitState()
+        health.failureCount = errorRecovery.getFailureCount()
+        health.isInFallbackMode = errorRecovery.isInFallbackMode()
+        
+        // Verificar se há problemas críticos
+        if (health.circuitState === 'open' || health.failureCount > 5) {
+          health.isHealthy = false
+        }
+      } catch (errorRecoveryError) {
+        console.warn('⚠️ Erro ao verificar errorRecovery:', errorRecoveryError)
+        health.isHealthy = false
+      }
+      
+      // Verificar se a sessão atual é válida (com timeout)
+      if (session) {
+        try {
+          const sessionCheckPromise = sessionManager.validateSession()
+          const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Session validation timeout')), 5000)
+          )
+          
+          const isSessionValid = await Promise.race([sessionCheckPromise, timeoutPromise])
+          if (!isSessionValid) {
+            health.isHealthy = false
+            console.warn('⚠️ Health check: Sessão inválida detectada')
+          }
+        } catch (error) {
+          health.isHealthy = false
+          console.warn('⚠️ Health check: Erro ao validar sessão:', error)
+        }
+      }
+      
+      setSystemHealth(health)
+      console.log('✅ Health check concluído:', health)
+    } catch (error) {
+      console.error('❌ Erro durante health check:', error)
+      setSystemHealth(prev => ({
+        ...prev,
+        isHealthy: false,
+        lastHealthCheck: new Date()
+      }))
+    }
+  }
+  
+  // Função para recuperação de erros
+  const recoverFromError = async (error: Error): Promise<boolean> => {
+    try {
+      console.log('🔧 AuthContext: Iniciando recovery de erro:', error.message)
+      
+      const recoveryResult = await errorRecovery.recoverFromError(error, {
+        userId: user?.id,
+        context: 'AuthContext',
+        timestamp: Date.now()
+      })
+      
+      if (recoveryResult.success) {
+        console.log('✅ Recovery bem-sucedido no AuthContext')
+        
+        // Atualizar health após recovery
+        await performHealthCheck()
+        
+        // Se houve mudança na sessão, revalidar
+        if (recoveryResult.strategy === 'refresh_session') {
+          const currentSession = await sessionManager.getCurrentSession()
+          if (currentSession) {
+            await updateAuthState(currentSession)
+          }
+        }
+        
+        return true
+      } else {
+        console.log('❌ Recovery falhou no AuthContext:', recoveryResult.error)
+        return false
+      }
+    } catch (recoveryError) {
+      console.error('❌ Erro durante recovery no AuthContext:', recoveryError)
+      return false
+    }
+  }
+  
+  // Função para resetar estado do sistema
+  const resetSystemState = (): void => {
+    console.log('🔄 Resetando estado do sistema de autenticação...')
+    
+    // Reset do error recovery
+    errorRecovery.resetCircuit()
+    
+    // Reset do health
+    setSystemHealth({
+      isHealthy: true,
+      circuitState: 'closed',
+      failureCount: 0,
+      isInFallbackMode: false,
+      lastHealthCheck: new Date()
+    })
+    
+    console.log('✅ Estado do sistema resetado')
+  }
+
+  // Função para buscar perfil do usuário com cache, ProfileSync e AuthInterceptor
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       if (!userId) {
@@ -106,73 +273,136 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return null
       }
 
-      // Usar AuthInterceptor para operação com retry e recovery
-      const result = await authInterceptor.intercept(async () => {
-        const syncResult = await profileSync.syncProfile(userId)
-
-        if (!syncResult.success) {
-          throw new Error(syncResult.error || 'Erro ao sincronizar perfil')
+      // Verificar cache primeiro (se disponível)
+      if (cacheManager) {
+        try {
+          const cachedProfile = cacheManager.getProfile(userId)
+          if (cachedProfile) {
+            console.log('✅ Perfil obtido do cache')
+            return cachedProfile
+          }
+        } catch (cacheError) {
+          console.warn('⚠️ Erro ao acessar cache, continuando sem cache:', cacheError)
         }
+      }
 
-        return syncResult.profile
-      }, 'fetchUserProfile')
+      // Tentar query direta primeiro (mais simples e confiável)
+      try {
+        const { data: profile, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', userId)
+          .single()
 
-      if (!result.success) {
-        console.error('Erro ao buscar perfil com interceptor:', result.error)
-        
-        // Tentar recuperação manual como fallback
+        if (error) {
+          console.warn('⚠️ Erro na query direta do perfil:', error)
+        } else if (profile) {
+          console.log('✅ Perfil obtido via query direta')
+          
+          // Tentar armazenar no cache (se disponível)
+          if (cacheManager) {
+            try {
+              cacheManager.setProfile(userId, profile)
+            } catch (cacheError) {
+              console.warn('⚠️ Erro ao armazenar no cache:', cacheError)
+            }
+          }
+          
+          return profile
+        }
+      } catch (directQueryError) {
+        console.warn('⚠️ Erro na query direta:', directQueryError)
+      }
+
+      // Fallback: usar ProfileSync
+      try {
+        const syncResult = await profileSync.syncProfile(userId)
+        if (syncResult.success && syncResult.profile) {
+          console.log('✅ Perfil obtido via ProfileSync')
+          
+          // Tentar armazenar no cache (se disponível)
+          if (cacheManager) {
+            try {
+              cacheManager.setProfile(userId, syncResult.profile)
+            } catch (cacheError) {
+              console.warn('⚠️ Erro ao armazenar no cache:', cacheError)
+            }
+          }
+          
+          return syncResult.profile
+        }
+      } catch (syncError) {
+        console.warn('⚠️ Erro no ProfileSync:', syncError)
+      }
+
+      // Último fallback: tentar recuperação
+      try {
         const recoveredProfile = await profileSync.recoverProfile(userId)
         if (recoveredProfile) {
           console.log('✅ Perfil recuperado com fallback')
           return recoveredProfile
         }
-        
-        return null
+      } catch (recoveryError) {
+        console.warn('⚠️ Erro na recuperação:', recoveryError)
       }
 
-      return result.data || null
+      console.warn('⚠️ Não foi possível obter perfil para o usuário:', userId)
+      return null
+
     } catch (error) {
-      console.error('Erro inesperado ao buscar perfil:', {
-        error,
+      console.error('❌ Erro inesperado ao buscar perfil:', {
+        error: error instanceof Error ? error.message : error,
         userId,
-        type: typeof error,
       })
       return null
     }
   }
 
-  // Função para atualizar estado de autenticação com AuthInterceptor
+  // Função para atualizar estado de autenticação (simplificada para debug)
   const updateAuthState = async (session: Session | null) => {
+    console.log('🔄 Atualizando estado de autenticação:', { 
+      hasSession: !!session, 
+      userId: session?.user?.id 
+    })
+    
     setSession(session)
     setUser(session?.user ?? null)
 
     if (session?.user) {
+      console.log('👤 Usuário encontrado na sessão, buscando perfil...')
+      
       try {
-        // Usar AuthInterceptor para validar sessão com retry
-        const validationResult = await authInterceptor.intercept(async () => {
-          return await sessionManager.validateSession()
-        }, 'validateSession')
-        
-        if (!validationResult.success || !validationResult.data) {
-          console.warn('⚠️ Sessão inválida detectada pelo interceptor')
-          setProfile(null)
-          setLoading(false)
-          setInitialized(true)
-          return
-        }
-
+        // Buscar perfil diretamente (sem SessionManager para debug)
         const userProfile = await fetchUserProfile(session.user.id)
+        console.log('📋 Perfil obtido:', userProfile ? 'sucesso' : 'falhou')
         setProfile(userProfile)
+        
+        // Health check opcional
+        try {
+          await performHealthCheck()
+        } catch (healthError) {
+          console.warn('⚠️ Erro no health check (não crítico):', healthError)
+        }
+        
       } catch (error) {
-        console.error('❌ Erro ao atualizar estado de auth:', error)
+        console.error('❌ Erro ao buscar perfil:', error)
         setProfile(null)
       }
     } else {
+      console.log('🚫 Nenhum usuário na sessão, limpando estado...')
       setProfile(null)
+      
+      // Limpar estado de saúde quando não há sessão
+      setSystemHealth(prev => ({
+        ...prev,
+        isHealthy: true,
+        lastHealthCheck: new Date()
+      }))
     }
 
     setLoading(false)
     setInitialized(true)
+    console.log('✅ Estado de autenticação atualizado')
   }
 
   // Inicializar autenticação
@@ -182,20 +412,25 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Obter sessão inicial
     const initializeAuth = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
+        console.log('🚀 Inicializando sistema de autenticação...')
         
-        if (error) {
-          console.error('Erro ao obter sessão:', error)
-        }
-
+        // Usar SessionManager para obter sessão inicial
+        const session = await sessionManager.getCurrentSession()
+        
         if (mounted) {
           await updateAuthState(session)
         }
       } catch (error) {
-        console.error('Erro na inicialização da auth:', error)
+        console.error('❌ Erro na inicialização da auth:', error)
+        
         if (mounted) {
-          setLoading(false)
-          setInitialized(true)
+          // Tentar recovery na inicialização
+          const recoverySuccess = await recoverFromError(error as Error)
+          
+          if (!recoverySuccess) {
+            setLoading(false)
+            setInitialized(true)
+          }
         }
       }
     }
@@ -205,7 +440,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // Escutar mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event)
+        console.log('🔄 Auth state changed:', event)
         
         if (mounted) {
           await updateAuthState(session)
@@ -218,31 +453,89 @@ export function AuthProvider({ children }: AuthProviderProps) {
       subscription.unsubscribe()
     }
   }, [])
+  
+  // Health checks periódicos
+  useEffect(() => {
+    if (!initialized) return
+    
+    // Health check inicial
+    performHealthCheck()
+    
+    // Health checks periódicos a cada 2 minutos
+    const healthCheckInterval = setInterval(() => {
+      if (user) {
+        performHealthCheck()
+      }
+    }, 120000) // 2 minutos
+    
+    return () => clearInterval(healthCheckInterval)
+  }, [initialized, user?.id]) // Usar user.id em vez de user completo
 
-  // Função de login com AuthInterceptor
+  // Função de login simplificada para debug
   const signIn = async (data: LoginData): Promise<AuthResult> => {
     try {
       setLoading(true)
+      console.log('🔐 Tentando fazer login com:', { email: data.email })
 
-      const result = await authInterceptor.wrapSupabaseOperation(
-        () => supabase.auth.signInWithPassword({
-          email: data.email,
-          password: data.senha,
-        }),
-        'signIn'
-      )
+      // Login direto no Supabase sem interceptor para debug
+      const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+        email: data.email,
+        password: data.senha,
+      })
 
-      if (!result.success) {
-        return { success: false, error: result.error as any }
+      console.log('📊 Resultado do login:', { 
+        success: !authError, 
+        hasUser: !!authData?.user,
+        hasSession: !!authData?.session,
+        error: authError 
+      })
+
+      if (authError) {
+        console.error('❌ Erro no login:', authError)
+        return { 
+          success: false, 
+          error: authError 
+        }
+      }
+
+      if (!authData?.user) {
+        console.error('❌ Login sem usuário retornado')
+        return { 
+          success: false, 
+          error: { message: 'Usuário não retornado pelo login' } as AuthError 
+        }
+      }
+
+      const user = authData.user
+      console.log('✅ Login bem-sucedido para usuário:', user.id)
+
+      // Buscar perfil do usuário
+      let userProfile: UserProfile | null = null
+      try {
+        userProfile = await fetchUserProfile(user.id)
+        console.log('👤 Perfil do usuário:', userProfile ? 'encontrado' : 'não encontrado')
+      } catch (profileError) {
+        console.warn('⚠️ Erro ao buscar perfil após login:', profileError)
+      }
+
+      // Cache opcional (se disponível)
+      if (cacheManager && user) {
+        try {
+          await cacheManager.warmup(user.id, { user })
+        } catch (cacheError) {
+          console.warn('⚠️ Erro ao gerenciar cache no login:', cacheError)
+        }
       }
 
       return { 
         success: true, 
         error: null, 
-        user: result.data?.user,
-        profile: profile 
+        user: user,
+        profile: userProfile 
       }
+
     } catch (error) {
+      console.error('❌ Erro inesperado no login:', error)
       return { 
         success: false, 
         error: error as AuthError 
@@ -252,10 +545,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função de cadastro
+  // Função de cadastro com criação de perfil
   const signUp = async (data: SignUpData): Promise<AuthResult> => {
     try {
       setLoading(true)
+      console.log('📝 Tentando cadastrar usuário:', { email: data.email, nome: data.nome })
 
       const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
@@ -264,12 +558,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
           data: {
             nome: data.nome,
             telefone: data.telefone,
+            role: 'client' // Definir role padrão
           },
         },
       })
 
+      console.log('📊 Resultado do cadastro:', { 
+        success: !error, 
+        hasUser: !!authData?.user,
+        needsConfirmation: !authData?.session,
+        error 
+      })
+
       if (error) {
+        console.error('❌ Erro no cadastro:', error)
         return { success: false, error }
+      }
+
+      if (!authData?.user) {
+        console.error('❌ Cadastro sem usuário retornado')
+        return { 
+          success: false, 
+          error: { message: 'Usuário não foi criado' } as AuthError 
+        }
+      }
+
+      const user = authData.user
+      console.log('✅ Usuário cadastrado com sucesso:', user.id)
+
+      // Se o usuário foi confirmado automaticamente, criar perfil
+      if (authData.session && user) {
+        console.log('🔄 Criando perfil para usuário confirmado...')
+        try {
+          // Tentar criar perfil na tabela profiles
+          const { data: profileData, error: profileError } = await supabase
+            .from('profiles')
+            .upsert({
+              id: user.id,
+              nome: data.nome,
+              email: data.email,
+              telefone: data.telefone,
+              role: 'client',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            })
+            .select()
+            .single()
+
+          if (profileError) {
+            console.warn('⚠️ Erro ao criar perfil:', profileError)
+          } else {
+            console.log('✅ Perfil criado com sucesso:', profileData)
+          }
+        } catch (profileError) {
+          console.warn('⚠️ Erro inesperado ao criar perfil:', profileError)
+        }
       }
 
       return { 
@@ -278,6 +621,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         user: authData.user 
       }
     } catch (error) {
+      console.error('❌ Erro inesperado no cadastro:', error)
       return { 
         success: false, 
         error: error as AuthError 
@@ -287,27 +631,57 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função de logout
+  // Função de logout usando SessionManager e limpeza de cache
   const signOut = async (): Promise<AuthResult> => {
     try {
       setLoading(true)
 
-      console.log('🔄 Iniciando logout do Supabase...')
+      console.log('🔄 Iniciando logout usando SessionManager...')
 
-      // Fazer logout no Supabase
-      const { error } = await supabase.auth.signOut()
+      const currentUserId = user?.id
 
-      if (error) {
-        console.error('❌ Erro no logout do Supabase:', error)
-        return { success: false, error }
+      // Usar SessionManager para logout robusto
+      const logoutSuccess = await sessionManager.signOut()
+
+      if (!logoutSuccess) {
+        console.error('❌ Erro no logout via SessionManager')
+        
+        // Fallback: tentar logout direto no Supabase
+        const { error } = await supabase.auth.signOut()
+        if (error) {
+          console.error('❌ Erro no logout fallback:', error)
+          return { success: false, error }
+        }
       }
 
-      console.log('✅ Logout do Supabase realizado com sucesso')
+      console.log('✅ Logout realizado com sucesso')
+
+      // Limpar cache do usuário (se disponível)
+      if (currentUserId) {
+        if (cacheManager) {
+          try {
+            cacheManager.invalidateUser(currentUserId)
+          } catch (cacheError) {
+            console.warn('⚠️ Erro ao invalidar cache no logout:', cacheError)
+          }
+        }
+        
+        if (queryOptimizer) {
+          try {
+            queryOptimizer.invalidateUserCache(currentUserId)
+          } catch (queryError) {
+            console.warn('⚠️ Erro ao invalidar query cache no logout:', queryError)
+          }
+        }
+      }
 
       // Limpar estado local imediatamente
       setUser(null)
       setProfile(null)
       setSession(null)
+      
+      // Reset do sistema
+      resetSystemState()
 
       return { success: true, error: null }
     } catch (error) {
@@ -317,6 +691,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(null)
       setProfile(null)
       setSession(null)
+      resetSystemState()
       
       return { 
         success: false, 
@@ -369,7 +744,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (Object.keys(authUpdates).length > 0) {
         console.log('🔄 Atualizando dados do auth:', authUpdates)
         const authResult = await authInterceptor.wrapSupabaseOperation(
-          () => supabase.auth.updateUser({ data: authUpdates }),
+          async () => {
+            const response = await supabase.auth.updateUser({ data: authUpdates })
+            return { data: response.data, error: response.error }
+          },
           'updateUserAuth'
         )
 
@@ -390,12 +768,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Atualizar na tabela profiles com interceptor
       const profileResult = await authInterceptor.wrapSupabaseOperation(
-        () => supabase
-          .from('profiles')
-          .update(profileUpdates)
-          .eq('id', user.id)
-          .select()
-          .single(),
+        async () => {
+          const response = await supabase
+            .from('profiles')
+            .update(profileUpdates)
+            .eq('id', user.id)
+            .select()
+            .single()
+          return { data: response.data, error: response.error }
+        },
         'updateProfile'
       )
 
@@ -548,11 +929,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função para recarregar perfil
+  // Função para recarregar perfil com cache
   const refreshProfile = async (): Promise<void> => {
     if (user) {
+      // Invalidar cache do perfil antes de recarregar
+      cacheManager.invalidateProfile(user.id)
+      
       const userProfile = await fetchUserProfile(user.id)
       setProfile(userProfile)
+      
+      // Atualizar cache com novo perfil
+      if (userProfile) {
+        cacheManager.setProfile(user.id, userProfile)
+      }
     }
   }
 
@@ -597,6 +986,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initialized,
     isAuthenticated: !!user,
     
+    // Estado de saúde do sistema
+    systemHealth,
+    
     // Ações
     signIn,
     signUp,
@@ -605,6 +997,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     updateProfile,
     updateProfileSimple,
     uploadUserAvatar,
+    
+    // Ações de sistema
+    performHealthCheck,
+    recoverFromError,
+    resetSystemState,
     
     // Helpers
     hasRole,

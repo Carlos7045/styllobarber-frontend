@@ -122,6 +122,40 @@ export class SessionManager {
     }
   }
 
+  async signOut(): Promise<boolean> {
+    try {
+      console.log('🚪 SessionManager: Iniciando logout...')
+      
+      await supabase.auth.signOut()
+      
+      this.sessionHealth = {
+        isValid: false,
+        lastValidated: new Date(),
+        errorCount: 0
+      }
+
+      this.logSessionEvent({
+        type: 'logout',
+        timestamp: new Date(),
+        details: { action: 'signOut', success: true }
+      })
+
+      console.log('✅ SessionManager: Logout realizado com sucesso')
+      return true
+    } catch (error) {
+      console.error('❌ SessionManager: Erro no logout:', error)
+      
+      this.logSessionEvent({
+        type: 'error',
+        timestamp: new Date(),
+        details: { action: 'signOut', success: false },
+        error: error as Error
+      })
+      
+      return false
+    }
+  }
+
   async clearSession(): Promise<void> {
     try {
       await supabase.auth.signOut()

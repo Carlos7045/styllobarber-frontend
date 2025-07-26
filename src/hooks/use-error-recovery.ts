@@ -103,7 +103,7 @@ export function useErrorRecovery() {
     
     const interval = setInterval(updateState, 5000) // A cada 5 segundos
     return () => clearInterval(interval)
-  }, [updateState])
+  }, []) // Remover dependência para evitar loop
 
   return {
     ...state,
@@ -182,7 +182,7 @@ export function useSystemHealth() {
     
     const interval = setInterval(checkHealth, 10000) // A cada 10 segundos
     return () => clearInterval(interval)
-  }, [checkHealth])
+  }, []) // Remover dependência para evitar loop
 
   return {
     ...health,

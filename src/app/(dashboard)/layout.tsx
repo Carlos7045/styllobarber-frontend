@@ -6,6 +6,7 @@ import { Header, HeaderContent } from '@/components/layout/header'
 import { Container } from '@/components/layout'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { RouteGuard } from '@/components/auth'
+import { QuickUserInfo } from '@/components/debug/QuickUserInfo'
 // import { SessionProvider } from '@/components/auth/SessionProvider' // Removido temporariamente
 import { useAuth } from '@/hooks/use-auth'
 import { cn } from '@/lib/utils'
@@ -66,14 +67,17 @@ export default function DashboardLayout({
 
 // Componente interno do dashboard (após verificação de auth)
 function DashboardContent({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const { isCollapsed, isDarkMode, toggleCollapse, toggleTheme } = useSidebar()
 
-  // Determinar role do usuário (temporário - será obtido do banco)
-  const userRole = user?.user_metadata?.role || 'admin'
+  // Determinar role do usuário
+  const userRole = profile?.role || user?.user_metadata?.role || 'client' // Default para client, não admin
 
   return (
     <div className={cn('flex h-screen bg-background-secondary', isDarkMode && 'dark')}>
+      {/* Quick User Info - só em development */}
+      <QuickUserInfo />
+      
       {/* Sidebar */}
       <Sidebar
         isCollapsed={isCollapsed}

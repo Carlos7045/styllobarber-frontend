@@ -19,13 +19,15 @@ import {
   Sun,
   Moon,
   Home,
-  User
+  User,
+  Activity
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { useAuth } from '@/hooks/use-auth'
 import { LogoutButton } from '@/components/auth/LogoutButton'
+import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 
 // Variantes do sidebar
 const sidebarVariants = cva(
@@ -165,12 +167,6 @@ const navigationItems: Record<string, NavItem[]> = {
   ],
   client: [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      href: '/dashboard',
-      icon: Home,
-    },
-    {
       id: 'agendamentos',
       label: 'Agendamentos',
       href: '/agendamentos',
@@ -216,11 +212,59 @@ export function Sidebar({
   ...props
 }: SidebarProps) {
   const pathname = usePathname()
-  const { user } = useAuth()
+  const { user, profile } = useAuth()
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
+  
+  // Verificar permissões de monitoramento
+  const { isSaasOwner, isDeveloper } = useMonitoringPermissions(userRole, profile)
 
   // Obter itens de navegação baseado no role
-  const navItems = navigationItems[userRole] || navigationItems.admin
+  let navItems = [...(navigationItems[userRole] || navigationItems.admin)]
+  
+  // Adicionar item de monitoramento APENAS para SaaS Owner ou Developer
+  // Verificar se realmente tem permissão (não apenas role)
+  if ((isSaasOwner() || isDeveloper()) && profile) {
+    // Verificação adicional de segurança
+    const hasMonitoringAccess = profile.nome?.includes('Carlos Henrique') || 
+                               profile.email === 'carlos@styllobarber.com' ||
+                               profile.email === 'carlos7045@gmail.com' ||
+                               profile.role === 'saas_owner' ||
+                               (process.env.NODE_ENV === 'development' && profile.nome?.includes('Carlos'))
+    
+    if (hasMonitoringAccess) {
+      // Encontrar posição antes de "Configurações"
+      const configIndex = navItems.findIndex(item => item.id === 'configuracoes')
+      const insertIndex = configIndex !== -1 ? configIndex : navItems.length
+      
+      // Determinar badge baseado no tipo de usuário
+      let badge = undefined
+      if (isSaasOwner()) {
+        badge = '👑' // Crown emoji para SaaS Owner
+      } else if (isDeveloper()) {
+        badge = '🔧' // Wrench emoji para Developer
+      }
+      
+      // Inserir item de monitoramento
+      navItems.splice(insertIndex, 0, {
+        id: 'monitoring',
+        label: 'Monitoramento',
+        href: '/monitoring',
+        icon: Activity,
+        badge: badge,
+      })
+    }
+  }
+  
+  // Adicionar item de debug em desenvolvimento
+  if (process.env.NODE_ENV === 'development') {
+    navItems.push({
+      id: 'debug',
+      label: 'Debug',
+      href: '/debug',
+      icon: Activity,
+      badge: '🐛',
+    })
+  }
 
   // Função para verificar se item está ativo
   const isItemActive = (href: string) => {

@@ -1,5 +1,8 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { 
   Calendar, 
   Users, 
@@ -9,7 +12,8 @@ import {
   CheckCircle,
   AlertCircle,
   Scissors,
-  BarChart3
+  BarChart3,
+  Shield
 } from 'lucide-react'
 
 import { 
@@ -131,8 +135,70 @@ function getStatusText(status: string) {
   }
 }
 
-// Página do Dashboard
+// Página do Dashboard - Apenas para Admin e Barber
 export default function DashboardPage() {
+  const { profile, user, loading } = useAuth()
+  const router = useRouter()
+
+  // Verificar permissões
+  useEffect(() => {
+    if (loading) return
+
+    const userRole = profile?.role || user?.user_metadata?.role || 'client'
+    
+    // Clientes não podem acessar o dashboard administrativo
+    if (userRole === 'client') {
+      console.log('🚫 Cliente tentando acessar dashboard administrativo, redirecionando...')
+      router.replace('/agendamentos')
+      return
+    }
+  }, [profile, user, loading, router])
+
+  // Mostrar loading
+  if (loading) {
+    return (
+      <Container className="py-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-gold"></div>
+        </div>
+      </Container>
+    )
+  }
+
+  const userRole = profile?.role || user?.user_metadata?.role || 'client'
+
+  // Bloquear acesso para clientes
+  if (userRole === 'client') {
+    return (
+      <Container className="py-8">
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-blue-700">
+                <Shield className="h-5 w-5" />
+                Área Administrativa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Shield className="h-16 w-16 text-blue-500 mx-auto mb-4" />
+                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                  Acesso Restrito
+                </h3>
+                <p className="text-gray-600 mb-6">
+                  Esta área é exclusiva para administradores e barbeiros.
+                </p>
+                <p className="text-sm text-gray-500">
+                  Como cliente, você tem acesso a: Agendamentos, Histórico e Perfil.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </Container>
+    )
+  }
+
   return (
     <Container className="py-6">
       <Stack spacing="lg">
