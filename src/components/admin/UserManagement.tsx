@@ -8,13 +8,14 @@ import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/compo
 import { supabase } from '@/lib/supabase'
 import { UserEditModal } from './UserEditModal'
 import { ConfirmDialog } from './ConfirmDialog'
+import { NovoFuncionarioModal } from './NovoFuncionarioModal'
 
 interface UserManagementProps {
   className?: string
 }
 
 export function UserManagement({ className }: UserManagementProps) {
-  const { hasRole } = useAuth()
+  const { hasRole, profile } = useAuth()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -22,6 +23,10 @@ export function UserManagement({ className }: UserManagementProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isNovoFuncionarioOpen, setIsNovoFuncionarioOpen] = useState(false)
+  
+  // Verificar permissão uma única vez
+  const isAuthorized = profile?.role === 'admin' || profile?.role === 'saas_owner'
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -38,17 +43,28 @@ export function UserManagement({ className }: UserManagementProps) {
 
   // Carregar usuários
   useEffect(() => {
-    if (hasRole('admin')) {
+    if (isAuthorized && profile?.id) {
       loadUsers()
     }
-  }, [hasRole])
+  }, [isAuthorized, profile?.id])
 
-  // Verificar se é admin
-  if (!hasRole('admin')) {
+  // Mostrar loading se ainda não carregou o perfil
+  if (!profile) {
     return (
       <Card className={className}>
         <CardContent className="flex items-center justify-center py-12">
-          <p className="text-text-muted">Acesso negado. Apenas administradores podem gerenciar usuários.</p>
+          <p className="text-text-secondary">Carregando...</p>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Verificar se é admin
+  if (!isAuthorized) {
+    return (
+      <Card className={className}>
+        <CardContent className="flex items-center justify-center py-12">
+          <p className="text-text-secondary">Acesso negado. Apenas administradores podem gerenciar usuários.</p>
         </CardContent>
       </Card>
     )
@@ -60,6 +76,7 @@ export function UserManagement({ className }: UserManagementProps) {
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
+        .neq('role', 'saas_owner')
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -112,8 +129,9 @@ export function UserManagement({ className }: UserManagementProps) {
                          user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          (user.telefone && user.telefone.includes(searchTerm))
     const matchesRole = roleFilter === 'all' || user.role === roleFilter
-    // TODO: Implementar filtro de status quando campo ativo estiver no banco
-    const matchesStatus = statusFilter === 'all' || true
+    const matchesStatus = statusFilter === 'all' || 
+                         (statusFilter === 'active' && user.ativo) ||
+                         (statusFilter === 'inactive' && !user.ativo)
     return matchesSearch && matchesRole && matchesStatus
   })
 
@@ -180,10 +198,43 @@ export function UserManagement({ className }: UserManagementProps) {
         try {
           setActionLoading(true)
           
-          // TODO: Implementar campo ativo no banco de dados
-          // Por enquanto, apenas simular a ação
-          console.log(`${activate ? 'Ativando' : 'Desativando'} usuário:`, userId)
-          
+          if (!activate) {
+            // Verificar se usuário tem agendamentos futuros
+            const { data: agendamentosFuturos, error: checkError } = await supabase
+              .from('appointments')
+              .select('id')
+              .or(`cliente_id.eq.${userId},barbeiro_id.eq.${userId}`)
+              .gte('data_agendamento', new Date().toISOString())
+              .neq('status', 'cancelado')
+
+            if (checkError) {
+              throw checkError
+            }
+
+            if (agendamentosFuturos && agendamentosFuturos.length > 0) {
+              alert(`Usuário possui ${agendamentosFuturos.length} agendamento(s) futuro(s). Cancele-os primeiro.`)
+              return
+            }
+          }
+
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ ativo: activate })
+            .eq('id', userId)
+
+          if (updateError) {
+            throw updateError
+          }
+
+          // Atualizar lista local
+          setUsers(users.map(user => 
+            user.id === userId ? { 
+              ...user, 
+              ativo: activate,
+              updated_at: new Date().toISOString()
+            } : user
+          ))
+
           alert(`Usuário ${activate ? 'ativado' : 'desativado'} com sucesso!`)
         } catch (error) {
           console.error('Erro ao alterar status:', error)
@@ -280,9 +331,18 @@ export function UserManagement({ className }: UserManagementProps) {
             Gestão de Usuários
           </CardTitle>
           <div className="flex items-center gap-2">
-            <div className="text-sm text-text-muted mr-4">
+            <div className="text-sm text-text-secondary mr-4">
               {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''}
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsNovoFuncionarioOpen(true)}
+              className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black border-primary-gold"
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Funcionário
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -345,11 +405,11 @@ export function UserManagement({ className }: UserManagementProps) {
         {/* Lista de usuários */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-text-muted">Carregando usuários...</p>
+            <p className="text-text-secondary">Carregando usuários...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-text-muted">Nenhum usuário encontrado</p>
+            <p className="text-text-secondary">Nenhum usuário encontrado</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -375,21 +435,30 @@ export function UserManagement({ className }: UserManagementProps) {
                   {/* Informações do usuário */}
                   <div>
                     <h4 className="font-medium text-text-primary">{user.nome}</h4>
-                    <p className="text-sm text-text-muted">{user.email}</p>
+                    <p className="text-sm text-text-secondary">{user.email}</p>
                     {user.telefone && (
-                      <p className="text-xs text-text-muted">{user.telefone}</p>
+                      <p className="text-xs text-text-secondary">{user.telefone}</p>
                     )}
                   </div>
                 </div>
 
                 <div className="flex items-center gap-3">
+                  {/* Badge do status */}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    user.ativo 
+                      ? 'bg-success/10 text-success border border-success/20' 
+                      : 'bg-error/10 text-error border border-error/20'
+                  }`}>
+                    {user.ativo ? 'Ativo' : 'Inativo'}
+                  </span>
+
                   {/* Badge do role */}
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(user.role)}`}>
                     {getRoleName(user.role)}
                   </span>
 
                   {/* Data de criação */}
-                  <div className="text-xs text-text-muted hidden sm:block">
+                  <div className="text-xs text-text-secondary hidden sm:block">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </div>
 
@@ -425,12 +494,15 @@ export function UserManagement({ className }: UserManagementProps) {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleToggleUserStatus(user.id, false)}
+                      onClick={() => handleToggleUserStatus(user.id, !user.ativo)}
                       disabled={loading || actionLoading}
-                      title="Desativar usuário"
-                      className="text-warning hover:text-warning hover:bg-warning/10"
+                      title={user.ativo ? 'Desativar usuário' : 'Ativar usuário'}
+                      className={user.ativo 
+                        ? "text-warning hover:text-warning hover:bg-warning/10"
+                        : "text-success hover:text-success hover:bg-success/10"
+                      }
                     >
-                      <UserX className="h-4 w-4" />
+                      {user.ativo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
                     </Button>
 
                     {/* Botão de deletar */}
@@ -457,19 +529,19 @@ export function UserManagement({ className }: UserManagementProps) {
             <div className="text-2xl font-bold text-error">
               {users.filter(u => u.role === 'admin').length}
             </div>
-            <div className="text-sm text-text-muted">Administradores</div>
+            <div className="text-sm text-text-secondary">Administradores</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-primary-gold">
               {users.filter(u => u.role === 'barber').length}
             </div>
-            <div className="text-sm text-text-muted">Barbeiros</div>
+            <div className="text-sm text-text-secondary">Barbeiros</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-info">
               {users.filter(u => u.role === 'client').length}
             </div>
-            <div className="text-sm text-text-muted">Clientes</div>
+            <div className="text-sm text-text-secondary">Clientes</div>
           </div>
         </div>
       </CardContent>
@@ -494,6 +566,16 @@ export function UserManagement({ className }: UserManagementProps) {
         loading={actionLoading}
         onConfirm={confirmDialog.action}
         onCancel={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* Modal de novo funcionário */}
+      <NovoFuncionarioModal
+        isOpen={isNovoFuncionarioOpen}
+        onClose={() => setIsNovoFuncionarioOpen(false)}
+        onSuccess={() => {
+          setIsNovoFuncionarioOpen(false)
+          loadUsers() // Recarregar lista de usuários
+        }}
       />
     </Card>
   )

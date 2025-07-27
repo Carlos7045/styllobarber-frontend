@@ -1,6 +1,7 @@
 // Barrel exports para facilitar importações
 export * from './auth'
 export * from './appointments'
+export * from './services'
 
 // Tipos utilitários comuns
 export interface ApiResponse<T> {

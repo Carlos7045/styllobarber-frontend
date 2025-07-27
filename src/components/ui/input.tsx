@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 // Variantes do input usando CVA
 const inputVariants = cva(
   // Classes base
-  'flex w-full rounded-lg border bg-background-primary px-3 py-2 text-sm transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'flex w-full rounded-lg border bg-background-primary px-3 py-2 text-sm text-text-primary transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-dark-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       // Variantes de estilo
@@ -87,7 +87,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {/* Ícone à esquerda */}
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-muted">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
               {leftIcon}
             </div>
           )}
@@ -113,7 +113,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           
           {/* Ícone à direita */}
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
               {rightIcon}
             </div>
           )}
@@ -134,7 +134,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {helperText && !error && (
           <p 
             id={`${inputId}-helper`}
-            className="mt-1 text-xs text-text-muted"
+            className="mt-1 text-xs text-text-secondary"
           >
             {helperText}
           </p>

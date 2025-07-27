@@ -267,7 +267,7 @@ export function UserEditModal({ user, isOpen, onClose, onSave }: UserEditModalPr
                 <label className="text-sm font-medium text-text-secondary">
                   Criado em
                 </label>
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-text-secondary">
                   {new Date(user.created_at).toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',
@@ -281,7 +281,7 @@ export function UserEditModal({ user, isOpen, onClose, onSave }: UserEditModalPr
                 <label className="text-sm font-medium text-text-secondary">
                   Última atualização
                 </label>
-                <p className="text-sm text-text-muted">
+                <p className="text-sm text-text-secondary">
                   {new Date(user.updated_at).toLocaleDateString('pt-BR', {
                     day: '2-digit',
                     month: '2-digit',

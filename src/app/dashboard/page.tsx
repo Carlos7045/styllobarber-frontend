@@ -2,9 +2,14 @@
 
 import { useAuth } from '@/hooks/use-auth'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Container } from '@/components/layout'
 import { FullPageLoading } from '@/components/auth/AuthLoadingState'
+import { useAdminAgendamentos } from '@/hooks/use-admin-agendamentos'
+import { useAdminServicos } from '@/hooks/use-admin-servicos'
+import { useAdminClientes } from '@/hooks/use-admin-clientes'
+import { supabase } from '@/lib/supabase'
+import { formatarMoeda } from '@/lib/utils'
 
 // Dashboard principal - Redireciona baseado no role do usuário
 export default function DashboardRedirect() {
@@ -24,18 +29,18 @@ export default function DashboardRedirect() {
         console.log('👑 SaaS Owner → /saas-admin')
         router.replace('/saas-admin')
         break
-        
+
       case 'admin':
       case 'barber':
         console.log('👨‍💼 Admin/Barbeiro → Dashboard administrativo')
         // Manter na mesma página, mas mostrar dashboard administrativo
         break
-        
+
       case 'client':
         console.log('👥 Cliente → /dashboard/agendamentos')
         router.replace('/dashboard/agendamentos')
         break
-        
+
       default:
         console.log('❓ Role desconhecido, redirecionando para agendamentos')
         router.replace('/dashboard/agendamentos')
@@ -60,59 +65,129 @@ export default function DashboardRedirect() {
 
 // Componente do Dashboard para Admin e Barbeiro
 function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile: any }) {
-  // Dados mockados para demonstração
-  const dashboardData = {
-    metrics: [
-      {
-        title: 'Agendamentos Hoje',
-        value: '12',
-        change: '+2 desde ontem',
-        icon: '📅',
-        color: 'text-amber-500',
-      },
-      {
-        title: 'Clientes Ativos',
-        value: '248',
-        change: '+12 este mês',
-        icon: '👥',
-        color: 'text-blue-500',
-      },
-      {
-        title: 'Receita Hoje',
-        value: 'R$ 1.240',
-        change: '+15% vs ontem',
-        icon: '💰',
-        color: 'text-green-500',
-      },
-      {
-        title: 'Taxa de Ocupação',
-        value: '85%',
-        change: '+5% esta semana',
-        icon: '📊',
-        color: 'text-purple-500',
-      },
-    ]
-  }
+  const [dashboardData, setDashboardData] = useState({
+    agendamentosHoje: 0,
+    clientesAtivos: 0,
+    receitaHoje: 0,
+    taxaOcupacao: 0,
+    loading: true
+  })
+
+  const {
+    agendamentosHoje,
+    taxaOcupacao,
+    loading: agendamentosLoading
+  } = useAdminAgendamentos()
+
+  const {
+    servicos,
+    loading: servicosLoading
+  } = useAdminServicos()
+
+  const {
+    clientesAtivos,
+    loading: clientesLoading
+  } = useAdminClientes()
+
+  // Buscar dados específicos do dashboard
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const hoje = new Date().toISOString().split('T')[0]
+
+        // Buscar receita de hoje
+        const { data: agendamentosHoje } = await supabase
+          .from('appointments')
+          .select(`
+            preco_final,
+            service:services!appointments_service_id_fkey(preco)
+          `)
+          .eq('status', 'concluido')
+          .gte('data_agendamento', `${hoje}T00:00:00`)
+          .lt('data_agendamento', `${hoje}T23:59:59`)
+
+        const receitaHoje = agendamentosHoje?.reduce((sum, apt) => {
+          const precoFinal = apt.preco_final || (apt.service as any)?.preco || 0
+          return sum + precoFinal
+        }, 0) || 0
+
+        setDashboardData(prev => ({
+          ...prev,
+          receitaHoje,
+          loading: false
+        }))
+      } catch (error) {
+        console.error('Erro ao buscar dados do dashboard:', error)
+        setDashboardData(prev => ({ ...prev, loading: false }))
+      }
+    }
+
+    fetchDashboardData()
+  }, [])
+
+  // Atualizar dados quando hooks carregarem
+  useEffect(() => {
+    if (!agendamentosLoading && !clientesLoading) {
+      setDashboardData(prev => ({
+        ...prev,
+        agendamentosHoje,
+        clientesAtivos,
+        taxaOcupacao,
+        loading: false
+      }))
+    }
+  }, [agendamentosHoje, clientesAtivos, taxaOcupacao, agendamentosLoading, clientesLoading])
+
+  const metrics = [
+    {
+      title: 'Agendamentos Hoje',
+      value: dashboardData.loading ? '...' : dashboardData.agendamentosHoje.toString(),
+      change: 'Agendamentos confirmados',
+      icon: '📅',
+      color: 'text-amber-500',
+    },
+    {
+      title: 'Clientes Ativos',
+      value: dashboardData.loading ? '...' : dashboardData.clientesAtivos.toString(),
+      change: 'Base de clientes',
+      icon: '👥',
+      color: 'text-blue-500',
+    },
+    {
+      title: 'Receita Hoje',
+      value: dashboardData.loading ? '...' : formatarMoeda(dashboardData.receitaHoje),
+      change: 'Serviços concluídos',
+      icon: '💰',
+      color: 'text-green-500',
+    },
+    {
+      title: 'Taxa de Ocupação',
+      value: dashboardData.loading ? '...' : `${Math.round(dashboardData.taxaOcupacao)}%`,
+      change: 'Capacidade utilizada',
+      icon: '📊',
+      color: 'text-purple-500',
+    },
+  ]
 
   return (
     <Container className="py-6">
       <div className="space-y-6">
         {/* Header */}
         <div>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-text-primary mb-2">
             Dashboard {userRole === 'admin' ? 'Administrativo' : 'do Barbeiro'}
           </h1>
-          <p className="text-gray-400">
+          <p className="text-text-secondary">
             Bem-vindo, {profile?.nome || 'Usuário'}! Visão geral das atividades de hoje.
           </p>
         </div>
 
         {/* Métricas principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {dashboardData.metrics.map((metric, index) => (
+          {metrics.map((metric, index) => (
             <div
               key={index}
-              className="bg-gray-800 p-6 rounded-lg border border-gray-700 hover:border-amber-500/50 transition-colors"
+              className="bg-background-secondary p-6 rounded-lg border border-border-default hover:border-primary-gold/50 transition-colors"
             >
               <div className="flex items-center justify-between mb-4">
                 <span className="text-2xl">{metric.icon}</span>
@@ -120,11 +195,15 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
                   {metric.change}
                 </span>
               </div>
-              <h3 className="text-gray-400 text-sm font-medium mb-1">
+              <h3 className="text-text-secondary text-sm font-medium mb-1">
                 {metric.title}
               </h3>
-              <p className="text-2xl font-bold text-white">
-                {metric.value}
+              <p className="text-2xl font-bold text-text-primary">
+                {dashboardData.loading ? (
+                  <div className="h-8 bg-neutral-light-gray animate-pulse rounded" />
+                ) : (
+                  metric.value
+                )}
               </p>
             </div>
           ))}
@@ -134,7 +213,7 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
         {userRole === 'admin' ? (
           <AdminSpecificContent />
         ) : (
-          <BarberSpecificContent />
+          <BarberSpecificContent profile={profile} />
         )}
       </div>
     </Container>
@@ -143,41 +222,101 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
 
 // Conteúdo específico para Admin
 function AdminSpecificContent() {
+  const { servicos } = useAdminServicos()
+  const { clientes } = useAdminClientes()
+  const [faturamentoMensal, setFaturamentoMensal] = useState(0)
+  const [funcionariosCount, setFuncionariosCount] = useState(0)
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        // Buscar faturamento do mês atual
+        const inicioMes = new Date()
+        inicioMes.setDate(1)
+        inicioMes.setHours(0, 0, 0, 0)
+
+        const { data: agendamentosMes } = await supabase
+          .from('appointments')
+          .select(`
+            preco_final,
+            service:services!appointments_service_id_fkey(preco)
+          `)
+          .eq('status', 'concluido')
+          .gte('data_agendamento', inicioMes.toISOString())
+
+        const faturamento = agendamentosMes?.reduce((sum, apt) => {
+          const precoFinal = apt.preco_final || (apt.service as any)?.preco || 0
+          return sum + precoFinal
+        }, 0) || 0
+
+        // Buscar quantidade de funcionários
+        const { count: funcionarios } = await supabase
+          .from('funcionarios')
+          .select('*', { count: 'exact', head: true })
+          .eq('ativo', true)
+
+        setFaturamentoMensal(faturamento)
+        setFuncionariosCount(funcionarios || 0)
+      } catch (error) {
+        console.error('Erro ao buscar analytics:', error)
+      }
+    }
+
+    fetchAnalytics()
+  }, [])
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">
+      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
+        <h3 className="text-xl font-bold text-text-primary mb-4">
           🏪 Gestão da Barbearia
         </h3>
         <div className="space-y-3">
-          <button className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+          <a
+            href="/dashboard/usuarios"
+            className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
+          >
             👨‍💼 Gerenciar Funcionários
-          </button>
-          <button className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+          </a>
+          <a
+            href="/dashboard/servicos"
+            className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
+          >
             ⚙️ Configurar Serviços
-          </button>
-          <button className="w-full text-left p-3 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+          </a>
+          <a
+            href="/dashboard/relatorios"
+            className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
+          >
             📊 Relatórios Financeiros
-          </button>
+          </a>
         </div>
       </div>
 
-      <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">
+      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
+        <h3 className="text-xl font-bold text-text-primary mb-4">
           📈 Análises
         </h3>
-        <div className="space-y-3 text-gray-300">
+        <div className="space-y-3 text-text-secondary">
           <div className="flex justify-between">
             <span>Faturamento Mensal:</span>
-            <span className="text-green-400 font-bold">R$ 15.240</span>
+            <span className="text-green-400 font-bold">
+              {formatarMoeda(faturamentoMensal)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Clientes Ativos:</span>
-            <span className="text-blue-400 font-bold">248</span>
+            <span className="text-blue-400 font-bold">{clientes.length}</span>
           </div>
           <div className="flex justify-between">
             <span>Funcionários:</span>
-            <span className="text-purple-400 font-bold">5</span>
+            <span className="text-purple-400 font-bold">{funcionariosCount}</span>
+          </div>
+          <div className="flex justify-between">
+            <span>Serviços Ativos:</span>
+            <span className="text-amber-400 font-bold">
+              {servicos.filter(s => s.ativo).length}
+            </span>
           </div>
         </div>
       </div>
@@ -186,47 +325,172 @@ function AdminSpecificContent() {
 }
 
 // Conteúdo específico para Barbeiro
-function BarberSpecificContent() {
+function BarberSpecificContent({ profile }: { profile: any }) {
+  const [agendaHoje, setAgendaHoje] = useState<any[]>([])
+  const [ganhos, setGanhos] = useState({
+    hoje: 0,
+    semana: 0,
+    mes: 0
+  })
+
+  useEffect(() => {
+    const fetchBarberData = async () => {
+      if (!profile?.id) return
+
+      try {
+        const hoje = new Date().toISOString().split('T')[0]
+
+        // Buscar agendamentos de hoje do barbeiro
+        const { data: agendamentosHoje } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            cliente:profiles!appointments_cliente_id_fkey(nome),
+            service:services!appointments_service_id_fkey(nome, preco)
+          `)
+          .eq('barbeiro_id', profile.id)
+          .gte('data_agendamento', `${hoje}T00:00:00`)
+          .lt('data_agendamento', `${hoje}T23:59:59`)
+          .neq('status', 'cancelado')
+          .order('data_agendamento', { ascending: true })
+
+        setAgendaHoje(agendamentosHoje || [])
+
+        // Calcular ganhos
+        const { data: ganhosHoje } = await supabase
+          .from('appointments')
+          .select(`
+            preco_final,
+            service:services!appointments_service_id_fkey(preco)
+          `)
+          .eq('barbeiro_id', profile.id)
+          .eq('status', 'concluido')
+          .gte('data_agendamento', `${hoje}T00:00:00`)
+          .lt('data_agendamento', `${hoje}T23:59:59`)
+
+        const ganhoHoje = ganhosHoje?.reduce((sum, apt) => {
+          const precoFinal = apt.preco_final || (apt.service as any)?.preco || 0
+          return sum + precoFinal
+        }, 0) || 0
+
+        // Ganhos da semana
+        const inicioSemana = new Date()
+        inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay())
+        inicioSemana.setHours(0, 0, 0, 0)
+
+        const { data: ganhosSemana } = await supabase
+          .from('appointments')
+          .select(`
+            preco_final,
+            service:services!appointments_service_id_fkey(preco)
+          `)
+          .eq('barbeiro_id', profile.id)
+          .eq('status', 'concluido')
+          .gte('data_agendamento', inicioSemana.toISOString())
+
+        const ganhoSemana = ganhosSemana?.reduce((sum, apt) => {
+          const precoFinal = apt.preco_final || (apt.service as any)?.preco || 0
+          return sum + precoFinal
+        }, 0) || 0
+
+        // Ganhos do mês
+        const inicioMes = new Date()
+        inicioMes.setDate(1)
+        inicioMes.setHours(0, 0, 0, 0)
+
+        const { data: ganhosMes } = await supabase
+          .from('appointments')
+          .select(`
+            preco_final,
+            service:services!appointments_service_id_fkey(preco)
+          `)
+          .eq('barbeiro_id', profile.id)
+          .eq('status', 'concluido')
+          .gte('data_agendamento', inicioMes.toISOString())
+
+        const ganhoMes = ganhosMes?.reduce((sum, apt) => {
+          const precoFinal = apt.preco_final || (apt.service as any)?.preco || 0
+          return sum + precoFinal
+        }, 0) || 0
+
+        setGanhos({
+          hoje: ganhoHoje,
+          semana: ganhoSemana,
+          mes: ganhoMes
+        })
+      } catch (error) {
+        console.error('Erro ao buscar dados do barbeiro:', error)
+      }
+    }
+
+    fetchBarberData()
+  }, [profile?.id])
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">
-          ✂️ Minha Agenda
+      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
+        <h3 className="text-xl font-bold text-text-primary mb-4">
+          ✂️ Minha Agenda Hoje
         </h3>
         <div className="space-y-3">
-          <div className="p-3 bg-gray-700 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-white">João Silva</span>
-              <span className="text-amber-400">09:00</span>
-            </div>
-            <span className="text-gray-400 text-sm">Corte + Barba</span>
-          </div>
-          <div className="p-3 bg-gray-700 rounded-lg">
-            <div className="flex justify-between items-center">
-              <span className="text-white">Pedro Santos</span>
-              <span className="text-amber-400">10:30</span>
-            </div>
-            <span className="text-gray-400 text-sm">Corte Masculino</span>
-          </div>
+          {agendaHoje.length === 0 ? (
+            <p className="text-text-secondary text-center py-4">
+              Nenhum agendamento para hoje
+            </p>
+          ) : (
+            agendaHoje.slice(0, 5).map((agendamento) => (
+              <div key={agendamento.id} className="p-3 bg-neutral-light-gray rounded-lg">
+                <div className="flex justify-between items-center">
+                  <span className="text-text-primary">{agendamento.cliente?.nome || 'Cliente'}</span>
+                  <span className="text-amber-400">
+                    {new Date(agendamento.data_agendamento).toLocaleTimeString('pt-BR', {
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}
+                  </span>
+                </div>
+                <span className="text-text-secondary text-sm">
+                  {agendamento.service?.nome || 'Serviço'}
+                </span>
+                <span className={`text-xs px-2 py-1 rounded-full ml-2 ${agendamento.status === 'confirmado'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-yellow-100 text-yellow-800'
+                  }`}>
+                  {agendamento.status}
+                </span>
+              </div>
+            ))
+          )}
+          {agendaHoje.length > 5 && (
+            <p className="text-text-secondary text-center text-sm">
+              +{agendaHoje.length - 5} agendamentos...
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="bg-gray-800 p-6 rounded-lg border border-gray-700">
-        <h3 className="text-xl font-bold text-white mb-4">
+      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
+        <h3 className="text-xl font-bold text-text-primary mb-4">
           💰 Meus Ganhos
         </h3>
-        <div className="space-y-3 text-gray-300">
+        <div className="space-y-3 text-text-secondary">
           <div className="flex justify-between">
             <span>Hoje:</span>
-            <span className="text-green-400 font-bold">R$ 320</span>
+            <span className="text-green-400 font-bold">
+              {formatarMoeda(ganhos.hoje)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Esta Semana:</span>
-            <span className="text-green-400 font-bold">R$ 1.840</span>
+            <span className="text-green-400 font-bold">
+              {formatarMoeda(ganhos.semana)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Este Mês:</span>
-            <span className="text-green-400 font-bold">R$ 6.240</span>
+            <span className="text-green-400 font-bold">
+              {formatarMoeda(ganhos.mes)}
+            </span>
           </div>
         </div>
       </div>

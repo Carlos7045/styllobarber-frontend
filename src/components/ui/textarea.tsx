@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 // Variantes do textarea usando CVA
 const textareaVariants = cva(
   // Classes base
-  'flex min-h-[80px] w-full rounded-lg border bg-background-primary px-3 py-2 text-sm transition-all duration-200 placeholder:text-text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none',
+  'flex min-h-[80px] w-full rounded-lg border bg-background-primary px-3 py-2 text-sm text-text-primary transition-all duration-200 placeholder:text-neutral-dark-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 resize-none',
   {
     variants: {
       // Variantes de estilo
@@ -130,7 +130,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             {helperText && !error && (
               <p 
                 id={`${textareaId}-helper`}
-                className="text-xs text-text-muted"
+                className="text-xs text-text-secondary"
               >
                 {helperText}
               </p>
@@ -141,7 +141,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
           {showCharCount && maxLength && (
             <p className={cn(
               'text-xs ml-2 flex-shrink-0',
-              charCount > maxLength * 0.9 ? 'text-warning' : 'text-text-muted',
+              charCount > maxLength * 0.9 ? 'text-warning' : 'text-text-secondary',
               charCount >= maxLength ? 'text-error' : ''
             )}>
               {charCount}/{maxLength}

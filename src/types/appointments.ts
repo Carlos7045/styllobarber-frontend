@@ -123,6 +123,27 @@ export const APPOINTMENT_STATUS_LABELS: Record<AppointmentStatus, string> = {
   cancelado: 'Cancelado',
 }
 
+// Interface para agendamento com funcionalidades específicas do cliente
+export interface ClientAppointment extends Appointment {
+  canCancel: boolean
+  canReschedule: boolean
+  timeUntilAppointment?: string
+  isUpcoming: boolean
+  isPast: boolean
+}
+
+// Interface para políticas de cancelamento e reagendamento
+export interface CancellationPolicy {
+  minHoursBeforeAppointment: number // 24 horas
+  allowCancellation: boolean
+}
+
+export interface ReschedulingPolicy {
+  minHoursBeforeAppointment: number // 12 horas
+  maxReschedulesPerMonth: number // 3
+  allowRescheduling: boolean
+}
+
 // Configuração padrão do calendário
 export const DEFAULT_CALENDAR_CONFIG: CalendarConfig = {
   startHour: 8,
@@ -130,4 +151,16 @@ export const DEFAULT_CALENDAR_CONFIG: CalendarConfig = {
   slotDuration: 30,
   workDays: [1, 2, 3, 4, 5, 6], // Segunda a sábado
   holidays: [],
+}
+
+// Políticas padrão
+export const DEFAULT_CANCELLATION_POLICY: CancellationPolicy = {
+  minHoursBeforeAppointment: 24,
+  allowCancellation: true,
+}
+
+export const DEFAULT_RESCHEDULING_POLICY: ReschedulingPolicy = {
+  minHoursBeforeAppointment: 12,
+  maxReschedulesPerMonth: 3,
+  allowRescheduling: true,
 }

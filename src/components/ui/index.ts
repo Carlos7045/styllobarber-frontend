@@ -55,3 +55,42 @@ export {
   badgeVariants,
   type BadgeProps,
 } from './badge'
+
+// Componentes Modal
+export {
+  Modal,
+  ModalHeader,
+  ModalTitle,
+  ModalDescription,
+  ModalContent,
+  ModalFooter,
+  modalVariants,
+  type ModalProps,
+} from './modal'
+
+// Componente DatePicker
+export {
+  DatePicker,
+  datePickerVariants,
+  type DatePickerProps,
+  type DateAvailability,
+} from './date-picker'
+
+// Componente TimePicker
+export {
+  TimePicker,
+  timePickerVariants,
+  type TimePickerProps,
+  type TimeSlot,
+} from './time-picker'
+
+// Componentes ConfirmDialog
+export {
+  ConfirmDialog,
+  DeleteConfirmDialog,
+  CancelConfirmDialog,
+  SaveConfirmDialog,
+  confirmDialogVariants,
+  useConfirmDialog,
+  type ConfirmDialogProps,
+} from './confirm-dialog'

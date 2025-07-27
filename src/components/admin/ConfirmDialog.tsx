@@ -76,7 +76,7 @@ export function ConfirmDialog({
         </CardHeader>
 
         <CardContent>
-          <p className="text-text-muted mb-6">{message}</p>
+          <p className="text-text-secondary mb-6">{message}</p>
 
           <div className="flex gap-3">
             <Button

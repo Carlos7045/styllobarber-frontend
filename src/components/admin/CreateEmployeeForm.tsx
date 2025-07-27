@@ -87,7 +87,7 @@ export function CreateEmployeeForm({
           <UserPlus className="h-6 w-6" />
           Cadastrar Funcionário
         </CardTitle>
-        <p className="text-text-muted">
+        <p className="text-text-secondary">
           Adicione um novo funcionário à sua barbearia
         </p>
         

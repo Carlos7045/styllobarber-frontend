@@ -68,6 +68,7 @@ const config: Config = {
           muted: "#9CA3AF",
           inverse: "#FFFFFF",
         },
+        "muted-foreground": "#9CA3AF",
         border: {
           DEFAULT: "#E5E7EB",
           dark: "#374151",
