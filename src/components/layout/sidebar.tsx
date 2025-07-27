@@ -109,7 +109,7 @@ const navigationItems: Record<string, NavItem[]> = {
     },
     {
       id: 'relatorios',
-      label: 'Relatórios',
+      label: 'Hub de Relatórios',
       href: '/dashboard/relatorios',
       icon: BarChart3,
     },
