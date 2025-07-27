@@ -10,7 +10,7 @@ interface ServicoFormModalProps {
   isOpen: boolean
   onClose: () => void
   servico?: ServicoAdmin | null
-  onSuccess?: (servico: ServicoAdmin) => void
+  onSuccess?: (servico?: ServicoAdmin) => void
 }
 
 export const ServicoFormModal: React.FC<ServicoFormModalProps> = ({
@@ -72,13 +72,21 @@ export const ServicoFormModal: React.FC<ServicoFormModalProps> = ({
       return
     }
 
-    if (!formData.preco || parseFloat(formData.preco) <= 0) {
-      setError('Preço deve ser maior que zero')
+    const preco = parseFloat(formData.preco)
+    if (!formData.preco || isNaN(preco) || preco <= 0) {
+      setError('Preço deve ser um número maior que zero')
       return
     }
 
-    if (!formData.duracao_minutos || parseInt(formData.duracao_minutos) <= 0) {
-      setError('Duração deve ser maior que zero')
+    const duracao = parseInt(formData.duracao_minutos)
+    if (!formData.duracao_minutos || isNaN(duracao) || duracao <= 0) {
+      setError('Duração deve ser um número maior que zero')
+      return
+    }
+
+    const ordem = formData.ordem ? parseInt(formData.ordem) : undefined
+    if (formData.ordem && (isNaN(ordem!) || ordem! < 0)) {
+      setError('Ordem deve ser um número válido')
       return
     }
 
@@ -89,27 +97,28 @@ export const ServicoFormModal: React.FC<ServicoFormModalProps> = ({
       const data = {
         nome: formData.nome.trim(),
         descricao: formData.descricao.trim() || undefined,
-        preco: parseFloat(formData.preco),
-        duracao_minutos: parseInt(formData.duracao_minutos),
+        preco: preco,
+        duracao_minutos: duracao,
         categoria: formData.categoria.trim() || undefined,
-        ordem: formData.ordem ? parseInt(formData.ordem) : undefined,
+        ordem: ordem,
         ativo: formData.ativo
       }
 
       let result
-      if (isEditing) {
+      if (isEditing && servico) {
         result = await updateServico(servico.id, data as UpdateServicoData)
       } else {
         result = await createServico(data as CreateServicoData)
       }
 
       if (result.success) {
-        onSuccess?.(result.data || { ...servico!, ...data })
+        onSuccess?.(result.data)
         onClose()
       } else {
         setError(result.error || 'Erro ao salvar serviço')
       }
     } catch (err) {
+      console.error('Erro ao salvar serviço:', err)
       setError(err instanceof Error ? err.message : 'Erro inesperado')
     } finally {
       setLoading(false)

@@ -54,11 +54,17 @@ export default function ServicosPage() {
   const handleToggleStatus = async (serviceId: string, ativo: boolean) => {
     if (!isAdmin) return
 
-    const result = await toggleServicoStatus(serviceId, ativo)
-    if (result.success) {
-      refetch()
-    } else {
-      alert(result.error || 'Erro ao alterar status do serviço')
+    try {
+      const result = await toggleServicoStatus(serviceId, ativo)
+      if (result.success) {
+        refetch()
+      } else {
+        console.error('Erro ao alterar status:', result.error)
+        alert(result.error || 'Erro ao alterar status do serviço')
+      }
+    } catch (error) {
+      console.error('Erro inesperado ao alterar status:', error)
+      alert('Erro inesperado ao alterar status do serviço')
     }
   }
 
@@ -73,9 +79,13 @@ export default function ServicosPage() {
   }
 
   const handleServicoFormSuccess = () => {
-    refetch()
-    setIsServicoFormOpen(false)
-    setSelectedServico(null)
+    try {
+      refetch()
+      setIsServicoFormOpen(false)
+      setSelectedServico(null)
+    } catch (error) {
+      console.error('Erro ao atualizar lista de serviços:', error)
+    }
   }
   return (
     <Container className="py-8">
@@ -230,7 +240,7 @@ export default function ServicosPage() {
                         </p>
 
                         {/* Estatísticas para admin */}
-                        {isAdmin && 'total_agendamentos' in servico && (
+                        {isAdmin && (
                           <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-neutral-light-gray rounded-lg">
                             <div className="text-center">
                               <div className="text-sm font-medium text-primary-gold">
@@ -284,7 +294,7 @@ export default function ServicosPage() {
                               <p className="text-sm text-text-secondary">
                                 {formatarMoeda(servico.preco)} • {servico.duracao_minutos} min
                               </p>
-                              {isAdmin && 'agendamentos_futuros' in servico && (servico as ServicoAdmin).agendamentos_futuros! > 0 && (
+                              {isAdmin && (servico as ServicoAdmin).agendamentos_futuros > 0 && (
                                 <p className="text-xs text-warning">
                                   {(servico as ServicoAdmin).agendamentos_futuros} agendamento(s) futuro(s)
                                 </p>

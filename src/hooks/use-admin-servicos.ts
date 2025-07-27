@@ -8,11 +8,21 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 import type { Service } from '@/types/services'
 
-export interface ServicoAdmin extends Service {
+export interface ServicoAdmin {
+  id: string
+  nome: string
+  descricao?: string
+  preco: number
+  duracao_minutos: number
+  categoria?: string
+  ativo: boolean
+  ordem?: number
+  created_at: string
+  updated_at: string
   historico_precos?: HistoricoPreco[]
-  agendamentos_futuros?: number
-  receita_mes?: number
-  total_agendamentos?: number
+  agendamentos_futuros: number
+  receita_mes: number
+  total_agendamentos: number
 }
 
 export interface HistoricoPreco {
@@ -97,39 +107,61 @@ export function useAdminServicos(): UseAdminServicosReturn {
       // Buscar estatísticas para cada serviço
       const servicosComStats = await Promise.all(
         (servicosData || []).map(async (servico) => {
-          // Contar agendamentos futuros
-          const { count: agendamentosFuturos } = await supabase
-            .from('appointments')
-            .select('*', { count: 'exact', head: true })
-            .eq('service_id', servico.id)
-            .gte('data_agendamento', new Date().toISOString())
-            .neq('status', 'cancelado')
+          try {
+            // Contar agendamentos futuros
+            const { count: agendamentosFuturos, error: futureError } = await supabase
+              .from('appointments')
+              .select('*', { count: 'exact', head: true })
+              .eq('service_id', servico.id)
+              .gte('data_agendamento', new Date().toISOString())
+              .neq('status', 'cancelado')
 
-          // Calcular receita do mês atual
-          const inicioMes = new Date()
-          inicioMes.setDate(1)
-          inicioMes.setHours(0, 0, 0, 0)
+            if (futureError) {
+              console.warn('Erro ao buscar agendamentos futuros:', futureError)
+            }
 
-          const { data: agendamentosMes } = await supabase
-            .from('appointments')
-            .select('preco_final')
-            .eq('service_id', servico.id)
-            .eq('status', 'concluido')
-            .gte('data_agendamento', inicioMes.toISOString())
+            // Calcular receita do mês atual
+            const inicioMes = new Date()
+            inicioMes.setDate(1)
+            inicioMes.setHours(0, 0, 0, 0)
 
-          const receitaMes = agendamentosMes?.reduce((sum, apt) => sum + (apt.preco_final || servico.preco), 0) || 0
+            const { data: agendamentosMes, error: monthError } = await supabase
+              .from('appointments')
+              .select('preco_final')
+              .eq('service_id', servico.id)
+              .eq('status', 'concluido')
+              .gte('data_agendamento', inicioMes.toISOString())
 
-          // Contar total de agendamentos
-          const { count: totalAgendamentos } = await supabase
-            .from('appointments')
-            .select('*', { count: 'exact', head: true })
-            .eq('service_id', servico.id)
+            if (monthError) {
+              console.warn('Erro ao buscar receita do mês:', monthError)
+            }
 
-          return {
-            ...servico,
-            agendamentos_futuros: agendamentosFuturos || 0,
-            receita_mes: receitaMes,
-            total_agendamentos: totalAgendamentos || 0
+            const receitaMes = agendamentosMes?.reduce((sum, apt) => sum + (apt.preco_final || servico.preco), 0) || 0
+
+            // Contar total de agendamentos
+            const { count: totalAgendamentos, error: totalError } = await supabase
+              .from('appointments')
+              .select('*', { count: 'exact', head: true })
+              .eq('service_id', servico.id)
+
+            if (totalError) {
+              console.warn('Erro ao buscar total de agendamentos:', totalError)
+            }
+
+            return {
+              ...servico,
+              agendamentos_futuros: agendamentosFuturos || 0,
+              receita_mes: receitaMes || 0,
+              total_agendamentos: totalAgendamentos || 0
+            } as ServicoAdmin
+          } catch (err) {
+            console.warn(`Erro ao buscar estatísticas para serviço ${servico.id}:`, err)
+            return {
+              ...servico,
+              agendamentos_futuros: 0,
+              receita_mes: 0,
+              total_agendamentos: 0
+            } as ServicoAdmin
           }
         })
       )
@@ -150,10 +182,28 @@ export function useAdminServicos(): UseAdminServicosReturn {
     }
 
     try {
+      // Validar dados antes de enviar
+      if (!data.nome || data.nome.trim() === '') {
+        return { success: false, error: 'Nome do serviço é obrigatório' }
+      }
+
+      if (!data.preco || data.preco <= 0) {
+        return { success: false, error: 'Preço deve ser maior que zero' }
+      }
+
+      if (!data.duracao_minutos || data.duracao_minutos <= 0) {
+        return { success: false, error: 'Duração deve ser maior que zero' }
+      }
+
       const { data: newServico, error: createError } = await supabase
         .from('services')
         .insert([{
-          ...data,
+          nome: data.nome.trim(),
+          descricao: data.descricao?.trim() || null,
+          preco: data.preco,
+          duracao_minutos: data.duracao_minutos,
+          categoria: data.categoria?.trim() || null,
+          ordem: data.ordem || null,
           ativo: data.ativo ?? true
         }])
         .select()
@@ -164,7 +214,7 @@ export function useAdminServicos(): UseAdminServicosReturn {
       }
 
       // Adicionar à lista local com estatísticas zeradas
-      const servicoComStats = {
+      const servicoComStats: ServicoAdmin = {
         ...newServico,
         agendamentos_futuros: 0,
         receita_mes: 0,
@@ -283,10 +333,9 @@ export function useAdminServicos(): UseAdminServicosReturn {
           .neq('status', 'cancelado')
 
         if (checkError) {
-          throw checkError
-        }
-
-        if (agendamentosFuturos && agendamentosFuturos.length > 0) {
+          console.warn('Erro ao verificar agendamentos futuros:', checkError)
+          // Continuar mesmo com erro na verificação
+        } else if (agendamentosFuturos && agendamentosFuturos.length > 0) {
           return {
             success: false,
             error: `Serviço possui ${agendamentosFuturos.length} agendamento(s) futuro(s). Cancele-os primeiro.`
