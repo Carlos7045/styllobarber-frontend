@@ -8,6 +8,7 @@ import { FullPageLoading } from '@/components/auth/AuthLoadingState'
 import { useAdminAgendamentos } from '@/hooks/use-admin-agendamentos'
 import { useAdminServicos } from '@/hooks/use-admin-servicos'
 import { useAdminClientes } from '@/hooks/use-admin-clientes'
+import { useFuncionariosEspecialidades } from '@/hooks/use-funcionarios-especialidades-simple'
 import { supabase } from '@/lib/supabase'
 import { formatarMoeda } from '@/lib/utils'
 
@@ -198,13 +199,13 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
               <h3 className="text-text-secondary text-sm font-medium mb-1">
                 {metric.title}
               </h3>
-              <p className="text-2xl font-bold text-text-primary">
+              <div className="text-2xl font-bold text-text-primary">
                 {dashboardData.loading ? (
                   <div className="h-8 bg-neutral-light-gray animate-pulse rounded" />
                 ) : (
                   metric.value
                 )}
-              </p>
+              </div>
             </div>
           ))}
         </div>
@@ -224,8 +225,8 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
 function AdminSpecificContent() {
   const { servicos } = useAdminServicos()
   const { clientes } = useAdminClientes()
+  const { funcionarios } = useFuncionariosEspecialidades()
   const [faturamentoMensal, setFaturamentoMensal] = useState(0)
-  const [funcionariosCount, setFuncionariosCount] = useState(0)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -249,14 +250,7 @@ function AdminSpecificContent() {
           return sum + precoFinal
         }, 0) || 0
 
-        // Buscar quantidade de funcionários
-        const { count: funcionarios } = await supabase
-          .from('funcionarios')
-          .select('*', { count: 'exact', head: true })
-          .eq('ativo', true)
-
         setFaturamentoMensal(faturamento)
-        setFuncionariosCount(funcionarios || 0)
       } catch (error) {
         console.error('Erro ao buscar analytics:', error)
       }
@@ -273,7 +267,7 @@ function AdminSpecificContent() {
         </h3>
         <div className="space-y-3">
           <a
-            href="/dashboard/usuarios"
+            href="/dashboard/funcionarios"
             className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
           >
             👨‍💼 Gerenciar Funcionários
@@ -310,7 +304,7 @@ function AdminSpecificContent() {
           </div>
           <div className="flex justify-between">
             <span>Funcionários:</span>
-            <span className="text-purple-400 font-bold">{funcionariosCount}</span>
+            <span className="text-purple-400 font-bold">{funcionarios.length}</span>
           </div>
           <div className="flex justify-between">
             <span>Serviços Ativos:</span>

@@ -22,6 +22,7 @@ interface UseServicesOptions {
 interface UseServicesReturn {
   // Dados
   services: Service[]
+  disabledServices: Service[]
   filteredServices: Service[]
   loading: boolean
   error: string | null
@@ -34,6 +35,8 @@ interface UseServicesReturn {
   // Ações
   refetch: () => Promise<void>
   clearCache: () => void
+  deleteService: (serviceId: string) => Promise<{ success: boolean; error?: string }>
+  reactivateService: (serviceId: string) => Promise<{ success: boolean; error?: string }>
   
   // Estado dos filtros
   currentFilters: ServiceFilters
@@ -51,6 +54,7 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
   } = options
 
   const [services, setServices] = useState<Service[]>([])
+  const [disabledServices, setDisabledServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentFilters, setCurrentFilters] = useState<ServiceFilters>(initialFilters)
@@ -66,25 +70,39 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
   }, [enableCache])
 
   // Buscar serviços do banco de dados
-  const fetchServices = useCallback(async (): Promise<Service[]> => {
+  const fetchServices = useCallback(async (): Promise<{ active: Service[]; disabled: Service[] }> => {
     try {
       console.log('🔍 Buscando serviços do banco de dados...')
       
-      const { data, error: fetchError } = await supabase
+      // Buscar serviços ativos
+      const { data: activeData, error: activeError } = await supabase
         .from('services')
         .select('*')
         .eq('ativo', true)
         .order('ordem', { ascending: true })
         .order('nome', { ascending: true })
 
-      if (fetchError) {
-        throw fetchError
+      if (activeError) {
+        throw activeError
       }
 
-      const servicesData = data || []
-      console.log(`✅ ${servicesData.length} serviços carregados`)
+      // Buscar serviços desativados
+      const { data: disabledData, error: disabledError } = await supabase
+        .from('services')
+        .select('*')
+        .eq('ativo', false)
+        .order('nome', { ascending: true })
+
+      if (disabledError) {
+        throw disabledError
+      }
+
+      const activeServices = activeData || []
+      const disabledServicesData = disabledData || []
       
-      return servicesData
+      console.log(`✅ ${activeServices.length} serviços ativos e ${disabledServicesData.length} serviços desativados carregados`)
+      
+      return { active: activeServices, disabled: disabledServicesData }
     } catch (err) {
       console.error('❌ Erro ao buscar serviços:', err)
       throw err
@@ -101,22 +119,26 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
       if (isCacheValid() && serviceCache) {
         console.log('📦 Usando serviços do cache')
         setServices(serviceCache.services)
+        // Para serviços desativados, sempre buscar do banco (não cachear)
+        const { disabled } = await fetchServices()
+        setDisabledServices(disabled)
         setLoading(false)
         return
       }
 
       // Buscar do banco de dados
-      const servicesData = await fetchServices()
+      const { active, disabled } = await fetchServices()
       
-      // Atualizar cache
+      // Atualizar cache apenas para serviços ativos
       if (enableCache) {
         serviceCache = {
-          services: servicesData,
+          services: active,
           timestamp: Date.now()
         }
       }
       
-      setServices(servicesData)
+      setServices(active)
+      setDisabledServices(disabled)
     } catch (err) {
       console.error('❌ Erro ao carregar serviços:', err)
       setError(err instanceof Error ? err.message : 'Erro ao carregar serviços')
@@ -203,6 +225,86 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
     await loadServices()
   }, [clearCache, loadServices])
 
+  // Deletar serviço permanentemente
+  const deleteService = useCallback(async (serviceId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      console.log(`🗑️ Deletando serviço ${serviceId}...`)
+
+      // Primeiro, remover associações com funcionários
+      const { error: associationError } = await supabase
+        .from('funcionario_servicos')
+        .delete()
+        .eq('servico_id', serviceId)
+
+      if (associationError) {
+        console.error('❌ Erro ao remover associações:', associationError)
+        return { success: false, error: 'Erro ao remover associações do serviço' }
+      }
+
+      // Depois, deletar o serviço
+      const { error: deleteError } = await supabase
+        .from('services')
+        .delete()
+        .eq('id', serviceId)
+
+      if (deleteError) {
+        console.error('❌ Erro ao deletar serviço:', deleteError)
+        return { success: false, error: 'Erro ao deletar serviço' }
+      }
+
+      // Atualizar estado local
+      setDisabledServices(prev => prev.filter(service => service.id !== serviceId))
+      
+      // Limpar cache
+      clearCache()
+      
+      console.log('✅ Serviço deletado com sucesso')
+      return { success: true }
+    } catch (err) {
+      console.error('❌ Erro inesperado ao deletar serviço:', err)
+      return { success: false, error: 'Erro inesperado ao deletar serviço' }
+    }
+  }, [clearCache])
+
+  // Reativar serviço
+  const reactivateService = useCallback(async (serviceId: string): Promise<{ success: boolean; error?: string }> => {
+    try {
+      console.log(`🔄 Reativando serviço ${serviceId}...`)
+
+      const { error: updateError } = await supabase
+        .from('services')
+        .update({ 
+          ativo: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', serviceId)
+
+      if (updateError) {
+        console.error('❌ Erro ao reativar serviço:', updateError)
+        return { success: false, error: 'Erro ao reativar serviço' }
+      }
+
+      // Encontrar o serviço nos desativados
+      const serviceToReactivate = disabledServices.find(service => service.id === serviceId)
+      
+      if (serviceToReactivate) {
+        // Mover para serviços ativos
+        const reactivatedService = { ...serviceToReactivate, ativo: true }
+        setServices(prev => [...prev, reactivatedService])
+        setDisabledServices(prev => prev.filter(service => service.id !== serviceId))
+      }
+      
+      // Limpar cache
+      clearCache()
+      
+      console.log('✅ Serviço reativado com sucesso')
+      return { success: true }
+    } catch (err) {
+      console.error('❌ Erro inesperado ao reativar serviço:', err)
+      return { success: false, error: 'Erro inesperado ao reativar serviço' }
+    }
+  }, [disabledServices, clearCache])
+
   // Serviços filtrados (memoizado)
   const filteredServices = useMemo(() => {
     let result = [...services]
@@ -262,6 +364,7 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
 
   return {
     services,
+    disabledServices,
     filteredServices,
     loading,
     error,
@@ -270,6 +373,8 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
     clearFilters,
     refetch,
     clearCache,
+    deleteService,
+    reactivateService,
     currentFilters,
     hasActiveFilters
   }

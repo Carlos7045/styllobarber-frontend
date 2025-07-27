@@ -34,6 +34,7 @@ export default function ServicosPage() {
     servicos: servicosAdmin,
     loading: loadingAdmin,
     toggleServicoStatus,
+    deleteServico,
     refetch
   } = useAdminServicos()
 
@@ -85,6 +86,29 @@ export default function ServicosPage() {
       setSelectedServico(null)
     } catch (error) {
       console.error('Erro ao atualizar lista de serviços:', error)
+    }
+  }
+
+  const handleDeleteServico = async (serviceId: string, serviceName: string) => {
+    if (!isAdmin) return
+
+    const confirmar = window.confirm(
+      `ATENÇÃO: Esta ação é irreversível!\n\nTem certeza que deseja excluir permanentemente o serviço "${serviceName}"?\n\nEsta ação irá:\n- Remover o serviço do banco de dados\n- Remover todas as associações com funcionários\n- Não poderá ser desfeita`
+    )
+    
+    if (!confirmar) return
+
+    try {
+      const result = await deleteServico(serviceId)
+      if (result.success) {
+        alert('Serviço excluído com sucesso!')
+        refetch()
+      } else {
+        alert(result.error || 'Erro ao excluir serviço')
+      }
+    } catch (error) {
+      console.error('Erro inesperado ao excluir serviço:', error)
+      alert('Erro inesperado ao excluir serviço')
     }
   }
   return (
@@ -306,14 +330,26 @@ export default function ServicosPage() {
                               {isAdmin ? 'Desativado' : 'Indisponível'}
                             </span>
                             {isAdmin && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleToggleStatus(servico.id, true)}
-                                className="text-success hover:text-success"
-                              >
-                                Reativar
-                              </Button>
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleToggleStatus(servico.id, true)}
+                                  className="text-success hover:text-success hover:bg-success/10 border-success/20"
+                                  title="Reativar serviço"
+                                >
+                                  Reativar
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteServico(servico.id, servico.nome)}
+                                  className="text-error hover:text-error hover:bg-error/10 border-error/20"
+                                  title="Excluir permanentemente"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </>
                             )}
                           </div>
                         </div>

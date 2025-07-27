@@ -1,3 +1,6 @@
 export { UserManagement } from './UserManagement'
+export { FuncionarioManagement } from './FuncionarioManagement'
 export { UserEditModal } from './UserEditModal'
 export { ConfirmDialog } from './ConfirmDialog'
+export { EspecialidadesModal } from './EspecialidadesModal'
+export { CriarFuncionarioModal } from './CriarFuncionarioModal'

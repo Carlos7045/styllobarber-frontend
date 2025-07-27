@@ -14,6 +14,19 @@ export interface Service {
   ordem?: number
   created_at: string
   updated_at: string
+  
+  // Dados relacionados (joins)
+  funcionarios?: FuncionarioBasico[]
+}
+
+// Interface para dados básicos de funcionário
+export interface FuncionarioBasico {
+  id: string
+  nome: string
+  email: string
+  telefone?: string
+  avatar_url?: string
+  role: string
 }
 
 // Interface para filtros de serviços

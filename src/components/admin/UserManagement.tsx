@@ -73,10 +73,11 @@ export function UserManagement({ className }: UserManagementProps) {
   const loadUsers = async () => {
     try {
       setLoading(true)
+      // Buscar apenas clientes
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
-        .neq('role', 'saas_owner')
+        .eq('role', 'client')
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -328,11 +329,11 @@ export function UserManagement({ className }: UserManagementProps) {
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="h-5 w-5" />
-            Gestão de Usuários
+            Gestão de Clientes
           </CardTitle>
           <div className="flex items-center gap-2">
             <div className="text-sm text-text-secondary mr-4">
-              {filteredUsers.length} usuário{filteredUsers.length !== 1 ? 's' : ''}
+              {filteredUsers.length} cliente{filteredUsers.length !== 1 ? 's' : ''}
             </div>
             <Button
               variant="outline"
@@ -341,7 +342,7 @@ export function UserManagement({ className }: UserManagementProps) {
               className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black border-primary-gold"
             >
               <Plus className="h-4 w-4 mr-1" />
-              Funcionário
+              Cliente
             </Button>
             <Button
               variant="outline"
@@ -382,10 +383,7 @@ export function UserManagement({ className }: UserManagementProps) {
               disabled={loading}
               className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
             >
-              <option value="all">Todos os perfis</option>
-              <option value="admin">Administradores</option>
-              <option value="barber">Barbeiros</option>
-              <option value="client">Clientes</option>
+              <option value="all">Todos os clientes</option>
             </select>
           </div>
           <div className="sm:w-48">
@@ -464,17 +462,10 @@ export function UserManagement({ className }: UserManagementProps) {
 
                   {/* Ações */}
                   <div className="flex items-center gap-1">
-                    {/* Alterar role */}
-                    <select
-                      value={user.role}
-                      onChange={(e) => handleRoleChange(user.id, e.target.value as any)}
-                      disabled={loading || actionLoading}
-                      className="text-xs px-2 py-1 border border-border-default rounded bg-background-primary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-gold disabled:opacity-50"
-                    >
-                      <option value="client">Cliente</option>
-                      <option value="barber">Barbeiro</option>
-                      <option value="admin">Admin</option>
-                    </select>
+                    {/* Status do cliente (sempre cliente) */}
+                    <span className="text-xs px-2 py-1 bg-info/10 text-info border border-info/20 rounded">
+                      Cliente
+                    </span>
 
                     {/* Botão de editar */}
                     <Button
@@ -524,24 +515,12 @@ export function UserManagement({ className }: UserManagementProps) {
         )}
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-border-default">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-error">
-              {users.filter(u => u.role === 'admin').length}
-            </div>
-            <div className="text-sm text-text-secondary">Administradores</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-primary-gold">
-              {users.filter(u => u.role === 'barber').length}
-            </div>
-            <div className="text-sm text-text-secondary">Barbeiros</div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 pt-6 border-t border-border-default">
           <div className="text-center">
             <div className="text-2xl font-bold text-info">
-              {users.filter(u => u.role === 'client').length}
+              {users.length}
             </div>
-            <div className="text-sm text-text-secondary">Clientes</div>
+            <div className="text-sm text-text-secondary">Total de Clientes</div>
           </div>
         </div>
       </CardContent>

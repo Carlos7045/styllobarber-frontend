@@ -1,26 +1,26 @@
 import { Metadata } from 'next'
 import { Container } from '@/components/layout'
-import { UserManagement } from '@/components/admin/UserManagement'
+import { FuncionarioManagement } from '@/components/admin/FuncionarioManagement'
 
 export const metadata: Metadata = {
-  title: 'Gestão de Clientes - StylloBarber',
-  description: 'Gerencie clientes do sistema.',
+  title: 'Gestão de Funcionários - StylloBarber',
+  description: 'Gerencie funcionários, barbeiros e administradores do sistema.',
 }
 
-export default function UsuariosPage() {
+export default function FuncionariosPage() {
   return (
     <Container className="py-6">
       <div className="max-w-6xl mx-auto">
         <div className="mb-6">
           <h1 className="text-2xl font-heading font-bold text-text-primary">
-            Gestão de Clientes
+            Gestão de Funcionários
           </h1>
           <p className="text-text-muted">
-            Gerencie clientes do sistema
+            Gerencie funcionários, barbeiros e administradores da barbearia
           </p>
         </div>
 
-        <UserManagement />
+        <FuncionarioManagement />
       </div>
     </Container>
   )

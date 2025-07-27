@@ -86,20 +86,20 @@ const navigationItems: Record<string, NavItem[]> = {
     {
       id: 'clientes',
       label: 'Clientes',
-      href: '/dashboard/clientes',
+      href: '/dashboard/usuarios',
       icon: Users,
+    },
+    {
+      id: 'funcionarios',
+      label: 'Funcionários',
+      href: '/dashboard/funcionarios',
+      icon: UserCheck,
     },
     {
       id: 'servicos',
       label: 'Serviços',
       href: '/dashboard/servicos',
       icon: Scissors,
-    },
-    {
-      id: 'funcionarios',
-      label: 'Funcionários',
-      href: '/dashboard/usuarios',
-      icon: UserCheck,
     },
     {
       id: 'financeiro',
@@ -143,7 +143,7 @@ const navigationItems: Record<string, NavItem[]> = {
     {
       id: 'clientes',
       label: 'Clientes',
-      href: '/dashboard/clientes',
+      href: '/dashboard/usuarios',
       icon: Users,
     },
     {
