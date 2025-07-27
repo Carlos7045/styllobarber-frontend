@@ -134,13 +134,11 @@ export const ServicoFormModal: React.FC<ServicoFormModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      title={isEditing ? 'Editar Serviço' : 'Novo Serviço'}
       size="lg"
       className="max-h-[90vh] overflow-hidden"
     >
       <ModalHeader>
-        <ModalTitle>
-          {isEditing ? 'Editar Serviço' : 'Novo Serviço'}
-        </ModalTitle>
       </ModalHeader>
 
       <ModalContent className="flex-1 overflow-y-auto">

@@ -403,6 +403,8 @@ export function useAdminServicos(): UseAdminServicosReturn {
     }
   }, [hasPermission])
 
+
+
   // Função para atualizar ordem dos serviços
   const updateOrdem = useCallback(async (servicosOrdenados: { id: string; ordem: number }[]) => {
     if (!hasPermission) {

@@ -488,11 +488,11 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
         <Modal
             isOpen={isOpen}
             onClose={onClose}
+            title={stepTitles[currentStep]}
             size="lg"
             className="max-h-[90vh] overflow-hidden"
         >
             <ModalHeader>
-                <ModalTitle>{stepTitles[currentStep]}</ModalTitle>
 
                 {/* Indicador de progresso */}
                 <div className="flex items-center gap-2 mt-4">

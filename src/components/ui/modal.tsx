@@ -67,15 +67,15 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
             className={cn(modalVariants({ size }), className)}
             onEscapeKeyDown={closeOnEscape ? undefined : (e) => e.preventDefault()}
           >
+            {/* Título obrigatório para acessibilidade */}
+            <Dialog.Title className={title ? "text-lg font-semibold leading-none tracking-tight text-text-primary" : "sr-only"}>
+              {title || "Modal"}
+            </Dialog.Title>
+            
             {/* Header do modal */}
-            {(title || showCloseButton) && (
+            {(title || description || showCloseButton) && (
               <div className="flex items-center justify-between">
                 <div className="flex flex-col space-y-1.5">
-                  {title && (
-                    <Dialog.Title className="text-lg font-semibold leading-none tracking-tight text-text-primary">
-                      {title}
-                    </Dialog.Title>
-                  )}
                   {description && (
                     <Dialog.Description className="text-sm text-text-secondary">
                       {description}
