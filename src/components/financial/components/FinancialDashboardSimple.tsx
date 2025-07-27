@@ -379,7 +379,7 @@ export const FinancialDashboardSimple = () => {
           Acesso Rápido aos Relatórios
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <Card 
             className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
             onClick={() => router.push('/dashboard/financeiro/receitas')}
@@ -428,6 +428,32 @@ export const FinancialDashboardSimple = () => {
               <div>
                 <h3 className="font-medium text-gray-900">Comissões</h3>
                 <p className="text-sm text-gray-600">Performance dos barbeiros</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card 
+            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            onClick={() => router.push('/dashboard/financeiro/fluxo-caixa')}
+          >
+            <div className="flex items-center space-x-3">
+              <DollarSign className="h-8 w-8 text-indigo-600" />
+              <div>
+                <h3 className="font-medium text-gray-900">Fluxo de Caixa</h3>
+                <p className="text-sm text-gray-600">Controle em tempo real</p>
+              </div>
+            </div>
+          </Card>
+
+          <Card 
+            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-green-200 bg-green-50"
+            onClick={() => router.push('/dashboard/financeiro/pdv')}
+          >
+            <div className="flex items-center space-x-3">
+              <Calculator className="h-8 w-8 text-green-600" />
+              <div>
+                <h3 className="font-medium text-gray-900">PDV</h3>
+                <p className="text-sm text-gray-600">Registro rápido</p>
               </div>
             </div>
           </Card>
