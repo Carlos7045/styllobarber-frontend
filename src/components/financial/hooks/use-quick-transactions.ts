@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { QuickTransactionService, QuickTransactionData, TransactionResponse } from '../services/quick-transaction-service'
+import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
 
 interface UseQuickTransactionsOptions {
   autoRefresh?: boolean
@@ -38,6 +39,9 @@ export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}):
     refreshInterval = 10000 // 10 segundos
   } = options
 
+  // Obter filtros baseados nas permissões do barbeiro
+  const { getTransactionFilter } = useBarberFinancialFilter()
+
   // Estado
   const [historicoRecente, setHistoricoRecente] = useState<any[]>([])
   const [estatisticasDia, setEstatisticasDia] = useState({
@@ -57,7 +61,8 @@ export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}):
   const carregarHistorico = useCallback(async () => {
     try {
       setError(null)
-      const historico = await QuickTransactionService.obterHistoricoRecente(20)
+      const filtros = getTransactionFilter()
+      const historico = await QuickTransactionService.obterHistoricoRecente(20, filtros)
       setHistoricoRecente(historico)
     } catch (err) {
       console.error('Erro ao carregar histórico:', err)
@@ -65,13 +70,14 @@ export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}):
       setHistoricoRecente([])
       // Não definir erro para não quebrar a interface
     }
-  }, [])
+  }, [getTransactionFilter])
 
   // Carregar estatísticas do dia
   const carregarEstatisticas = useCallback(async () => {
     try {
       setError(null)
-      const stats = await QuickTransactionService.obterEstatisticasDia()
+      const filtros = getTransactionFilter()
+      const stats = await QuickTransactionService.obterEstatisticasDia(filtros)
       setEstatisticasDia(stats)
     } catch (err) {
       console.error('Erro ao carregar estatísticas:', err)
@@ -83,7 +89,7 @@ export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}):
         metodoPagamentoMaisUsado: 'DINHEIRO'
       })
     }
-  }, [])
+  }, [getTransactionFilter])
 
   // Registrar nova transação
   const registrarTransacao = useCallback(async (data: QuickTransactionData): Promise<TransactionResponse> => {

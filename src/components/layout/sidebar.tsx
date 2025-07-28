@@ -141,9 +141,9 @@ const navigationItems: Record<string, NavItem[]> = {
       badge: '2',
     },
     {
-      id: 'clientes',
-      label: 'Clientes',
-      href: '/dashboard/usuarios',
+      id: 'meus-clientes',
+      label: 'Meus Clientes',
+      href: '/dashboard/clientes',
       icon: Users,
     },
     {

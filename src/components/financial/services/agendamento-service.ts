@@ -24,16 +24,34 @@ export interface Agendamento {
 
 export class AgendamentoService {
   // Buscar clientes por nome, telefone ou email
-  static async buscarClientes(termo: string): Promise<Cliente[]> {
+  static async buscarClientes(
+    termo: string, 
+    filtros: { barbeiro_id?: string } = {}
+  ): Promise<Cliente[]> {
     try {
       if (termo.length < 2) return []
 
-      // Tentar buscar no banco real
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('id, nome, telefone, email, created_at')
-        .or(`nome.ilike.%${termo}%,telefone.ilike.%${termo}%,email.ilike.%${termo}%`)
-        .limit(10)
+      // Se há filtro de barbeiro, buscar apenas clientes que tiveram agendamentos com ele
+      let query
+      if (filtros.barbeiro_id) {
+        query = supabase
+          .from('clientes')
+          .select(`
+            id, nome, telefone, email, created_at,
+            agendamentos!inner(barbeiro_id)
+          `)
+          .or(`nome.ilike.%${termo}%,telefone.ilike.%${termo}%,email.ilike.%${termo}%`)
+          .eq('agendamentos.barbeiro_id', filtros.barbeiro_id)
+          .limit(10)
+      } else {
+        query = supabase
+          .from('clientes')
+          .select('id, nome, telefone, email, created_at')
+          .or(`nome.ilike.%${termo}%,telefone.ilike.%${termo}%,email.ilike.%${termo}%`)
+          .limit(10)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         console.log('Erro ao buscar clientes, usando dados mockados:', error)
@@ -59,10 +77,13 @@ export class AgendamentoService {
   }
 
   // Buscar agendamentos de um cliente
-  static async buscarAgendamentosCliente(clienteId: string): Promise<Agendamento[]> {
+  static async buscarAgendamentosCliente(
+    clienteId: string, 
+    filtros: { barbeiro_id?: string } = {}
+  ): Promise<Agendamento[]> {
     try {
       // Tentar buscar no banco real
-      const { data, error } = await supabase
+      let query = supabase
         .from('agendamentos')
         .select(`
           id,
@@ -71,6 +92,7 @@ export class AgendamentoService {
           status,
           observacoes,
           cliente_id,
+          barbeiro_id,
           clientes (nome),
           servicos (nome, descricao),
           funcionarios (nome)
@@ -78,6 +100,13 @@ export class AgendamentoService {
         .eq('cliente_id', clienteId)
         .order('data_agendamento', { ascending: false })
         .limit(20)
+
+      // Aplicar filtro de barbeiro se especificado
+      if (filtros.barbeiro_id) {
+        query = query.eq('barbeiro_id', filtros.barbeiro_id)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         console.log('Erro ao buscar agendamentos, usando dados mockados:', error)

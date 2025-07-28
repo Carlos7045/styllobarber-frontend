@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
+import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
 
 interface Agendamento {
   id: string
@@ -267,12 +268,16 @@ export const AgendamentoSelector = ({
   const [selectedAgendamento, setSelectedAgendamento] = useState<Agendamento | null>(null)
   const [loading, setLoading] = useState(true)
 
+  // Obter filtros baseados nas permissões do barbeiro
+  const { getAppointmentFilter } = useBarberFinancialFilter()
+
   useEffect(() => {
     // Carregar agendamentos do cliente
     const carregarAgendamentos = async () => {
       setLoading(true)
       try {
-        const agendamentosCliente = await AgendamentoService.buscarAgendamentosCliente(clienteId)
+        const filtros = getAppointmentFilter()
+        const agendamentosCliente = await AgendamentoService.buscarAgendamentosCliente(clienteId, filtros)
         setAgendamentos(agendamentosCliente)
       } catch (error) {
         console.error('Erro ao carregar agendamentos:', error)

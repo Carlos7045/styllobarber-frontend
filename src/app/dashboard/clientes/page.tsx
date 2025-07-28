@@ -1,10 +1,12 @@
 /**
  * Página de Gestão de Clientes
- * Apenas admins e funcionários podem acessar
+ * Admins veem todos os clientes, barbeiros veem apenas seus clientes
  */
 
-import { Metadata } from 'next'
-import { Users, Plus, Search, Filter } from 'lucide-react'
+'use client'
+
+
+import { Users, Plus, Search, Filter, Calendar, Phone, Mail, Star } from 'lucide-react'
 
 import { 
   Card, 
@@ -17,14 +19,12 @@ import {
 } from '@/components/ui'
 import { Container, Grid, Stack } from '@/components/layout'
 import { RouteGuard, PermissionGate } from '@/components/auth'
+import { useBarberPermissions } from '@/hooks/use-barber-permissions'
 
-export const metadata: Metadata = {
-  title: 'Clientes - StylloBarber',
-  description: 'Gestão de clientes da barbearia.',
-}
+// Removido metadata pois agora é client component
 
-// Dados mockados para demonstração (apenas clientes)
-const clientes = [
+// Dados mockados para demonstração
+const todosClientes = [
   {
     id: '1',
     nome: 'João Silva',
@@ -34,7 +34,10 @@ const clientes = [
     status: 'active',
     ultimoAgendamento: '2024-01-20',
     totalAgendamentos: 15,
-    pontosFidelidade: 150
+    pontosFidelidade: 150,
+    barbeiro: 'Carlos Henrique', // Cliente do barbeiro logado
+    servicoFavorito: 'Corte + Barba',
+    valorTotal: 675.00
   },
   {
     id: '2',
@@ -45,7 +48,10 @@ const clientes = [
     status: 'active',
     ultimoAgendamento: '2024-01-18',
     totalAgendamentos: 8,
-    pontosFidelidade: 80
+    pontosFidelidade: 80,
+    barbeiro: 'Carlos Henrique', // Cliente do barbeiro logado
+    servicoFavorito: 'Corte Simples',
+    valorTotal: 320.00
   },
   {
     id: '3',
@@ -56,11 +62,35 @@ const clientes = [
     status: 'inactive',
     ultimoAgendamento: '2023-12-15',
     totalAgendamentos: 3,
-    pontosFidelidade: 30
+    pontosFidelidade: 30,
+    barbeiro: 'Outro Barbeiro', // Cliente de outro barbeiro
+    servicoFavorito: 'Barba',
+    valorTotal: 90.00
+  },
+  {
+    id: '4',
+    nome: 'Roberto Lima',
+    email: 'roberto@email.com',
+    telefone: '(11) 99999-4444',
+    role: 'client',
+    status: 'active',
+    ultimoAgendamento: '2024-01-22',
+    totalAgendamentos: 12,
+    pontosFidelidade: 120,
+    barbeiro: 'Carlos Henrique', // Cliente do barbeiro logado
+    servicoFavorito: 'Corte + Barba',
+    valorTotal: 540.00
   }
 ]
 
 export default function ClientesPage() {
+  const { barbeiroNome, permissions, isBarber, isAdmin } = useBarberPermissions()
+  
+  // Filtrar clientes baseado no role
+  const clientes = isAdmin 
+    ? todosClientes 
+    : todosClientes.filter(cliente => cliente.barbeiro === barbeiroNome)
+
   return (
     <RouteGuard requiredRoles={['admin', 'barber']}>
       <Container className="py-6">
@@ -69,10 +99,13 @@ export default function ClientesPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-text-primary mb-2">
-                Gestão de Clientes
+                {isBarber ? 'Meus Clientes' : 'Gestão de Clientes'}
               </h1>
               <p className="text-text-muted">
-                Gerencie os clientes da sua barbearia
+                {isBarber 
+                  ? `Seus clientes atendidos, ${barbeiroNome || 'Barbeiro'}`
+                  : 'Gerencie todos os clientes da barbearia'
+                }
               </p>
             </div>
             
@@ -114,7 +147,7 @@ export default function ClientesPage() {
                     {clientes.length}
                   </div>
                   <div className="text-sm text-text-muted">
-                    Total de Clientes
+                    {isBarber ? 'Meus Clientes' : 'Total de Clientes'}
                   </div>
                 </div>
               </CardContent>
@@ -136,11 +169,11 @@ export default function ClientesPage() {
             <Card>
               <CardContent className="py-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">
-                    {clientes.filter(c => c.status === 'inactive').length}
+                  <div className="text-2xl font-bold text-blue-600">
+                    {clientes.length > 0 ? Math.round(clientes.reduce((acc, c) => acc + c.totalAgendamentos, 0) / clientes.length) : 0}
                   </div>
                   <div className="text-sm text-text-muted">
-                    Inativos
+                    Média Agendamentos
                   </div>
                 </div>
               </CardContent>
@@ -149,11 +182,11 @@ export default function ClientesPage() {
             <Card>
               <CardContent className="py-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {Math.round(clientes.reduce((acc, c) => acc + c.totalAgendamentos, 0) / clientes.length)}
+                  <div className="text-2xl font-bold text-green-600">
+                    R$ {clientes.reduce((acc, c) => acc + (c.valorTotal || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
                   <div className="text-sm text-text-muted">
-                    Média Agendamentos
+                    {isBarber ? 'Receita Gerada' : 'Receita Total'}
                   </div>
                 </div>
               </CardContent>
@@ -165,68 +198,107 @@ export default function ClientesPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Users className="h-5 w-5" />
-                Lista de Clientes
+                {isBarber ? 'Meus Clientes' : 'Lista de Clientes'}
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {clientes.map((cliente) => (
-                  <div
-                    key={cliente.id}
-                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 bg-primary-gold/10 rounded-full flex items-center justify-center">
-                        <span className="text-primary-gold font-semibold">
-                          {cliente.nome.charAt(0)}
-                        </span>
-                      </div>
-                      
-                      <div>
-                        <h3 className="font-semibold text-text-primary">
-                          {cliente.nome}
-                        </h3>
-                        <p className="text-sm text-text-muted">
-                          {cliente.email} • {cliente.telefone}
-                        </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge 
-                            variant={cliente.status === 'active' ? 'success' : 'secondary'}
-                          >
-                            {cliente.status === 'active' ? 'Ativo' : 'Inativo'}
-                          </Badge>
-                          <span className="text-xs text-text-muted">
-                            {cliente.totalAgendamentos} agendamentos
-                          </span>
-                          <span className="text-xs text-primary-gold">
-                            {cliente.pontosFidelidade} pontos
+              {clientes.length === 0 ? (
+                <div className="text-center py-12">
+                  <Users className="h-12 w-12 mx-auto text-gray-300 mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    {isBarber ? 'Nenhum cliente encontrado' : 'Nenhum cliente cadastrado'}
+                  </h3>
+                  <p className="text-gray-500">
+                    {isBarber 
+                      ? 'Você ainda não atendeu nenhum cliente.'
+                      : 'Comece adicionando o primeiro cliente da barbearia.'
+                    }
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {clientes.map((cliente) => (
+                    <div
+                      key={cliente.id}
+                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-primary-gold/10 rounded-full flex items-center justify-center">
+                          <span className="text-primary-gold font-semibold text-lg">
+                            {cliente.nome.charAt(0)}
                           </span>
                         </div>
+                        
+                        <div>
+                          <h3 className="font-semibold text-text-primary text-lg">
+                            {cliente.nome}
+                          </h3>
+                          <div className="flex items-center gap-4 text-sm text-text-muted mt-1">
+                            <div className="flex items-center gap-1">
+                              <Mail className="h-3 w-3" />
+                              {cliente.email}
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Phone className="h-3 w-3" />
+                              {cliente.telefone}
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 mt-2">
+                            <Badge 
+                              variant={cliente.status === 'active' ? 'success' : 'secondary'}
+                            >
+                              {cliente.status === 'active' ? 'Ativo' : 'Inativo'}
+                            </Badge>
+                            <span className="text-xs text-text-muted flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {cliente.totalAgendamentos} agendamentos
+                            </span>
+                            <span className="text-xs text-primary-gold flex items-center gap-1">
+                              <Star className="h-3 w-3" />
+                              {cliente.pontosFidelidade} pontos
+                            </span>
+                            {isBarber && (
+                              <span className="text-xs text-green-600 font-medium">
+                                R$ {cliente.valorTotal?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} gerados
+                              </span>
+                            )}
+                          </div>
+                          {cliente.servicoFavorito && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              Serviço favorito: {cliente.servicoFavorito}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-2">
-                      <div className="text-right text-sm">
-                        <div className="text-text-muted">Último agendamento</div>
-                        <div className="font-medium">
-                          {new Date(cliente.ultimoAgendamento).toLocaleDateString('pt-BR')}
+                      <div className="flex items-center gap-4">
+                        <div className="text-right text-sm">
+                          <div className="text-text-muted">Último agendamento</div>
+                          <div className="font-medium">
+                            {new Date(cliente.ultimoAgendamento).toLocaleDateString('pt-BR')}
+                          </div>
                         </div>
-                      </div>
-                      
-                      <PermissionGate requiredRole="admin">
-                        <div className="flex items-center gap-1 ml-4">
+                        
+                        <div className="flex items-center gap-2">
                           <Button variant="outline" size="sm">
                             Ver Detalhes
                           </Button>
-                          <Button variant="outline" size="sm">
-                            Editar
-                          </Button>
+                          {isBarber && (
+                            <Button variant="outline" size="sm" className="bg-green-50 border-green-200 text-green-700 hover:bg-green-100">
+                              Novo Agendamento
+                            </Button>
+                          )}
+                          <PermissionGate requiredRole="admin">
+                            <Button variant="outline" size="sm">
+                              Editar
+                            </Button>
+                          </PermissionGate>
                         </div>
-                      </PermissionGate>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
         </Stack>

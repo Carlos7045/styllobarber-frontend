@@ -1,6 +1,7 @@
 // Serviço para gerenciar transações rápidas do PDV
 import { supabase } from '@/lib/supabase'
 import { AgendamentoService } from './agendamento-service'
+import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
 
 export interface QuickTransactionData {
   tipo: 'ENTRADA' | 'SAIDA'
@@ -149,10 +150,13 @@ export class QuickTransactionService {
   }
 
   // Obter histórico de transações recentes
-  static async obterHistoricoRecente(limite = 10): Promise<any[]> {
+  static async obterHistoricoRecente(
+    limite = 10, 
+    filtros: { barbeiro_id?: string } = {}
+  ): Promise<any[]> {
     try {
       // Primeiro, tentar buscar com joins
-      let { data, error } = await supabase
+      let query = supabase
         .from('transacoes_financeiras')
         .select(`
           id,
@@ -168,6 +172,13 @@ export class QuickTransactionService {
         `)
         .order('data_transacao', { ascending: false })
         .limit(limite)
+
+      // Aplicar filtro de barbeiro se especificado
+      if (filtros.barbeiro_id) {
+        query = query.eq('barbeiro_id', filtros.barbeiro_id)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         console.error('Erro ao buscar histórico:', error)
@@ -201,7 +212,9 @@ export class QuickTransactionService {
   }
 
   // Obter estatísticas do dia
-  static async obterEstatisticasDia(): Promise<{
+  static async obterEstatisticasDia(
+    filtros: { barbeiro_id?: string } = {}
+  ): Promise<{
     totalEntradas: number
     totalSaidas: number
     numeroTransacoes: number
@@ -210,12 +223,19 @@ export class QuickTransactionService {
     try {
       const hoje = new Date().toISOString().split('T')[0]
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('transacoes_financeiras')
         .select('tipo, valor, metodo_pagamento')
         .gte('data_transacao', `${hoje}T00:00:00`)
         .lte('data_transacao', `${hoje}T23:59:59`)
         .eq('status', 'CONFIRMADA')
+
+      // Aplicar filtro de barbeiro se especificado
+      if (filtros.barbeiro_id) {
+        query = query.eq('barbeiro_id', filtros.barbeiro_id)
+      }
+
+      const { data, error } = await query
 
       if (error || !data) {
         console.log('Usando estatísticas mockadas devido ao erro:', error)

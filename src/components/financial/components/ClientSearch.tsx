@@ -22,6 +22,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
+import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
 
 interface Cliente {
   id: string
@@ -332,6 +333,9 @@ export const ClientSearch = ({
   const [loading, setLoading] = useState(false)
   const [showResults, setShowResults] = useState(false)
 
+  // Obter filtros baseados nas permissões do barbeiro
+  const { getClientFilter, getAppointmentFilter } = useBarberFinancialFilter()
+
   // Buscar clientes usando o serviço
   const buscarClientes = useCallback(async (termo: string) => {
     if (termo.length < 2) {
@@ -343,13 +347,19 @@ export const ClientSearch = ({
     setLoading(true)
     
     try {
-      const clientesEncontrados = await AgendamentoService.buscarClientes(termo)
+      const filtrosCliente = getClientFilter()
+      const filtrosAgendamento = getAppointmentFilter()
+      
+      const clientesEncontrados = await AgendamentoService.buscarClientes(termo, filtrosCliente)
       setClientes(clientesEncontrados)
       
       // Buscar agendamentos para cada cliente encontrado
       const todosAgendamentos: Agendamento[] = []
       for (const cliente of clientesEncontrados) {
-        const agendamentosCliente = await AgendamentoService.buscarAgendamentosCliente(cliente.id)
+        const agendamentosCliente = await AgendamentoService.buscarAgendamentosCliente(
+          cliente.id, 
+          filtrosAgendamento
+        )
         todosAgendamentos.push(...agendamentosCliente)
       }
       

@@ -19,6 +19,8 @@ import {
 } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { BarberDashboard } from './BarberDashboard'
+import { useBarberPermissions } from '@/hooks/use-barber-permissions'
 import { 
   LineChart,
   Line,
@@ -173,6 +175,14 @@ export const FinancialDashboardSimple = () => {
   const [selectedPeriod, setSelectedPeriod] = useState('mes')
   const [selectedBarbeiro, setSelectedBarbeiro] = useState('')
   const [lastRefresh, setLastRefresh] = useState(new Date())
+  
+  // Verificar se é barbeiro para mostrar dashboard específico
+  const { isBarber, isAdmin } = useBarberPermissions()
+
+  // Se for barbeiro (não admin), mostrar dashboard específico
+  if (isBarber && !isAdmin) {
+    return <BarberDashboard />
+  }
 
   const handleRefresh = () => {
     setLastRefresh(new Date())

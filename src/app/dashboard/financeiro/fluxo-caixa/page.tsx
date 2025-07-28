@@ -19,7 +19,9 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { CashFlowManager } from '@/components/financial/components/CashFlowManager'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
+import { PermissionGuard, FinancialDataGuard } from '@/components/auth/PermissionGuard'
 import { useCashFlow, useCashFlowAlerts } from '@/components/financial/hooks/use-cash-flow'
+import { useBarberPermissions } from '@/hooks/use-barber-permissions'
 import { formatCurrency } from '@/components/financial/utils'
 
 // Componente de configurações rápidas
@@ -150,6 +152,7 @@ const AlertsPanel = () => {
 // Componente principal da página
 export default function FluxoCaixaPage() {
   const router = useRouter()
+  const { permissions, isBarber } = useBarberPermissions()
   const { 
     resumo, 
     loading, 
@@ -207,8 +210,29 @@ export default function FluxoCaixaPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PermissionGuard
+      customCheck={(perms) => perms.canViewCashFlow || perms.canViewOwnFinancialData}
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              {isBarber ? 'Acesso Limitado' : 'Acesso Restrito'}
+            </h2>
+            <p className="text-gray-600 mb-6">
+              {isBarber 
+                ? 'Como barbeiro, você tem acesso limitado ao fluxo de caixa. Use o PDV para suas transações.'
+                : 'Você não tem permissão para acessar o fluxo de caixa completo.'
+              }
+            </p>
+            <Button onClick={() => router.push('/dashboard/financeiro/pdv')}>
+              Ir para o PDV
+            </Button>
+          </div>
+        </div>
+      }
+    >
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -359,7 +383,8 @@ export default function FluxoCaixaPage() {
             <RecentTransactions limit={8} />
           </motion.div>
         </div>
+        </div>
       </div>
-    </div>
+    </PermissionGuard>
   )
 }

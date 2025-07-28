@@ -10,6 +10,9 @@ export * from './hooks/use-metrics'
 export * from './hooks/use-reports'
 export * from './hooks/use-cash-flow'
 export * from './hooks/use-quick-transactions'
+
+// Hooks de permissões
+export { useBarberPermissions, useBarberFinancialFilter, usePermissionCheck } from '@/hooks/use-barber-permissions'
 export * from './components/CommissionConfig'
 export * from './components/CommissionReport'
 export * from './components/ExpenseForm'
@@ -27,6 +30,7 @@ export * from './components/RecentTransactions'
 export * from './components/PDVTest'
 export * from './components/ClientSearch'
 export * from './components/AgendamentoSelector'
+export * from './components/BarberDashboard'
 export * from './components/ReportsCenter'
 export * from './components/ReceitasReport'
 
@@ -43,7 +47,19 @@ export { RecentTransactions } from './components/RecentTransactions'
 export { PDVTest } from './components/PDVTest'
 export { ClientSearch } from './components/ClientSearch'
 export { AgendamentoSelector } from './components/AgendamentoSelector'
+export { BarberDashboard } from './components/BarberDashboard'
 
 // Reports components
 export { ReportsCenter } from './components/ReportsCenter'
 export { ReceitasReport } from './components/ReceitasReport'
+
+// Componentes de proteção
+export { 
+  PermissionGuard, 
+  FinancialDataGuard, 
+  PDVGuard, 
+  ClientDataGuard, 
+  AdminGuard,
+  ConditionalRender,
+  useConditionalRender
+} from '@/components/auth/PermissionGuard'

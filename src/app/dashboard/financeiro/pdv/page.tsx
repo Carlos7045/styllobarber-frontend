@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { QuickTransactionPDV } from '@/components/financial/components/QuickTransactionPDV'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
 import { PDVTest } from '@/components/financial/components/PDVTest'
+import { PDVGuard } from '@/components/auth/PermissionGuard'
 import { useQuickTransactions, useRealtimeStats } from '@/components/financial/hooks/use-quick-transactions'
 import { formatCurrency } from '@/components/financial/utils'
 
@@ -128,8 +129,9 @@ export default function PDVPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <PDVGuard>
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
@@ -251,7 +253,8 @@ export default function PDVPage() {
             </div>
           </Card>
         </motion.div>
+        </div>
       </div>
-    </div>
+    </PDVGuard>
   )
 }
