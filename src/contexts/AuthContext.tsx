@@ -1199,30 +1199,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   // Helper para verificar role
   const hasRole = (role: 'admin' | 'barber' | 'client' | 'saas_owner'): boolean => {
-    return profile?.role === role
+    if (!profile) return false
+    return profile.role === role
   }
 
   // Helper para verificar permissões
   const hasPermission = (permission: string): boolean => {
     if (!profile) return false
 
-    // Definir permissões por role
+    // Importar mapeamento de permissões
     const rolePermissions: Record<string, string[]> = {
       saas_owner: ['*'], // SaaS Owner tem todas as permissões
-      admin: ['*'], // Admin tem todas as permissões
+      admin: [
+        // Usuários
+        'manage_users', 'view_users', 'create_users', 'edit_users', 'delete_users',
+        // Funcionários
+        'manage_employees', 'view_employees', 'create_employees', 'edit_employees', 'delete_employees',
+        // Serviços
+        'manage_services', 'view_services', 'create_services', 'edit_services', 'delete_services',
+        // Agendamentos
+        'manage_all_appointments', 'view_all_appointments', 'create_appointments', 'cancel_appointments',
+        // Financeiro
+        'view_financial', 'manage_financial', 'view_all_financial', 'manage_transactions', 'view_reports', 'export_data',
+        // Configurações
+        'manage_settings', 'view_settings',
+        // Sistema
+        'manage_roles'
+      ],
       barber: [
-        'view_appointments',
-        'manage_own_appointments',
-        'view_clients',
+        // Usuários (limitado)
+        'view_users',
+        // Serviços (visualização)
         'view_services',
-        'view_financial'
+        // Agendamentos (próprios e visualização)
+        'view_all_appointments', 'manage_own_appointments', 'create_appointments',
+        // Financeiro (próprio)
+        'view_financial', 'view_own_financial', 'view_reports',
+        // Configurações (limitado)
+        'view_settings'
       ],
       client: [
-        'view_own_appointments',
-        'create_appointments',
-        'cancel_own_appointments',
-        'view_own_profile',
-        'update_own_profile'
+        // Agendamentos (próprios)
+        'view_own_appointments', 'create_appointments', 'cancel_appointments',
+        // Serviços (visualização)
+        'view_services',
+        // Configurações (próprias)
+        'view_settings'
       ]
     }
 

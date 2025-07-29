@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/u
 import { NovoAgendamentoModal } from '@/components/client/NovoAgendamentoModal'
 import { ServicoFormModal } from '@/components/admin/ServicoFormModal'
 import { useAuth } from '@/hooks/use-auth'
+import { usePermissions, PERMISSIONS } from '@/hooks/use-permissions'
 import { useAdminServicos, type ServicoAdmin } from '@/hooks/use-admin-servicos'
 import { useServices } from '@/hooks/use-services'
 import { Scissors, Plus, Edit, Trash2, Calendar, BarChart3 } from 'lucide-react'
@@ -17,14 +18,14 @@ import { formatarMoeda } from '@/lib/utils'
  * Administradores: gerenciar serviços completo
  */
 export default function ServicosPage() {
-  const { hasRole } = useAuth()
+  const { canManageServices, hasPermission } = usePermissions()
   const [isAgendamentoOpen, setIsAgendamentoOpen] = useState(false)
   const [selectedServiceId, setSelectedServiceId] = useState<string>()
   const [isServicoFormOpen, setIsServicoFormOpen] = useState(false)
   const [selectedServico, setSelectedServico] = useState<ServicoAdmin | null>(null)
 
-  // Usar hook apropriado baseado no role
-  const isAdmin = hasRole('admin') || hasRole('saas_owner')
+  // Usar hook apropriado baseado nas permissões
+  const isAdmin = canManageServices
 
   // Hook para clientes (dados básicos)
   const { services: servicosCliente, loading: loadingCliente } = useServices()

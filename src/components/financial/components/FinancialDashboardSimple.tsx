@@ -21,6 +21,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { BarberDashboard } from './BarberDashboard'
 import { useBarberPermissions } from '@/hooks/use-barber-permissions'
+import { useFinancialData } from '@/hooks/use-financial-data'
+import { DataSourceIndicator, useDataSource } from './DataSourceIndicator'
 import { 
   LineChart,
   Line,
@@ -34,35 +36,7 @@ import {
   ResponsiveContainer
 } from 'recharts'
 
-// Dados mockados
-const mockData = {
-  metricas: {
-    receitaBruta: 15000,
-    receitaLiquida: 12000,
-    despesasTotal: 3000,
-    lucroLiquido: 9000,
-    ticketMedio: 75,
-    numeroAtendimentos: 200,
-    taxaCrescimento: 15.5,
-    comissoesPendentes: 2500
-  },
-  evolucaoTemporal: [
-    { mes: 'Jan', receitas: 12000, despesas: 2800, lucro: 9200 },
-    { mes: 'Fev', receitas: 13500, despesas: 2900, lucro: 10600 },
-    { mes: 'Mar', receitas: 14200, despesas: 3100, lucro: 11100 },
-    { mes: 'Abr', receitas: 15000, despesas: 3000, lucro: 12000 }
-  ],
-  performanceBarbeiros: [
-    { nome: 'João Silva', receitaGerada: 8000 },
-    { nome: 'Pedro Santos', receitaGerada: 7000 },
-    { nome: 'Carlos Oliveira', receitaGerada: 5500 }
-  ],
-  barbeiros: [
-    { id: '1', nome: 'João Silva' },
-    { id: '2', nome: 'Pedro Santos' },
-    { id: '3', nome: 'Carlos Oliveira' }
-  ]
-}
+// Dados mockados removidos - agora usando dados reais
 
 // Componente de Card de Métrica
 const MetricCard = ({ 
@@ -178,6 +152,9 @@ export const FinancialDashboardSimple = () => {
   
   // Verificar se é barbeiro para mostrar dashboard específico
   const { isBarber, isAdmin } = useBarberPermissions()
+  
+  // Buscar dados financeiros reais
+  const financialData = useFinancialData(selectedPeriod)
 
   // Se for barbeiro (não admin), mostrar dashboard específico
   if (isBarber && !isAdmin) {
@@ -287,7 +264,7 @@ export const FinancialDashboardSimple = () => {
                 className="text-sm border-2 border-gray-300 dark:border-secondary-graphite-card/50 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-primary-gold bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white font-semibold shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <option value="">Todos os barbeiros</option>
-                {mockData.barbeiros.map((barbeiro) => (
+                {financialData.barbeiros.map((barbeiro) => (
                   <option key={barbeiro.id} value={barbeiro.id}>
                     {barbeiro.nome}
                   </option>
@@ -302,34 +279,46 @@ export const FinancialDashboardSimple = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <MetricCard
           title="Receita Bruta"
-          value={mockData.metricas.receitaBruta}
-          previousValue={13000}
+          value={financialData.loading ? 0 : financialData.metricas.receitaBruta}
+          previousValue={financialData.loading ? 0 : financialData.metricasAnteriores.receitaBruta}
           icon={DollarSign}
           format="currency"
         />
         <MetricCard
           title="Receita Líquida"
-          value={mockData.metricas.receitaLiquida}
-          previousValue={10400}
+          value={financialData.loading ? 0 : financialData.metricas.receitaLiquida}
+          previousValue={financialData.loading ? 0 : financialData.metricasAnteriores.receitaLiquida}
           icon={TrendingUp}
           format="currency"
         />
         <MetricCard
           title="Despesas Totais"
-          value={mockData.metricas.despesasTotal}
-          previousValue={2600}
+          value={financialData.loading ? 0 : financialData.metricas.despesasTotal}
+          previousValue={financialData.loading ? 0 : financialData.metricasAnteriores.despesasTotal}
           icon={TrendingDown}
           format="currency"
           trend="down"
         />
         <MetricCard
           title="Lucro Líquido"
-          value={mockData.metricas.lucroLiquido}
-          previousValue={7800}
+          value={financialData.loading ? 0 : financialData.metricas.lucroLiquido}
+          previousValue={financialData.loading ? 0 : financialData.metricasAnteriores.lucroLiquido}
           icon={Calculator}
           format="currency"
         />
       </div>
+
+      {/* Indicador de erro se houver */}
+      {financialData.error && (
+        <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-4">
+          <div className="flex items-center space-x-2">
+            <AlertCircle className="h-5 w-5 text-orange-600 dark:text-orange-400" />
+            <p className="text-orange-800 dark:text-orange-200 font-medium">
+              {financialData.error}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Indicadores de Performance */}
       <motion.div
@@ -337,9 +326,18 @@ export const FinancialDashboardSimple = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Indicadores de Performance
-        </h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
+            Indicadores de Performance
+          </h2>
+          <DataSourceIndicator 
+            source={useDataSource(
+              !financialData.loading && financialData.metricas.numeroAtendimentos > 0,
+              financialData.error !== null
+            )}
+            size="sm"
+          />
+        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-blue-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
@@ -347,7 +345,7 @@ export const FinancialDashboardSimple = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Ticket Médio</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  R$ {mockData.metricas.ticketMedio.toFixed(2)}
+                  {financialData.loading ? '...' : `R$ ${financialData.metricas.ticketMedio.toFixed(2)}`}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl shadow-lg">
@@ -361,7 +359,7 @@ export const FinancialDashboardSimple = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Atendimentos</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {mockData.metricas.numeroAtendimentos}
+                  {financialData.loading ? '...' : financialData.metricas.numeroAtendimentos}
                 </p>
               </div>
               <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl shadow-lg">
@@ -375,7 +373,7 @@ export const FinancialDashboardSimple = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Taxa de Crescimento</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {mockData.metricas.taxaCrescimento.toFixed(1)}%
+                  {financialData.loading ? '...' : `${financialData.metricas.taxaCrescimento.toFixed(1)}%`}
                 </p>
               </div>
               <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl shadow-lg">
@@ -389,7 +387,11 @@ export const FinancialDashboardSimple = () => {
               <div>
                 <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Margem de Lucro</p>
                 <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {((mockData.metricas.lucroLiquido / mockData.metricas.receitaBruta) * 100).toFixed(1)}%
+                  {financialData.loading ? '...' : 
+                    financialData.metricas.receitaBruta > 0 
+                      ? `${((financialData.metricas.lucroLiquido / financialData.metricas.receitaBruta) * 100).toFixed(1)}%`
+                      : '0%'
+                  }
                 </p>
               </div>
               <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl shadow-lg">
@@ -516,110 +518,140 @@ export const FinancialDashboardSimple = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de Evolução */}
           <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 shadow-lg">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-              <div className="p-2 bg-primary-gold/10 rounded-lg mr-3">
-                <TrendingUp className="h-5 w-5 text-primary-gold" />
-              </div>
-              Evolução Financeira
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-primary-gold/10 rounded-lg mr-3">
+                  <TrendingUp className="h-5 w-5 text-primary-gold" />
+                </div>
+                Evolução Financeira
+              </h3>
+              <DataSourceIndicator 
+                source={useDataSource(
+                  financialData.evolucaoTemporal.length > 0 && 
+                  financialData.evolucaoTemporal.some(item => item.receitas > 0)
+                )}
+                size="sm"
+              />
+            </div>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockData.evolucaoTemporal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#D1D5DB" className="dark:stroke-gray-600" />
-                  <XAxis dataKey="mes" stroke="#374151" className="dark:stroke-gray-300" fontSize={12} />
-                  <YAxis 
-                    stroke="#374151" 
-                    className="dark:stroke-gray-300"
-                    fontSize={12}
-                    tickFormatter={(value) => 
-                      new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0
-                      }).format(value)
-                    }
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Line
-                    type="monotone"
-                    dataKey="receitas"
-                    stroke="#10B981"
-                    strokeWidth={4}
-                    name="Receitas"
-                    dot={{ fill: '#10B981', strokeWidth: 2, r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="despesas"
-                    stroke="#F59E0B"
-                    strokeWidth={4}
-                    name="Despesas"
-                    dot={{ fill: '#F59E0B', strokeWidth: 2, r: 6 }}
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="lucro"
-                    stroke="#3B82F6"
-                    strokeWidth={4}
-                    name="Lucro"
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {financialData.loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-gold"></div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={financialData.evolucaoTemporal}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#D1D5DB" className="dark:stroke-gray-600" />
+                    <XAxis dataKey="mes" stroke="#374151" className="dark:stroke-gray-300" fontSize={12} />
+                    <YAxis 
+                      stroke="#374151" 
+                      className="dark:stroke-gray-300"
+                      fontSize={12}
+                      tickFormatter={(value) => 
+                        new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        }).format(value)
+                      }
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="receitas"
+                      stroke="#10B981"
+                      strokeWidth={4}
+                      name="Receitas"
+                      dot={{ fill: '#10B981', strokeWidth: 2, r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="despesas"
+                      stroke="#F59E0B"
+                      strokeWidth={4}
+                      name="Despesas"
+                      dot={{ fill: '#F59E0B', strokeWidth: 2, r: 6 }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="lucro"
+                      stroke="#3B82F6"
+                      strokeWidth={4}
+                      name="Lucro"
+                      dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </Card>
 
           {/* Gráfico de Performance dos Barbeiros */}
           <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 shadow-lg">
-            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-              <div className="p-2 bg-primary-gold/10 rounded-lg mr-3">
-                <Users className="h-5 w-5 text-primary-gold" />
-              </div>
-              Performance dos Barbeiros
-            </h3>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center">
+                <div className="p-2 bg-primary-gold/10 rounded-lg mr-3">
+                  <Users className="h-5 w-5 text-primary-gold" />
+                </div>
+                Performance dos Barbeiros
+              </h3>
+              <DataSourceIndicator 
+                source={useDataSource(
+                  financialData.performanceBarbeiros.length > 0 && 
+                  !financialData.performanceBarbeiros.some(b => b.id.startsWith('fallback-'))
+                )}
+                size="sm"
+              />
+            </div>
             <div className="h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockData.performanceBarbeiros}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#D1D5DB" className="dark:stroke-gray-600" />
-                  <XAxis 
-                    dataKey="nome" 
-                    stroke="#374151"
-                    className="dark:stroke-gray-300"
-                    fontSize={12}
-                    angle={-45}
-                    textAnchor="end"
-                    height={80}
-                  />
-                  <YAxis 
-                    stroke="#374151"
-                    className="dark:stroke-gray-300"
-                    fontSize={12}
-                    tickFormatter={(value) => 
-                      new Intl.NumberFormat('pt-BR', {
-                        style: 'currency',
-                        currency: 'BRL',
-                        minimumFractionDigits: 0
-                      }).format(value)
-                    }
-                  />
-                  <Tooltip content={<CustomTooltip />} />
-                  <Legend />
-                  <Bar
-                    dataKey="receitaGerada"
-                    fill="#8B5CF6"
-                    name="Receita Gerada"
-                    radius={[6, 6, 0, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
+              {financialData.loading ? (
+                <div className="flex items-center justify-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-gold"></div>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={financialData.performanceBarbeiros}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#D1D5DB" className="dark:stroke-gray-600" />
+                    <XAxis 
+                      dataKey="nome" 
+                      stroke="#374151"
+                      className="dark:stroke-gray-300"
+                      fontSize={12}
+                      angle={-45}
+                      textAnchor="end"
+                      height={80}
+                    />
+                    <YAxis 
+                      stroke="#374151"
+                      className="dark:stroke-gray-300"
+                      fontSize={12}
+                      tickFormatter={(value) => 
+                        new Intl.NumberFormat('pt-BR', {
+                          style: 'currency',
+                          currency: 'BRL',
+                          minimumFractionDigits: 0
+                        }).format(value)
+                      }
+                    />
+                    <Tooltip content={<CustomTooltip />} />
+                    <Legend />
+                    <Bar
+                      dataKey="receitaGerada"
+                      fill="#8B5CF6"
+                      name="Receita Gerada"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </Card>
         </div>
       </motion.div>
 
       {/* Alerta de Comissões Pendentes */}
-      {mockData.metricas.comissoesPendentes > 0 && (
+      {!financialData.loading && financialData.metricas.comissoesPendentes > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -633,7 +665,7 @@ export const FinancialDashboardSimple = () => {
                   Comissões Pendentes
                 </h3>
                 <p className="text-orange-700 dark:text-orange-300 mt-1">
-                  Há R$ {mockData.metricas.comissoesPendentes.toFixed(2)} em comissões pendentes de pagamento
+                  Há R$ {financialData.metricas.comissoesPendentes.toFixed(2)} em comissões pendentes de pagamento
                 </p>
               </div>
             </div>

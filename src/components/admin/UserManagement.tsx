@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { Users, Search, Filter, MoreHorizontal, Edit, Trash2, UserCheck, UserX, Plus, Download, RefreshCw } from 'lucide-react'
 
 import { useAuth, UserProfile } from '@/hooks/use-auth'
+import { usePermissions, PERMISSIONS } from '@/hooks/use-permissions'
+import { PermissionGuard, AdminOnly } from '@/components/auth/PermissionGuard'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
 import { UserEditModal } from './UserEditModal'
@@ -15,7 +17,8 @@ interface UserManagementProps {
 }
 
 export function UserManagement({ className }: UserManagementProps) {
-  const { hasRole, profile } = useAuth()
+  const { profile } = useAuth()
+  const { canManageUsers, hasPermission } = usePermissions()
   const [users, setUsers] = useState<UserProfile[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -24,9 +27,6 @@ export function UserManagement({ className }: UserManagementProps) {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isNovoFuncionarioOpen, setIsNovoFuncionarioOpen] = useState(false)
-  
-  // Verificar permissão uma única vez
-  const isAuthorized = profile?.role === 'admin' || profile?.role === 'saas_owner'
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean
     title: string
@@ -43,32 +43,10 @@ export function UserManagement({ className }: UserManagementProps) {
 
   // Carregar usuários
   useEffect(() => {
-    if (isAuthorized && profile?.id) {
+    if (canManageUsers && profile?.id) {
       loadUsers()
     }
-  }, [isAuthorized, profile?.id])
-
-  // Mostrar loading se ainda não carregou o perfil
-  if (!profile) {
-    return (
-      <Card className={className}>
-        <CardContent className="flex items-center justify-center py-12">
-          <p className="text-gray-600 dark:text-gray-300">Carregando...</p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Verificar se é admin
-  if (!isAuthorized) {
-    return (
-      <Card className={className}>
-        <CardContent className="flex items-center justify-center py-12">
-          <p className="text-gray-600 dark:text-gray-300">Acesso negado. Apenas administradores podem gerenciar usuários.</p>
-        </CardContent>
-      </Card>
-    )
-  }
+  }, [canManageUsers, profile?.id])
 
   const loadUsers = async () => {
     try {
@@ -324,45 +302,54 @@ export function UserManagement({ className }: UserManagementProps) {
   }
 
   return (
-    <Card className={className}>
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
-            Gestão de Clientes
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <div className="text-sm text-gray-600 dark:text-gray-300 mr-4">
-              {filteredUsers.length} cliente{filteredUsers.length !== 1 ? 's' : ''}
+    <PermissionGuard 
+      requiredPermissions={[PERMISSIONS.MANAGE_USERS]} 
+      type="component"
+      accessDeniedMessage="Apenas administradores podem gerenciar usuários."
+    >
+      <Card className={className}>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Gestão de Clientes
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <div className="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                {filteredUsers.length} cliente{filteredUsers.length !== 1 ? 's' : ''}
+              </div>
+              <PermissionGuard requiredPermissions={[PERMISSIONS.CREATE_USERS]}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsNovoFuncionarioOpen(true)}
+                  className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black border-primary-gold"
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Cliente
+                </Button>
+              </PermissionGuard>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={loading}
+              >
+                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+              </Button>
+              <PermissionGuard requiredPermissions={[PERMISSIONS.EXPORT_DATA]}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportUsers}
+                  disabled={loading || filteredUsers.length === 0}
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </PermissionGuard>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setIsNovoFuncionarioOpen(true)}
-              className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black border-primary-gold"
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Cliente
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleRefresh}
-              disabled={loading}
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleExportUsers}
-              disabled={loading || filteredUsers.length === 0}
-            >
-              <Download className="h-4 w-4" />
-            </Button>
           </div>
-        </div>
-      </CardHeader>
+        </CardHeader>
 
       <CardContent className="space-y-6">
         {/* Filtros */}
@@ -557,5 +544,6 @@ export function UserManagement({ className }: UserManagementProps) {
         }}
       />
     </Card>
+  </PermissionGuard>
   )
 }

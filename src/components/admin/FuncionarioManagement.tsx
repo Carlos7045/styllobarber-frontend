@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react'
 import { Users, Search, Filter, MoreHorizontal, Edit, Trash2, UserCheck, UserX, Plus, Download, RefreshCw, Scissors, Settings } from 'lucide-react'
 
 import { useAuth, UserProfile } from '@/hooks/use-auth'
+import { usePermissions, PERMISSIONS } from '@/hooks/use-permissions'
+import { PermissionGuard, AdminOnly } from '@/components/auth/PermissionGuard'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { supabase } from '@/lib/supabase'
 import { UserEditModal } from './UserEditModal'
@@ -18,7 +20,8 @@ interface FuncionarioManagementProps {
 }
 
 export function FuncionarioManagement({ className }: FuncionarioManagementProps) {
-    const { hasRole, profile } = useAuth()
+    const { profile } = useAuth()
+    const { canManageEmployees, hasPermission } = usePermissions()
     const {
         funcionarios,
         filteredFuncionarios,
@@ -28,8 +31,6 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
         stats
     } = useFuncionariosEspecialidades()
 
-
-
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState<string>('all')
     const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -38,9 +39,6 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
     const [isEditModalOpen, setIsEditModalOpen] = useState(false)
     const [isCriarFuncionarioOpen, setIsCriarFuncionarioOpen] = useState(false)
     const [isEspecialidadesModalOpen, setIsEspecialidadesModalOpen] = useState(false)
-
-    // Verificar permissão uma única vez
-    const isAuthorized = profile?.role === 'admin' || profile?.role === 'saas_owner'
     const [confirmDialog, setConfirmDialog] = useState<{
         isOpen: boolean
         title: string
@@ -61,17 +59,6 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
             <Card className={className}>
                 <CardContent className="flex items-center justify-center py-12">
                     <p className="text-text-secondary">Carregando...</p>
-                </CardContent>
-            </Card>
-        )
-    }
-
-    // Verificar se é admin
-    if (!isAuthorized) {
-        return (
-            <Card className={className}>
-                <CardContent className="flex items-center justify-center py-12">
-                    <p className="text-text-secondary">Acesso negado. Apenas administradores podem gerenciar funcionários.</p>
                 </CardContent>
             </Card>
         )
@@ -294,45 +281,54 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
     }
 
     return (
-        <Card className={`${className} bg-gradient-to-r from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite shadow-lg`}>
-            <CardHeader>
-                <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                        <Users className="h-5 w-5" />
-                        Gestão de Funcionários
-                    </CardTitle>
-                    <div className="flex items-center gap-2">
-                        <div className="text-sm text-gray-600 dark:text-gray-300 mr-4">
-                            {funcionariosFiltrados.length} funcionário{funcionariosFiltrados.length !== 1 ? 's' : ''}
+        <PermissionGuard 
+            requiredPermissions={[PERMISSIONS.MANAGE_EMPLOYEES]} 
+            type="component"
+            accessDeniedMessage="Apenas administradores podem gerenciar funcionários."
+        >
+            <Card className={`${className} bg-gradient-to-r from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite shadow-lg`}>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <CardTitle className="flex items-center gap-2">
+                            <Users className="h-5 w-5" />
+                            Gestão de Funcionários
+                        </CardTitle>
+                        <div className="flex items-center gap-2">
+                            <div className="text-sm text-gray-600 dark:text-gray-300 mr-4">
+                                {funcionariosFiltrados.length} funcionário{funcionariosFiltrados.length !== 1 ? 's' : ''}
+                            </div>
+                            <PermissionGuard requiredPermissions={[PERMISSIONS.CREATE_EMPLOYEES]}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setIsCriarFuncionarioOpen(true)}
+                                    className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black border-primary-gold"
+                                >
+                                    <Plus className="h-4 w-4 mr-1" />
+                                    Funcionário
+                                </Button>
+                            </PermissionGuard>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleRefresh}
+                                disabled={loading}
+                            >
+                                <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            </Button>
+                            <PermissionGuard requiredPermissions={[PERMISSIONS.EXPORT_DATA]}>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={handleExportFuncionarios}
+                                    disabled={loading || funcionariosFiltrados.length === 0}
+                                >
+                                    <Download className="h-4 w-4" />
+                                </Button>
+                            </PermissionGuard>
                         </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setIsCriarFuncionarioOpen(true)}
-                            className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black border-primary-gold"
-                        >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Funcionário
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleRefresh}
-                            disabled={loading}
-                        >
-                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleExportFuncionarios}
-                            disabled={loading || funcionariosFiltrados.length === 0}
-                        >
-                            <Download className="h-4 w-4" />
-                        </Button>
                     </div>
-                </div>
-            </CardHeader>
+                </CardHeader>
 
             <CardContent className="space-y-6">
                 {/* Filtros */}
@@ -594,5 +590,6 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                 }}
             />
         </Card>
+        </PermissionGuard>
     )
 }

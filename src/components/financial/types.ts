@@ -4,10 +4,11 @@ export interface MovimentacaoFluxoCaixa {
   tipo: 'ENTRADA' | 'SAIDA'
   valor: number
   descricao: string
-  categoria: 'OPERACIONAL' | 'INVESTIMENTO' | 'FINANCIAMENTO'
-  dataMovimentacao: string
-  status: 'REALIZADA' | 'PROJETADA' | 'PENDENTE'
-  origem: string
+  categoria: string
+  data: Date
+  metodo_pagamento: string
+  status?: 'REALIZADA' | 'PROJETADA' | 'PENDENTE'
+  origem?: string
 }
 
 export interface FluxoCaixaResumo {

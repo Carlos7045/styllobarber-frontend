@@ -26,6 +26,7 @@ import {
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui'
 import { useAuth } from '@/hooks/use-auth'
+import { usePermissions } from '@/hooks/use-permissions'
 import { LogoutButton } from '@/components/auth/LogoutButton'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 

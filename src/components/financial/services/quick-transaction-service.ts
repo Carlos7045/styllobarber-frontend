@@ -95,9 +95,11 @@ export class QuickTransactionService {
       let barbeiroId = null
       if (data.barbeiro) {
         const { data: barbeiro, error: barbeiroError } = await supabase
-          .from('funcionarios')
+          .from('profiles')
           .select('id')
           .eq('nome', data.barbeiro)
+          .eq('role', 'barber')
+          .eq('ativo', true)
           .single()
 
         if (!barbeiroError) {
@@ -126,13 +128,24 @@ export class QuickTransactionService {
         await this.calcularComissao(transacao.id, barbeiroId, data.valor)
       }
 
-      // Se há agendamento relacionado, finalizar o agendamento
-      if (data.agendamentoId && data.tipo === 'ENTRADA') {
-        await AgendamentoService.finalizarAgendamento(data.agendamentoId, transacao.id)
+      // Se há agendamento relacionado, marcar como pago
+      if (data.agendamentoId && data.agendamentoId !== '0' && data.tipo === 'ENTRADA') {
+        await this.marcarAgendamentoComoPago(data.agendamentoId, transacao.id)
+      }
+      // Se NÃO há agendamento mas há cliente e barbeiro, criar agendamento retroativo
+      else if (!data.agendamentoId && data.cliente && data.cliente.trim() && 
+               data.barbeiro && data.barbeiro.trim() && barbeiroId && 
+               data.tipo === 'ENTRADA') {
+        console.log(`🎯 Condições atendidas para agendamento retroativo:`)
+        console.log(`   - Cliente: ${data.cliente}`)
+        console.log(`   - Barbeiro: ${data.barbeiro} (ID: ${barbeiroId})`)
+        console.log(`   - Valor: R$ ${data.valor}`)
+        
+        await this.criarAgendamentoRetroativo(data, barbeiroId, transacao.id)
       }
 
-      // Registrar no histórico de caixa se necessário
-      await this.atualizarHistoricoCaixa(data.tipo, data.valor, data.descricao)
+      // Registrar no fluxo de caixa
+      await this.registrarMovimentacaoFluxoCaixa(transacao.id, data.tipo, data.valor, data.descricao)
 
       return { 
         success: true, 
@@ -186,8 +199,9 @@ export class QuickTransactionService {
       }
 
       if (!data || data.length === 0) {
-        // Se não há dados reais, retornar mockados
-        return this.obterHistoricoMockado()
+        // Se não há dados reais, retornar array vazio
+        console.log('Nenhuma transação encontrada no histórico')
+        return []
       }
 
       // Processar dados para incluir informações adicionais
@@ -242,8 +256,14 @@ export class QuickTransactionService {
       }
 
       if (data.length === 0) {
-        // Se não há dados hoje, usar mockados para demonstração
-        return this.obterEstatisticasMockadas()
+        // Se não há dados hoje, retornar dados zerados (não mockados)
+        console.log('Nenhuma transação registrada hoje')
+        return {
+          totalEntradas: 0,
+          totalSaidas: 0,
+          numeroTransacoes: 0,
+          metodoPagamentoMaisUsado: 'DINHEIRO'
+        }
       }
 
       const totalEntradas = data
@@ -389,10 +409,34 @@ export class QuickTransactionService {
     }
   }
 
-  private static async atualizarHistoricoCaixa(tipo: string, valor: number, descricao: string) {
-    // Implementar lógica para atualizar histórico de caixa se necessário
-    // Por exemplo, registrar em uma tabela de movimentações de caixa
-    console.log(`Movimentação de caixa: ${tipo} - R$ ${valor.toFixed(2)} - ${descricao}`)
+  private static async registrarMovimentacaoFluxoCaixa(
+    transacaoId: string, 
+    tipo: string, 
+    valor: number, 
+    descricao: string
+  ) {
+    try {
+      // Registrar na tabela de movimentações do fluxo de caixa
+      const { error } = await supabase
+        .from('movimentacoes_fluxo_caixa')
+        .insert({
+          tipo: tipo === 'ENTRADA' ? 'ENTRADA' : 'SAIDA',
+          valor: valor,
+          descricao: descricao,
+          categoria: 'OPERACIONAL', // Transações do PDV são sempre operacionais
+          data: new Date().toISOString().split('T')[0], // Data sem hora
+          status: 'REALIZADA',
+          transacao_id: transacaoId
+        })
+
+      if (error) {
+        console.error('Erro ao registrar movimentação no fluxo de caixa:', error)
+      } else {
+        console.log(`Movimentação registrada no fluxo de caixa: ${tipo} - R$ ${valor.toFixed(2)} - ${descricao}`)
+      }
+    } catch (error) {
+      console.error('Erro ao registrar movimentação no fluxo de caixa:', error)
+    }
   }
 
   private static getRandomColor(): string {
@@ -521,6 +565,175 @@ export class QuickTransactionService {
         return 'Comissões'
       default:
         return 'Outros'
+    }
+  }
+
+  // Marcar agendamento como pago
+  private static async marcarAgendamentoComoPago(agendamentoId: string, transacaoId: string) {
+    try {
+      // Verificar se o agendamento existe na tabela appointments
+      const { data: agendamento, error: checkError } = await supabase
+        .from('appointments')
+        .select('id, status')
+        .eq('id', agendamentoId)
+        .single()
+
+      if (checkError || !agendamento) {
+        console.warn(`Agendamento ${agendamentoId} não encontrado na tabela appointments:`, checkError)
+        // Não é um erro crítico, apenas log para debug
+        return true
+      }
+
+      // Atualizar observações para indicar que foi pago via PDV
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          observacoes: `Pago via PDV - Transação: ${transacaoId}`,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', agendamentoId)
+
+      if (error) {
+        console.error('Erro ao marcar agendamento como pago:', error)
+        return false
+      } else {
+        console.log(`Agendamento ${agendamentoId} marcado como pago via PDV`)
+        return true
+      }
+    } catch (error) {
+      console.error('Erro ao marcar agendamento como pago:', error)
+      return false
+    }
+  }
+
+  // Criar agendamento retroativo para clientes atendidos sem agendamento prévio
+  private static async criarAgendamentoRetroativo(
+    data: QuickTransactionData, 
+    barbeiroId: string, 
+    transacaoId: string
+  ) {
+    try {
+      console.log(`🔄 Criando agendamento retroativo para cliente: ${data.cliente} com barbeiro: ${data.barbeiro}`)
+
+      // Buscar cliente pelo nome
+      const { data: cliente, error: clienteError } = await supabase
+        .from('profiles')
+        .select('id, nome')
+        .eq('nome', data.cliente)
+        .eq('role', 'client')
+        .eq('ativo', true)
+        .single()
+
+      if (clienteError || !cliente) {
+        console.warn(`⚠️ Cliente "${data.cliente}" não encontrado para criar agendamento retroativo`)
+        return false
+      }
+
+      // Verificar se o barbeiro existe e está ativo
+      const { data: barbeiro, error: barbeiroError } = await supabase
+        .from('profiles')
+        .select('id, nome')
+        .eq('id', barbeiroId)
+        .eq('role', 'barber')
+        .eq('ativo', true)
+        .single()
+
+      if (barbeiroError || !barbeiro) {
+        console.warn(`⚠️ Barbeiro com ID "${barbeiroId}" não encontrado ou inativo`)
+        return false
+      }
+
+      // Determinar serviço baseado na descrição ou usar o primeiro serviço ativo
+      let servicoId = null
+      let servicoNome = 'Serviço Geral'
+      
+      const { data: servicos, error: servicosError } = await supabase
+        .from('services')
+        .select('id, nome, preco')
+        .eq('ativo', true)
+        .order('nome')
+
+      if (!servicosError && servicos && servicos.length > 0) {
+        // Tentar encontrar serviço pela descrição (busca mais inteligente)
+        const descricaoLower = data.descricao.toLowerCase()
+        const servicoEncontrado = servicos.find(s => {
+          const nomeServico = s.nome.toLowerCase()
+          return descricaoLower.includes(nomeServico) || 
+                 nomeServico.includes(descricaoLower.split(' ')[0]) // Primeira palavra
+        })
+        
+        if (servicoEncontrado) {
+          servicoId = servicoEncontrado.id
+          servicoNome = servicoEncontrado.nome
+        } else {
+          servicoId = servicos[0].id
+          servicoNome = servicos[0].nome
+        }
+      }
+
+      if (!servicoId) {
+        console.warn('⚠️ Nenhum serviço encontrado para criar agendamento retroativo')
+        return false
+      }
+
+      // Criar agendamento retroativo
+      const agora = new Date()
+      const observacoesCompletas = [
+        `🤖 Agendamento criado automaticamente via PDV`,
+        `💰 Transação: ${transacaoId}`,
+        `👤 Cliente: ${cliente.nome}`,
+        `✂️ Barbeiro: ${barbeiro.nome}`,
+        `💵 Valor: R$ ${data.valor.toFixed(2)}`,
+        `📝 Método: ${data.metodoPagamento || 'DINHEIRO'}`,
+        data.observacoes ? `📋 Obs: ${data.observacoes}` : null
+      ].filter(Boolean).join(' | ')
+
+      const { data: novoAgendamento, error: agendamentoError } = await supabase
+        .from('appointments')
+        .insert({
+          cliente_id: cliente.id,
+          barbeiro_id: barbeiroId,
+          service_id: servicoId,
+          data_agendamento: agora.toISOString(),
+          status: 'concluido', // Já foi concluído
+          preco_final: data.valor,
+          observacoes: observacoesCompletas
+        })
+        .select('id')
+        .single()
+
+      if (agendamentoError) {
+        console.error('❌ Erro ao criar agendamento retroativo:', agendamentoError)
+        return false
+      }
+
+      console.log(`✅ Agendamento retroativo criado com sucesso!`)
+      console.log(`   📋 ID: ${novoAgendamento.id}`)
+      console.log(`   👤 Cliente: ${cliente.nome} (${cliente.id})`)
+      console.log(`   ✂️ Barbeiro: ${barbeiro.nome} (${barbeiroId})`)
+      console.log(`   🛍️ Serviço: ${servicoNome} (${servicoId})`)
+      console.log(`   💰 Valor: R$ ${data.valor.toFixed(2)}`)
+      
+      // Atualizar a transação com o ID do agendamento criado
+      const { error: updateError } = await supabase
+        .from('transacoes_financeiras')
+        .update({
+          agendamento_id: novoAgendamento.id,
+          observacoes: `${data.observacoes || ''} | Agendamento retroativo: ${novoAgendamento.id}`.trim()
+        })
+        .eq('id', transacaoId)
+
+      if (updateError) {
+        console.warn('⚠️ Erro ao atualizar transação com agendamento ID:', updateError)
+      } else {
+        console.log(`✅ Transação ${transacaoId} vinculada ao agendamento ${novoAgendamento.id}`)
+      }
+
+      return true
+
+    } catch (error) {
+      console.error('❌ Erro inesperado ao criar agendamento retroativo:', error)
+      return false
     }
   }
 

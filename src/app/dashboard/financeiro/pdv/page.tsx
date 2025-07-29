@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { QuickTransactionPDV } from '@/components/financial/components/QuickTransactionPDV'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
+import { PDVDataDebug } from '@/components/debug/PDVDataDebug'
 
 import { PDVGuard } from '@/components/auth/PermissionGuard'
 import {
@@ -287,6 +288,9 @@ export default function PDVPage() {
             </Card>
           </motion.div>
         </div>
+
+        {/* Componente de Debug */}
+        <PDVDataDebug />
       </div>
     </PDVGuard>
   )

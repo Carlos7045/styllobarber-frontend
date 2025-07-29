@@ -1,21 +1,33 @@
 'use client'
 
 import { useAuth } from '@/hooks/use-auth'
+import { usePermissions } from '@/hooks/use-permissions'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Container } from '@/components/layout'
 import { FullPageLoading } from '@/components/auth/AuthLoadingState'
-import { useAdminAgendamentos } from '@/hooks/use-admin-agendamentos'
-import { useAdminServicos } from '@/hooks/use-admin-servicos'
-import { useAdminClientes } from '@/hooks/use-admin-clientes'
-import { useFuncionariosEspecialidades } from '@/hooks/use-funcionarios-especialidades-simple'
-import { supabase } from '@/lib/supabase'
+import { useDashboardData, useBarberDashboardData } from '@/hooks/use-dashboard-data'
 import { formatarMoeda } from '@/lib/utils'
 
 // Dashboard principal - Redireciona baseado no role do usuário
 export default function DashboardRedirect() {
-  const { profile, user, loading } = useAuth()
+  const { profile, user, loading, hasRole, hasPermission } = useAuth()
+  const permissions = usePermissions()
   const router = useRouter()
+
+  // Debug temporário - remover em produção
+  useEffect(() => {
+    if (profile && process.env.NODE_ENV === 'development') {
+      console.log('🔐 Dashboard - Debug de Permissões:', {
+        profile,
+        hasRole: typeof hasRole,
+        hasPermission: typeof hasPermission,
+        permissions,
+        isAdmin: hasRole('admin'),
+        canManageUsers: hasPermission('manage_users')
+      })
+    }
+  }, [profile, hasRole, hasPermission, permissions])
 
   useEffect(() => {
     if (loading) return // Aguardar carregar
@@ -72,88 +84,8 @@ function AdminBarberDashboard({
   userRole: string
   profile: Record<string, unknown>
 }) {
-  const [dashboardData, setDashboardData] = useState({
-    agendamentosHoje: 0,
-    clientesAtivos: 0,
-    receitaHoje: 0,
-    taxaOcupacao: 0,
-    loading: true,
-  })
-
-  const { agendamentosHoje, taxaOcupacao, loading: agendamentosLoading } = useAdminAgendamentos()
-
-  const {
-    // servicos,
-    // loading: servicosLoading
-  } = useAdminServicos()
-
-  const { clientesAtivos, loading: clientesLoading } = useAdminClientes()
-
-  // Buscar dados específicos do dashboard
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        const hoje = new Date().toISOString().split('T')[0]
-
-        // Buscar receita de hoje
-        const { data: agendamentosHoje } = await supabase
-          .from('appointments')
-          .select(
-            `
-            preco_final,
-            service:services!appointments_service_id_fkey(preco)
-          `
-          )
-          .eq('status', 'concluido')
-          .gte('data_agendamento', `${hoje}T00:00:00`)
-          .lt('data_agendamento', `${hoje}T23:59:59`)
-
-        const receitaHoje =
-          agendamentosHoje?.reduce((sum, apt) => {
-            const precoFinal =
-              apt.preco_final || ((apt.service as Record<string, unknown>)?.preco as number) || 0
-            return sum + precoFinal
-          }, 0) || 0
-
-        // Se não há dados reais, usar dados mockados para demonstração
-        const receitaFinal = receitaHoje > 0 ? receitaHoje : 450.0 // Valor mockado para demonstração
-
-        setDashboardData((prev) => ({
-          ...prev,
-          receitaHoje: receitaFinal,
-          loading: false,
-        }))
-      } catch (error) {
-        // console.error('Erro ao buscar dados do dashboard:', error)
-        // Em caso de erro, usar dados mockados
-        setDashboardData((prev) => ({
-          ...prev,
-          receitaHoje: 450.0, // Valor mockado para demonstração
-          loading: false,
-        }))
-      }
-    }
-
-    fetchDashboardData()
-  }, [])
-
-  // Atualizar dados quando hooks carregarem
-  useEffect(() => {
-    if (!agendamentosLoading && !clientesLoading) {
-      // Se não há dados reais, usar dados mockados para demonstração
-      const agendamentosHojeFinal = agendamentosHoje > 0 ? agendamentosHoje : 5 // Mockado
-      const clientesAtivosFinal = clientesAtivos > 0 ? clientesAtivos : 23 // Mockado
-      const taxaOcupacaoFinal = taxaOcupacao > 0 ? taxaOcupacao : 65 // Mockado
-
-      setDashboardData((prev) => ({
-        ...prev,
-        agendamentosHoje: agendamentosHojeFinal,
-        clientesAtivos: clientesAtivosFinal,
-        taxaOcupacao: taxaOcupacaoFinal,
-        loading: false,
-      }))
-    }
-  }, [agendamentosHoje, clientesAtivos, taxaOcupacao, agendamentosLoading, clientesLoading])
+  // Usar hook de dados reais
+  const dashboardData = useDashboardData()
 
   const metrics = [
     {
@@ -162,6 +94,7 @@ function AdminBarberDashboard({
       change: 'Agendamentos confirmados',
       icon: '📅',
       color: 'text-amber-500',
+      error: dashboardData.error,
     },
     {
       title: 'Clientes Ativos',
@@ -169,6 +102,7 @@ function AdminBarberDashboard({
       change: 'Base de clientes',
       icon: '👥',
       color: 'text-blue-500',
+      error: dashboardData.error,
     },
     {
       title: 'Receita Hoje',
@@ -176,6 +110,7 @@ function AdminBarberDashboard({
       change: 'Serviços concluídos',
       icon: '💰',
       color: 'text-green-500',
+      error: dashboardData.error,
     },
     {
       title: 'Taxa de Ocupação',
@@ -183,6 +118,7 @@ function AdminBarberDashboard({
       change: 'Capacidade utilizada',
       icon: '📊',
       color: 'text-purple-500',
+      error: dashboardData.error,
     },
   ]
 
@@ -282,48 +218,10 @@ function AdminBarberDashboard({
 
 // Conteúdo específico para Admin
 function AdminSpecificContent() {
-  const { servicos } = useAdminServicos()
-  const { clientes } = useAdminClientes()
-  const { funcionarios } = useFuncionariosEspecialidades()
-  const [faturamentoMensal, setFaturamentoMensal] = useState(0)
-
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      try {
-        // Buscar faturamento do mês atual
-        const inicioMes = new Date()
-        inicioMes.setDate(1)
-        inicioMes.setHours(0, 0, 0, 0)
-
-        const { data: agendamentosMes } = await supabase
-          .from('appointments')
-          .select(
-            `
-            preco_final,
-            service:services!appointments_service_id_fkey(preco)
-          `
-          )
-          .eq('status', 'concluido')
-          .gte('data_agendamento', inicioMes.toISOString())
-
-        const faturamento =
-          agendamentosMes?.reduce((sum, apt) => {
-            const precoFinal =
-              apt.preco_final || ((apt.service as Record<string, unknown>)?.preco as number) || 0
-            return sum + precoFinal
-          }, 0) || 0
-
-        // Se não há dados reais, usar dados mockados para demonstração
-        const faturamentoFinal = faturamento > 0 ? faturamento : 8750.0 // Valor mockado
-
-        setFaturamentoMensal(faturamentoFinal)
-      } catch (error) {
-        // console.error('Erro ao buscar analytics:', error)
-      }
-    }
-
-    fetchAnalytics()
-  }, [])
+  const dashboardData = useDashboardData()
+  
+  // Calcular faturamento mensal baseado nos dados do dashboard
+  const faturamentoMensal = dashboardData.receitaHoje * 30 // Estimativa baseada na receita diária
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -358,28 +256,33 @@ function AdminSpecificContent() {
         <div className="space-y-3 text-gray-600 dark:text-gray-300">
           <div className="flex justify-between">
             <span>Faturamento Mensal:</span>
-            <span className="font-bold text-green-400">{formatarMoeda(faturamentoMensal)}</span>
+            <span className="font-bold text-green-400">
+              {dashboardData.loading ? '...' : formatarMoeda(faturamentoMensal)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Clientes Ativos:</span>
             <span className="font-bold text-blue-400">
-              {clientes.length > 0 ? clientes.length : 23}
+              {dashboardData.loading ? '...' : dashboardData.clientesAtivos}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Funcionários:</span>
             <span className="font-bold text-purple-400">
-              {funcionarios.length > 0 ? funcionarios.length : 3}
+              {dashboardData.loading ? '...' : dashboardData.funcionariosAtivos}
             </span>
           </div>
           <div className="flex justify-between">
             <span>Serviços Ativos:</span>
             <span className="font-bold text-amber-400">
-              {servicos.filter((s) => s.ativo).length > 0
-                ? servicos.filter((s) => s.ativo).length
-                : 8}
+              {dashboardData.loading ? '...' : dashboardData.totalServicos}
             </span>
           </div>
+          {dashboardData.error && (
+            <div className="text-xs text-orange-500 mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+              ⚠️ {dashboardData.error}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -388,148 +291,8 @@ function AdminSpecificContent() {
 
 // Conteúdo específico para Barbeiro
 function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }) {
-  const [agendaHoje, setAgendaHoje] = useState<Record<string, unknown>[]>([])
-  const [ganhos, setGanhos] = useState({
-    hoje: 0,
-    semana: 0,
-    mes: 0,
-  })
-
-  useEffect(() => {
-    const fetchBarberData = async () => {
-      if (!profile?.id) return
-
-      try {
-        const hoje = new Date().toISOString().split('T')[0]
-
-        // Buscar agendamentos de hoje do barbeiro
-        const { data: agendamentosHoje } = await supabase
-          .from('appointments')
-          .select(
-            `
-            *,
-            cliente:profiles!appointments_cliente_id_fkey(nome),
-            service:services!appointments_service_id_fkey(nome, preco)
-          `
-          )
-          .eq('barbeiro_id', profile.id)
-          .gte('data_agendamento', `${hoje}T00:00:00`)
-          .lt('data_agendamento', `${hoje}T23:59:59`)
-          .neq('status', 'cancelado')
-          .order('data_agendamento', { ascending: true })
-
-        // Se não há dados reais, usar dados mockados para demonstração
-        const agendaFinal =
-          agendamentosHoje && agendamentosHoje.length > 0
-            ? agendamentosHoje
-            : [
-                {
-                  id: 'mock-1',
-                  cliente: { nome: 'João Silva' },
-                  service: { nome: 'Corte + Barba' },
-                  data_agendamento: `${hoje}T14:00:00`,
-                  status: 'confirmado',
-                },
-                {
-                  id: 'mock-2',
-                  cliente: { nome: 'Pedro Santos' },
-                  service: { nome: 'Corte Simples' },
-                  data_agendamento: `${hoje}T15:30:00`,
-                  status: 'confirmado',
-                },
-                {
-                  id: 'mock-3',
-                  cliente: { nome: 'Carlos Lima' },
-                  service: { nome: 'Barba Completa' },
-                  data_agendamento: `${hoje}T16:00:00`,
-                  status: 'pendente',
-                },
-              ]
-
-        setAgendaHoje(agendaFinal)
-
-        // Calcular ganhos
-        const { data: ganhosHoje } = await supabase
-          .from('appointments')
-          .select(
-            `
-            preco_final,
-            service:services!appointments_service_id_fkey(preco)
-          `
-          )
-          .eq('barbeiro_id', profile.id)
-          .eq('status', 'concluido')
-          .gte('data_agendamento', `${hoje}T00:00:00`)
-          .lt('data_agendamento', `${hoje}T23:59:59`)
-
-        const ganhoHoje =
-          ganhosHoje?.reduce((sum, apt) => {
-            const precoFinal =
-              apt.preco_final || ((apt.service as Record<string, unknown>)?.preco as number) || 0
-            return sum + precoFinal
-          }, 0) || 0
-
-        // Ganhos da semana
-        const inicioSemana = new Date()
-        inicioSemana.setDate(inicioSemana.getDate() - inicioSemana.getDay())
-        inicioSemana.setHours(0, 0, 0, 0)
-
-        const { data: ganhosSemana } = await supabase
-          .from('appointments')
-          .select(
-            `
-            preco_final,
-            service:services!appointments_service_id_fkey(preco)
-          `
-          )
-          .eq('barbeiro_id', profile.id)
-          .eq('status', 'concluido')
-          .gte('data_agendamento', inicioSemana.toISOString())
-
-        const ganhoSemana =
-          ganhosSemana?.reduce((sum, apt) => {
-            const precoFinal =
-              apt.preco_final || ((apt.service as Record<string, unknown>)?.preco as number) || 0
-            return sum + precoFinal
-          }, 0) || 0
-
-        // Ganhos do mês
-        const inicioMes = new Date()
-        inicioMes.setDate(1)
-        inicioMes.setHours(0, 0, 0, 0)
-
-        const { data: ganhosMes } = await supabase
-          .from('appointments')
-          .select(
-            `
-            preco_final,
-            service:services!appointments_service_id_fkey(preco)
-          `
-          )
-          .eq('barbeiro_id', profile.id)
-          .eq('status', 'concluido')
-          .gte('data_agendamento', inicioMes.toISOString())
-
-        const ganhoMes =
-          ganhosMes?.reduce((sum, apt) => {
-            const precoFinal =
-              apt.preco_final || ((apt.service as Record<string, unknown>)?.preco as number) || 0
-            return sum + precoFinal
-          }, 0) || 0
-
-        // Se não há dados reais, usar dados mockados para demonstração
-        setGanhos({
-          hoje: ganhoHoje > 0 ? ganhoHoje : 180.0,
-          semana: ganhoSemana > 0 ? ganhoSemana : 850.0,
-          mes: ganhoMes > 0 ? ganhoMes : 3200.0,
-        })
-      } catch (error) {
-        // console.error('Erro ao buscar dados do barbeiro:', error)
-      }
-    }
-
-    fetchBarberData()
-  }, [profile?.id])
+  // Usar hook de dados reais para barbeiro
+  const barberData = useBarberDashboardData(profile?.id as string)
 
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -538,12 +301,16 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
           ✂️ Minha Agenda Hoje
         </h3>
         <div className="space-y-3">
-          {agendaHoje.length === 0 ? (
+          {barberData.loading ? (
+            <div className="py-4 text-center text-gray-600 dark:text-gray-300">
+              Carregando agenda...
+            </div>
+          ) : barberData.agendaHoje.length === 0 ? (
             <p className="py-4 text-center text-gray-600 dark:text-gray-300">
               Nenhum agendamento para hoje
             </p>
           ) : (
-            agendaHoje.slice(0, 5).map((agendamento) => (
+            barberData.agendaHoje.slice(0, 5).map((agendamento) => (
               <div
                 key={agendamento.id}
                 className="rounded-lg bg-gray-100 p-3 dark:bg-secondary-graphite"
@@ -574,10 +341,15 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
               </div>
             ))
           )}
-          {agendaHoje.length > 5 && (
+          {barberData.agendaHoje.length > 5 && (
             <p className="text-center text-sm text-gray-600 dark:text-gray-300">
-              +{agendaHoje.length - 5} agendamentos...
+              +{barberData.agendaHoje.length - 5} agendamentos...
             </p>
+          )}
+          {barberData.error && (
+            <div className="text-xs text-orange-500 mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+              ⚠️ {barberData.error}
+            </div>
           )}
         </div>
       </div>
@@ -587,16 +359,27 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
         <div className="space-y-3 text-gray-600 dark:text-gray-300">
           <div className="flex justify-between">
             <span>Hoje:</span>
-            <span className="font-bold text-green-400">{formatarMoeda(ganhos.hoje)}</span>
+            <span className="font-bold text-green-400">
+              {barberData.loading ? '...' : formatarMoeda(barberData.ganhos.hoje)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Esta Semana:</span>
-            <span className="font-bold text-green-400">{formatarMoeda(ganhos.semana)}</span>
+            <span className="font-bold text-green-400">
+              {barberData.loading ? '...' : formatarMoeda(barberData.ganhos.semana)}
+            </span>
           </div>
           <div className="flex justify-between">
             <span>Este Mês:</span>
-            <span className="font-bold text-green-400">{formatarMoeda(ganhos.mes)}</span>
+            <span className="font-bold text-green-400">
+              {barberData.loading ? '...' : formatarMoeda(barberData.ganhos.mes)}
+            </span>
           </div>
+          {barberData.error && (
+            <div className="text-xs text-orange-500 mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+              ⚠️ {barberData.error}
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -20,21 +20,7 @@ import { Badge } from '@/components/ui/badge'
 import { Container } from '@/components/layout'
 import { CashFlowManager } from '@/components/financial/components'
 import { RouteGuard } from '@/components/auth'
-
-// Dados mockados para demonstração
-const mockCashFlowData = {
-  resumo: {
-    saldoAtual: 15750.00,
-    entradasDia: 3200.00,
-    saidasDia: 800.00,
-    saldoProjetado: 18350.00,
-    limiteMinimoAlerta: 5000.00
-  },
-  loading: false,
-  error: null,
-  lastUpdate: new Date(),
-  alertaSaldoBaixo: false
-}
+import { useCashFlowData, useCashFlowSettings } from '@/hooks/use-cash-flow-data'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -98,7 +84,7 @@ const QuickSettings = ({
         </div>
         <div className="flex space-x-2">
           <Button 
-            variant="default"
+            variant="primary"
             size="sm" 
             onClick={handleSave}
             className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black font-semibold"
@@ -160,13 +146,19 @@ const AlertsPanel = ({ alertaSaldoBaixo, saldoAtual, limiteMinimo }: {
 export default function FluxoCaixaPage() {
   const router = useRouter()
   
-  // Usar dados mockados
-  const { resumo, loading, error } = mockCashFlowData
+  // Usar dados reais
+  const { resumo, loading, error, alertaSaldoBaixo } = useCashFlowData()
+  const { updateLimiteMinimo } = useCashFlowSettings()
 
   const handleConfigureAlert = async (limit: number) => {
-    // Implementação mockada
-    // console.log('Alerta configurado com sucesso para:', limit)
-    alert(`Limite mínimo configurado para ${formatCurrency(limit)}`)
+    const success = await updateLimiteMinimo(limit)
+    if (success) {
+      alert(`Limite mínimo configurado para ${formatCurrency(limit)}`)
+      // Recarregar dados
+      window.location.reload()
+    } else {
+      alert('Erro ao configurar limite mínimo. Tente novamente.')
+    }
   }
 
   const handleExportData = () => {
@@ -266,20 +258,61 @@ export default function FluxoCaixaPage() {
 
         {/* Alertas */}
         <AlertsPanel 
-          alertaSaldoBaixo={resumo.saldoAtual < resumo.limiteMinimoAlerta}
+          alertaSaldoBaixo={alertaSaldoBaixo}
           saldoAtual={resumo.saldoAtual}
           limiteMinimo={resumo.limiteMinimoAlerta}
         />
 
+        {/* Indicador de erro se houver */}
+        {error && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Card className="p-6 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
+              <div className="flex items-center space-x-3">
+                <AlertTriangle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
+                <div>
+                  <h3 className="font-semibold text-orange-900 dark:text-orange-200">
+                    Aviso
+                  </h3>
+                  <p className="text-orange-700 dark:text-orange-300 mt-1">
+                    {error}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        )}
+
         {/* Cards de Status */}
-        {resumo && (
+        {loading ? (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card className={`p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite hover:shadow-xl hover:scale-105 transition-all duration-300 ${resumo.saldoAtual < resumo.limiteMinimoAlerta ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500'}`}>
+              {[1, 2, 3, 4].map((i) => (
+                <Card key={i} className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite">
+                  <div className="animate-pulse">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4 mb-2"></div>
+                    <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/2 mb-2"></div>
+                    <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          </motion.div>
+        ) : resumo && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              <Card className={`p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite hover:shadow-xl hover:scale-105 transition-all duration-300 ${alertaSaldoBaixo ? 'border-l-4 border-l-red-500' : 'border-l-4 border-l-green-500'}`}>
                 <div className="flex items-center justify-between">
                   <div className="flex-1">
                     <div className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
@@ -287,12 +320,12 @@ export default function FluxoCaixaPage() {
                     </div>
                     <div className="flex items-center space-x-2 mb-2">
                       <Badge 
-                        variant={resumo.saldoAtual < resumo.limiteMinimoAlerta ? 'error' : 'success'}
+                        variant={alertaSaldoBaixo ? 'error' : 'success'}
                         className="text-xs font-bold"
                       >
-                        {resumo.saldoAtual < resumo.limiteMinimoAlerta ? 'Saldo Baixo' : 'Normal'}
+                        {alertaSaldoBaixo ? 'Saldo Baixo' : 'Normal'}
                       </Badge>
-                      {resumo.saldoAtual < resumo.limiteMinimoAlerta && (
+                      {alertaSaldoBaixo && (
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                       )}
                     </div>
@@ -300,8 +333,8 @@ export default function FluxoCaixaPage() {
                       Monitoramento ativo
                     </div>
                   </div>
-                  <div className={`p-4 rounded-xl ${resumo.saldoAtual < resumo.limiteMinimoAlerta ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
-                    <DollarSign className={`h-8 w-8 ${resumo.saldoAtual < resumo.limiteMinimoAlerta ? 'text-red-600' : 'text-green-600'}`} />
+                  <div className={`p-4 rounded-xl ${alertaSaldoBaixo ? 'bg-red-100 dark:bg-red-900/30' : 'bg-green-100 dark:bg-green-900/30'}`}>
+                    <DollarSign className={`h-8 w-8 ${alertaSaldoBaixo ? 'text-red-600' : 'text-green-600'}`} />
                   </div>
                 </div>
               </Card>

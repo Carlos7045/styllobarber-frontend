@@ -1,302 +1,291 @@
-// Componente para proteger rotas e componentes baseado em permissões
+/**
+ * Componente para proteção de rotas e componentes baseado em permissões
+ * Substitui verificações manuais de role por um sistema centralizado
+ */
+
 'use client'
 
-import { ReactNode } from 'react'
-import { useBarberPermissions, usePermissionCheck, BarberPermissions } from '@/hooks/use-barber-permissions'
-import { Card } from '@/components/ui/card'
-import { AlertTriangle, Lock, Eye, EyeOff } from 'lucide-react'
+import React from 'react'
+import { usePermissions, useRoutePermissions } from '@/hooks/use-permissions'
+import { Card, CardContent } from '@/components/ui'
+import { Shield, AlertTriangle, Lock } from 'lucide-react'
 
 interface PermissionGuardProps {
-  children: ReactNode
-  permission?: keyof BarberPermissions
-  customCheck?: (permissions: BarberPermissions) => boolean
-  fallback?: ReactNode
-  showFallback?: boolean
-  requireAll?: boolean // Se true, requer todas as permissões listadas
-  permissions?: (keyof BarberPermissions)[] // Lista de permissões
+  children: React.ReactNode
+  
+  // Permissões necessárias (qualquer uma)
+  requiredPermissions?: string[]
+  
+  // Roles necessários (qualquer um)
+  requiredRoles?: ('admin' | 'barber' | 'client' | 'saas_owner')[]
+  
+  // Se deve exigir TODAS as permissões (ao invés de qualquer uma)
+  requireAllPermissions?: boolean
+  
+  // Se deve exigir TODOS os roles (ao invés de qualquer um)
+  requireAllRoles?: boolean
+  
+  // Componente customizado para quando não tem acesso
+  fallback?: React.ReactNode
+  
+  // Se deve mostrar loading enquanto verifica
+  showLoading?: boolean
+  
+  // Tipo de proteção
+  type?: 'page' | 'component' | 'feature'
+  
+  // Mensagem customizada de acesso negado
+  accessDeniedMessage?: string
 }
 
-// Componente de fallback padrão
-const DefaultFallback = ({ 
-  message = 'Você não tem permissão para acessar este conteúdo',
-  showIcon = true 
-}: { 
-  message?: string
-  showIcon?: boolean 
-}) => (
-  <Card className="p-6 text-center border-red-200 bg-red-50">
-    <div className="flex flex-col items-center space-y-3">
-      {showIcon && <Lock className="h-12 w-12 text-red-400" />}
-      <div>
-        <h3 className="text-lg font-semibold text-red-900 mb-2">
-          Acesso Restrito
-        </h3>
-        <p className="text-red-700">
-          {message}
-        </p>
-      </div>
-    </div>
-  </Card>
-)
+export function PermissionGuard({
+  children,
+  requiredPermissions = [],
+  requiredRoles = [],
+  requireAllPermissions = false,
+  requireAllRoles = false,
+  fallback,
+  showLoading = true,
+  type = 'component',
+  accessDeniedMessage
+}: PermissionGuardProps) {
+  const { 
+    hasPermission, 
+    hasRole, 
+    hasAnyPermission, 
+    hasAllPermissions,
+    isAuthenticated,
+    userRole 
+  } = usePermissions()
+
+  // Se não está autenticado, não mostrar nada (deixar o RouteGuard lidar com isso)
+  if (!isAuthenticated) {
+    return showLoading ? <LoadingState type={type} /> : null
+  }
+
+  // Verificar permissões
+  let hasRequiredPermissions = true
+  if (requiredPermissions.length > 0) {
+    hasRequiredPermissions = requireAllPermissions 
+      ? hasAllPermissions(requiredPermissions)
+      : hasAnyPermission(requiredPermissions)
+  }
+
+  // Verificar roles
+  let hasRequiredRoles = true
+  if (requiredRoles.length > 0) {
+    hasRequiredRoles = requireAllRoles
+      ? requiredRoles.every(role => hasRole(role))
+      : requiredRoles.some(role => hasRole(role))
+  }
+
+  // Se tem acesso, mostrar conteúdo
+  if (hasRequiredPermissions && hasRequiredRoles) {
+    return <>{children}</>
+  }
+
+  // Se não tem acesso, mostrar fallback ou mensagem padrão
+  if (fallback) {
+    return <>{fallback}</>
+  }
+
+  return (
+    <AccessDeniedState 
+      type={type}
+      userRole={userRole}
+      requiredPermissions={requiredPermissions}
+      requiredRoles={requiredRoles}
+      customMessage={accessDeniedMessage}
+    />
+  )
+}
 
 // Componente de loading
-const LoadingFallback = () => (
-  <Card className="p-6 text-center">
-    <div className="flex flex-col items-center space-y-3">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      <p className="text-gray-600">Verificando permissões...</p>
+function LoadingState({ type }: { type: string }) {
+  if (type === 'page') {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-gold mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-300">Verificando permissões...</p>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex items-center justify-center p-4">
+      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-gold"></div>
     </div>
-  </Card>
-)
-
-export const PermissionGuard = ({
-  children,
-  permission,
-  customCheck,
-  fallback,
-  showFallback = true,
-  requireAll = false,
-  permissions = []
-}: PermissionGuardProps) => {
-  const { permissions: userPermissions, loading } = useBarberPermissions()
-  const permissionCheck = usePermissionCheck()
-
-  // Mostrar loading enquanto carrega permissões
-  if (loading) {
-    return <LoadingFallback />
-  }
-
-  // Verificar permissão customizada
-  if (customCheck) {
-    const hasPermission = customCheck(userPermissions)
-    if (!hasPermission) {
-      return showFallback ? (fallback || <DefaultFallback />) : null
-    }
-    return <>{children}</>
-  }
-
-  // Verificar permissão única
-  if (permission) {
-    const hasPermission = userPermissions[permission]
-    if (!hasPermission) {
-      return showFallback ? (fallback || <DefaultFallback />) : null
-    }
-    return <>{children}</>
-  }
-
-  // Verificar múltiplas permissões
-  if (permissions.length > 0) {
-    const hasPermissions = requireAll
-      ? permissions.every(perm => userPermissions[perm])
-      : permissions.some(perm => userPermissions[perm])
-
-    if (!hasPermissions) {
-      const message = requireAll
-        ? 'Você precisa de todas as permissões necessárias para acessar este conteúdo'
-        : 'Você não tem nenhuma das permissões necessárias para acessar este conteúdo'
-      
-      return showFallback ? (fallback || <DefaultFallback message={message} />) : null
-    }
-    return <>{children}</>
-  }
-
-  // Se nenhuma verificação foi especificada, mostrar conteúdo
-  return <>{children}</>
-}
-
-// Componente específico para dados financeiros
-export const FinancialDataGuard = ({ 
-  children, 
-  scope = 'own',
-  fallback 
-}: { 
-  children: ReactNode
-  scope?: 'own' | 'all'
-  fallback?: ReactNode 
-}) => {
-  const permissionCheck = usePermissionCheck()
-  
-  return (
-    <PermissionGuard
-      customCheck={() => permissionCheck.canAccessFinancialData(scope)}
-      fallback={fallback || (
-        <DefaultFallback 
-          message={`Você não tem permissão para ver ${scope === 'all' ? 'todos os' : 'seus'} dados financeiros`}
-        />
-      )}
-    >
-      {children}
-    </PermissionGuard>
   )
 }
 
-// Componente específico para PDV
-export const PDVGuard = ({ 
-  children, 
-  fallback 
-}: { 
-  children: ReactNode
-  fallback?: ReactNode 
-}) => {
-  const permissionCheck = usePermissionCheck()
-  
-  return (
-    <PermissionGuard
-      customCheck={() => permissionCheck.canUsePDV()}
-      fallback={fallback || (
-        <DefaultFallback 
-          message="Você não tem permissão para usar o PDV"
-        />
-      )}
-    >
-      {children}
-    </PermissionGuard>
-  )
-}
-
-// Componente específico para clientes
-export const ClientDataGuard = ({ 
-  children, 
-  scope = 'own',
-  fallback 
-}: { 
-  children: ReactNode
-  scope?: 'own' | 'all'
-  fallback?: ReactNode 
-}) => {
-  const permissionCheck = usePermissionCheck()
-  
-  return (
-    <PermissionGuard
-      customCheck={() => permissionCheck.canAccessClients(scope)}
-      fallback={fallback || (
-        <DefaultFallback 
-          message={`Você não tem permissão para ver ${scope === 'all' ? 'todos os' : 'seus'} clientes`}
-        />
-      )}
-    >
-      {children}
-    </PermissionGuard>
-  )
-}
-
-// Componente específico para administradores
-export const AdminGuard = ({ 
-  children, 
-  fallback 
-}: { 
-  children: ReactNode
-  fallback?: ReactNode 
-}) => {
-  return (
-    <PermissionGuard
-      permission="canAccessAdminPanel"
-      fallback={fallback || (
-        <DefaultFallback 
-          message="Apenas administradores podem acessar esta área"
-        />
-      )}
-    >
-      {children}
-    </PermissionGuard>
-  )
-}
-
-// Componente para mostrar/ocultar elementos baseado em permissões
-export const ConditionalRender = ({
-  children,
-  permission,
-  customCheck,
-  permissions = [],
-  requireAll = false,
-  fallback,
-  inverse = false // Se true, mostra quando NÃO tem permissão
+// Componente de acesso negado
+function AccessDeniedState({ 
+  type, 
+  userRole, 
+  requiredPermissions, 
+  requiredRoles, 
+  customMessage 
 }: {
-  children: ReactNode
-  permission?: keyof BarberPermissions
-  customCheck?: (permissions: BarberPermissions) => boolean
-  permissions?: (keyof BarberPermissions)[]
-  requireAll?: boolean
-  fallback?: ReactNode
-  inverse?: boolean
-}) => {
-  const { permissions: userPermissions, loading } = useBarberPermissions()
-
-  if (loading) {
-    return null
+  type: string
+  userRole: string | null
+  requiredPermissions: string[]
+  requiredRoles: string[]
+  customMessage?: string
+}) {
+  const getIcon = () => {
+    switch (type) {
+      case 'page':
+        return <Lock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+      case 'feature':
+        return <Shield className="h-8 w-8 text-gray-400" />
+      default:
+        return <AlertTriangle className="h-6 w-6 text-gray-400" />
+    }
   }
 
-  let hasPermission = false
+  const getMessage = () => {
+    if (customMessage) return customMessage
 
-  // Verificar permissão customizada
-  if (customCheck) {
-    hasPermission = customCheck(userPermissions)
-  }
-  // Verificar permissão única
-  else if (permission) {
-    hasPermission = userPermissions[permission]
-  }
-  // Verificar múltiplas permissões
-  else if (permissions.length > 0) {
-    hasPermission = requireAll
-      ? permissions.every(perm => userPermissions[perm])
-      : permissions.some(perm => userPermissions[perm])
-  }
-  // Se nenhuma verificação, assumir que tem permissão
-  else {
-    hasPermission = true
+    if (type === 'page') {
+      return 'Você não tem permissão para acessar esta página.'
+    }
+
+    return 'Acesso restrito para seu nível de usuário.'
   }
 
-  // Inverter lógica se necessário
-  if (inverse) {
-    hasPermission = !hasPermission
+  const getDetails = () => {
+    const details = []
+    
+    if (requiredRoles.length > 0) {
+      details.push(`Roles necessários: ${requiredRoles.join(', ')}`)
+    }
+    
+    if (requiredPermissions.length > 0) {
+      details.push(`Permissões necessárias: ${requiredPermissions.join(', ')}`)
+    }
+    
+    if (userRole) {
+      details.push(`Seu role atual: ${userRole}`)
+    }
+
+    return details
   }
 
-  return hasPermission ? <>{children}</> : <>{fallback}</>
+  if (type === 'page') {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-background-dark">
+        <Card className="max-w-md mx-auto">
+          <CardContent className="text-center p-8">
+            {getIcon()}
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Acesso Negado
+            </h2>
+            <p className="text-gray-600 dark:text-gray-300 mb-4">
+              {getMessage()}
+            </p>
+            
+            {process.env.NODE_ENV === 'development' && (
+              <div className="text-left bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs">
+                <p className="font-semibold mb-1">Debug Info:</p>
+                {getDetails().map((detail, index) => (
+                  <p key={index} className="text-gray-600 dark:text-gray-400">{detail}</p>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  return (
+    <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
+      <CardContent className="p-4">
+        <div className="flex items-center space-x-3">
+          {getIcon()}
+          <div>
+            <p className="text-sm font-medium text-orange-900 dark:text-orange-200">
+              {getMessage()}
+            </p>
+            {process.env.NODE_ENV === 'development' && (
+              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
+                Role: {userRole} | Requer: {requiredRoles.join(', ') || requiredPermissions.join(', ')}
+              </p>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
 }
 
-// Hook para usar em componentes funcionais
-export const useConditionalRender = () => {
-  const { permissions, loading } = useBarberPermissions()
-  const permissionCheck = usePermissionCheck()
+// Hook para usar o PermissionGuard programaticamente
+export function usePermissionGuard(
+  requiredPermissions: string[] = [],
+  requiredRoles: ('admin' | 'barber' | 'client' | 'saas_owner')[] = []
+) {
+  const { hasAnyPermission, hasRole, isAuthenticated } = usePermissions()
+
+  const hasRequiredPermissions = requiredPermissions.length === 0 || 
+    hasAnyPermission(requiredPermissions)
+
+  const hasRequiredRoles = requiredRoles.length === 0 || 
+    requiredRoles.some(role => hasRole(role))
+
+  const hasAccess = isAuthenticated && hasRequiredPermissions && hasRequiredRoles
 
   return {
-    loading,
-    permissions,
-    
-    // Renderizar condicionalmente
-    renderIf: (condition: boolean, content: ReactNode, fallback?: ReactNode) => {
-      return condition ? content : (fallback || null)
-    },
-
-    // Renderizar se tem permissão
-    renderIfPermission: (
-      permission: keyof BarberPermissions, 
-      content: ReactNode, 
-      fallback?: ReactNode
-    ) => {
-      return permissions[permission] ? content : (fallback || null)
-    },
-
-    // Renderizar se pode acessar dados financeiros
-    renderIfCanAccessFinancial: (
-      scope: 'own' | 'all', 
-      content: ReactNode, 
-      fallback?: ReactNode
-    ) => {
-      const canAccess = permissionCheck.canAccessFinancialData(scope)
-      return canAccess ? content : (fallback || null)
-    },
-
-    // Renderizar se é admin
-    renderIfAdmin: (content: ReactNode, fallback?: ReactNode) => {
-      return permissionCheck.isAdmin() ? content : (fallback || null)
-    },
-
-    // Renderizar se é barbeiro
-    renderIfBarber: (content: ReactNode, fallback?: ReactNode) => {
-      return permissions.canViewOwnFinancialData && !permissionCheck.isAdmin() 
-        ? content : (fallback || null)
-    }
+    hasAccess,
+    hasRequiredPermissions,
+    hasRequiredRoles,
+    isAuthenticated
   }
+}
+
+// Componentes específicos para casos comuns
+export function AdminOnly({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+  return (
+    <PermissionGuard requiredRoles={['admin', 'saas_owner']} fallback={fallback}>
+      {children}
+    </PermissionGuard>
+  )
+}
+
+export function BarberOnly({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+  return (
+    <PermissionGuard requiredRoles={['barber']} fallback={fallback}>
+      {children}
+    </PermissionGuard>
+  )
+}
+
+export function AdminOrBarber({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+  return (
+    <PermissionGuard requiredRoles={['admin', 'barber', 'saas_owner']} fallback={fallback}>
+      {children}
+    </PermissionGuard>
+  )
+}
+
+export function ClientOnly({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+  return (
+    <PermissionGuard requiredRoles={['client']} fallback={fallback}>
+      {children}
+    </PermissionGuard>
+  )
+}
+
+// Guard específico para PDV
+export function PDVGuard({ children }: { children: React.ReactNode }) {
+  return (
+    <PermissionGuard 
+      requiredPermissions={['manage_transactions', 'manage_financial']}
+      type="page"
+      accessDeniedMessage="Acesso ao PDV restrito a administradores e usuários com permissão financeira."
+    >
+      {children}
+    </PermissionGuard>
+  )
 }

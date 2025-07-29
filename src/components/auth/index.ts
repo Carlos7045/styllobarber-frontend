@@ -13,6 +13,17 @@ export {
   SimpleRouteGuard,
 } from './SimpleRouteGuard'
 
+// Novo sistema de permissões
+export {
+  PermissionGuard,
+  AdminOnly,
+  BarberOnly,
+  AdminOrBarber,
+  ClientOnly,
+  PDVGuard,
+  usePermissionGuard,
+} from './PermissionGuard'
+
 // Componente de logout
 export {
   LogoutButton,

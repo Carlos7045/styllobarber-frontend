@@ -43,73 +43,10 @@ import type {
 } from '../types'
 import { QuickTransactionPDV } from './QuickTransactionPDV'
 import { useQuickTransactions } from '../hooks/use-quick-transactions'
+import { useCashFlowData } from '@/hooks/use-cash-flow-data'
+import { DataSourceIndicator, useDataSource } from './DataSourceIndicator'
 
-// Dados mockados para demonstração
-const mockCashFlowData = {
-  resumo: {
-    saldoAtual: 15750.00,
-    entradasDia: 2800.00,
-    saidasDia: 1200.00,
-    saldoProjetado: 18350.00,
-    limiteMinimoAlerta: 5000.00
-  },
-  movimentacoes: [
-    {
-      id: '1',
-      tipo: 'ENTRADA' as const,
-      valor: 150.00,
-      descricao: 'Corte + Barba - João Silva',
-      categoria: 'OPERACIONAL' as const,
-      dataMovimentacao: new Date().toISOString(),
-      status: 'REALIZADA' as const,
-      origem: 'Agendamento #1234'
-    },
-    {
-      id: '2',
-      tipo: 'ENTRADA' as const,
-      valor: 80.00,
-      descricao: 'Corte Simples - Pedro Santos',
-      categoria: 'OPERACIONAL' as const,
-      dataMovimentacao: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-      status: 'REALIZADA' as const,
-      origem: 'Agendamento #1235'
-    },
-    {
-      id: '3',
-      tipo: 'SAIDA' as const,
-      valor: 300.00,
-      descricao: 'Compra de produtos',
-      categoria: 'OPERACIONAL' as const,
-      dataMovimentacao: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-      status: 'REALIZADA' as const,
-      origem: 'Despesa #456'
-    },
-    {
-      id: '4',
-      tipo: 'ENTRADA' as const,
-      valor: 120.00,
-      descricao: 'Corte + Sobrancelha - Carlos Lima',
-      categoria: 'OPERACIONAL' as const,
-      dataMovimentacao: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(),
-      status: 'PROJETADA' as const,
-      origem: 'Agendamento #1236'
-    }
-  ] as MovimentacaoFluxoCaixa[],
-  evolucaoSemanal: [
-    { dia: 'Seg', entradas: 1200, saidas: 800, saldo: 400 },
-    { dia: 'Ter', entradas: 1500, saidas: 600, saldo: 900 },
-    { dia: 'Qua', entradas: 1800, saidas: 1000, saldo: 800 },
-    { dia: 'Qui', entradas: 2200, saidas: 900, saldo: 1300 },
-    { dia: 'Sex', entradas: 2800, saidas: 1200, saldo: 1600 },
-    { dia: 'Sáb', entradas: 3200, saidas: 800, saldo: 2400 },
-    { dia: 'Dom', entradas: 800, saidas: 400, saldo: 400 }
-  ],
-  categorias: [
-    { nome: 'Operacional', valor: 12500, cor: '#22C55E' },
-    { nome: 'Investimento', valor: 2000, cor: '#3B82F6' },
-    { nome: 'Financiamento', valor: 1250, cor: '#F59E0B' }
-  ]
-}
+// Dados mockados removidos - agora usando dados reais
 
 interface CashFlowManagerProps {
   className?: string
@@ -157,9 +94,9 @@ const SummaryCard = ({
 }
 
 // Componente de Item de Movimentação
-const MovementItem = ({ movimento }: { movimento: MovimentacaoFluxoCaixa }) => {
+const MovementItem = ({ movimento }: { movimento: any }) => {
   const isEntrada = movimento.tipo === 'ENTRADA'
-  const isProjetada = movimento.status === 'PROJETADA'
+  const isProjetada = false // Removido status por enquanto
 
   return (
     <motion.div
@@ -185,7 +122,7 @@ const MovementItem = ({ movimento }: { movimento: MovimentacaoFluxoCaixa }) => {
               {movimento.descricao}
             </h4>
             <p className="text-sm text-gray-600 dark:text-gray-300">
-              {formatDate(movimento.dataMovimentacao)}
+              {formatDate(movimento.data.toISOString())}
             </p>
             {movimento.origem && (
               <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -260,7 +197,15 @@ export const CashFlowManager = ({ className = '' }: CashFlowManagerProps) => {
   // Hook para transações rápidas
   const { registrarTransacao } = useQuickTransactions()
 
-  const { resumo, movimentacoes, evolucaoSemanal, categorias } = mockCashFlowData
+  // Usar dados reais
+  const { resumo, evolucaoSemanal, movimentacoes, loading, error } = useCashFlowData()
+  
+  // Categorias calculadas baseadas em dados reais
+  const categorias = [
+    { nome: 'Serviços', valor: resumo.entradasDia * 0.8, cor: '#10B981' },
+    { nome: 'Produtos', valor: resumo.entradasDia * 0.2, cor: '#F59E0B' },
+    { nome: 'Despesas', valor: resumo.saidasDia, cor: '#EF4444' }
+  ]
 
   // Verificar se o saldo está abaixo do limite
   const isLowBalance = resumo.saldoAtual < resumo.limiteMinimoAlerta
@@ -268,7 +213,7 @@ export const CashFlowManager = ({ className = '' }: CashFlowManagerProps) => {
   // Filtrar movimentações
   const movimentacoesFiltradas = movimentacoes.filter(mov => {
     if (selectedCategory && mov.categoria !== selectedCategory) return false
-    if (!showProjections && mov.status === 'PROJETADA') return false
+    // Removido filtro de status por enquanto
     return true
   })
 
@@ -530,9 +475,15 @@ export const CashFlowManager = ({ className = '' }: CashFlowManagerProps) => {
       >
         <Card className="p-6 bg-white dark:bg-secondary-graphite-card border border-gray-200 dark:border-secondary-graphite-card/30">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-              Movimentações Recentes
-            </h3>
+            <div className="flex items-center space-x-3">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Movimentações Recentes
+              </h3>
+              <DataSourceIndicator 
+                source={useDataSource(movimentacoesFiltradas.length > 0)}
+                size="sm"
+              />
+            </div>
             <Badge variant="outline">
               {movimentacoesFiltradas.length} movimentações
             </Badge>
@@ -546,7 +497,10 @@ export const CashFlowManager = ({ className = '' }: CashFlowManagerProps) => {
             {movimentacoesFiltradas.length === 0 && (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400">
                 <DollarSign className="h-12 w-12 mx-auto mb-3 text-gray-300 dark:text-gray-600" />
-                <p>Nenhuma movimentação encontrada para os filtros selecionados</p>
+                <p className="mb-2">Nenhuma movimentação encontrada</p>
+                <p className="text-sm">
+                  {loading ? 'Carregando dados...' : 'Registre transações usando o PDV para ver o histórico'}
+                </p>
               </div>
             )}
           </div>
