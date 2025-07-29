@@ -36,7 +36,7 @@ export function useDashboardData() {
 
     const fetchDashboardData = async () => {
       try {
-        setMetrics(prev => ({ ...prev, loading: true, error: null }))
+        setMetrics((prev) => ({ ...prev, loading: true, error: null }))
 
         const hoje = new Date().toISOString().split('T')[0]
         const inicioHoje = `${hoje}T00:00:00`
@@ -50,7 +50,7 @@ export function useDashboardData() {
           transacoesResult,
           servicosResult,
           funcionariosResult,
-          ocupacaoResult
+          ocupacaoResult,
         ] = await Promise.all([
           // Agendamentos de hoje
           supabase
@@ -61,19 +61,17 @@ export function useDashboardData() {
             .neq('status', 'cancelado'),
 
           // Clientes ativos
-          supabase
-            .from('profiles')
-            .select('id')
-            .eq('role', 'client')
-            .eq('ativo', true),
+          supabase.from('profiles').select('id').eq('role', 'client').eq('ativo', true),
 
           // Receita de hoje (agendamentos concluídos)
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('status', 'concluido')
             .gte('data_agendamento', inicioHoje)
             .lte('data_agendamento', fimHoje),
@@ -86,17 +84,10 @@ export function useDashboardData() {
             .eq('data_transacao', hoje),
 
           // Total de serviços ativos
-          supabase
-            .from('services')
-            .select('id')
-            .eq('ativo', true),
+          supabase.from('services').select('id').eq('ativo', true),
 
           // Funcionários ativos
-          supabase
-            .from('profiles')
-            .select('id')
-            .in('role', ['admin', 'barber'])
-            .eq('ativo', true),
+          supabase.from('profiles').select('id').in('role', ['admin', 'barber']).eq('ativo', true),
 
           // Dados para taxa de ocupação (agendamentos vs slots disponíveis)
           supabase
@@ -104,7 +95,7 @@ export function useDashboardData() {
             .select('id, data_agendamento, duracao_minutos')
             .gte('data_agendamento', inicioHoje)
             .lte('data_agendamento', fimHoje)
-            .neq('status', 'cancelado')
+            .neq('status', 'cancelado'),
         ])
 
         // Processar resultados
@@ -114,18 +105,24 @@ export function useDashboardData() {
         const funcionariosAtivos = funcionariosResult.data?.length || 0
 
         // Calcular receita de hoje (agendamentos + PDV)
-        const receitaAgendamentos = receitaResult.data?.reduce((sum, apt) => {
-          const precoFinal = apt.preco_final || 
-            ((apt.service as any)?.preco) || 0
-          return sum + precoFinal
-        }, 0) || 0
+        interface AppointmentData {
+          preco_final?: number
+          service?: { preco?: number }
+        }
 
-        const receitaPDV = transacoesResult.data?.reduce((sum, transacao) => {
-          if (transacao.tipo === 'RECEITA') {
-            return sum + (parseFloat(transacao.valor) || 0)
-          }
-          return sum
-        }, 0) || 0
+        const receitaAgendamentos =
+          receitaResult.data?.reduce((sum, apt: AppointmentData) => {
+            const precoFinal = apt.preco_final || apt.service?.preco || 0
+            return sum + precoFinal
+          }, 0) || 0
+
+        const receitaPDV =
+          transacoesResult.data?.reduce((sum, transacao) => {
+            if (transacao.tipo === 'RECEITA') {
+              return sum + (parseFloat(transacao.valor) || 0)
+            }
+            return sum
+          }, 0) || 0
 
         const receitaHoje = receitaAgendamentos + receitaPDV
 
@@ -133,9 +130,7 @@ export function useDashboardData() {
         // Assumindo 8 horas de trabalho por dia, 30min por agendamento
         const slotsDisponiveis = funcionariosAtivos * 16 // 8h * 2 slots/hora
         const slotsOcupados = ocupacaoResult.data?.length || 0
-        const taxaOcupacao = slotsDisponiveis > 0 
-          ? (slotsOcupados / slotsDisponiveis) * 100 
-          : 0
+        const taxaOcupacao = slotsDisponiveis > 0 ? (slotsOcupados / slotsDisponiveis) * 100 : 0
 
         setMetrics({
           agendamentosHoje,
@@ -147,13 +142,12 @@ export function useDashboardData() {
           loading: false,
           error: null,
         })
-
       } catch (error) {
-        console.error('Erro ao buscar dados do dashboard:', error)
-        
+        // console.error('Erro ao buscar dados do dashboard:', error)
+
         // Em caso de erro, usar dados de fallback baseados em dados históricos
         const fallbackData = await getFallbackData()
-        
+
         setMetrics({
           ...fallbackData,
           loading: false,
@@ -177,26 +171,41 @@ async function getFallbackData(): Promise<Omit<DashboardMetrics, 'loading' | 'er
 
     const { data: dadosHistoricos } = await supabase
       .from('appointments')
-      .select(`
+      .select(
+        `
         id,
         preco_final,
         service:services!appointments_service_id_fkey(preco)
-      `)
+      `
+      )
       .eq('status', 'concluido')
       .gte('data_agendamento', seteDiasAtras.toISOString())
 
-    const receitaMedia = dadosHistoricos 
-      ? dadosHistoricos.reduce((sum, apt) => {
-          const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
+    interface AppointmentData {
+      preco_final?: number
+      service?: { preco?: number }
+    }
+
+    const receitaMedia = dadosHistoricos
+      ? dadosHistoricos.reduce((sum, apt: AppointmentData) => {
+          const preco = apt.preco_final || apt.service?.preco || 0
           return sum + preco
         }, 0) / 7 // Média diária
       : 0
 
     // Buscar contadores básicos que geralmente funcionam
     const [clientesResult, servicosResult, funcionariosResult] = await Promise.all([
-      supabase.from('profiles').select('id', { count: 'exact' }).eq('role', 'client').eq('ativo', true),
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact' })
+        .eq('role', 'client')
+        .eq('ativo', true),
       supabase.from('services').select('id', { count: 'exact' }).eq('ativo', true),
-      supabase.from('profiles').select('id', { count: 'exact' }).in('role', ['admin', 'barber']).eq('ativo', true)
+      supabase
+        .from('profiles')
+        .select('id', { count: 'exact' })
+        .in('role', ['admin', 'barber'])
+        .eq('ativo', true),
     ])
 
     return {
@@ -208,8 +217,8 @@ async function getFallbackData(): Promise<Omit<DashboardMetrics, 'loading' | 'er
       funcionariosAtivos: funcionariosResult.count || 0,
     }
   } catch (fallbackError) {
-    console.error('Erro ao buscar dados de fallback:', fallbackError)
-    
+    // console.error('Erro ao buscar dados de fallback:', fallbackError)
+
     // Último recurso: dados padrão baseados em uma barbearia típica
     return {
       agendamentosHoje: 8,
@@ -225,7 +234,7 @@ async function getFallbackData(): Promise<Omit<DashboardMetrics, 'loading' | 'er
 // Hook específico para dados de barbeiro
 export function useBarberDashboardData(barberId: string) {
   const [data, setData] = useState({
-    agendaHoje: [] as any[],
+    agendaHoje: [] as unknown[],
     ganhos: {
       hoje: 0,
       semana: 0,
@@ -240,7 +249,7 @@ export function useBarberDashboardData(barberId: string) {
 
     const fetchBarberData = async () => {
       try {
-        setData(prev => ({ ...prev, loading: true, error: null }))
+        setData((prev) => ({ ...prev, loading: true, error: null }))
 
         const hoje = new Date().toISOString().split('T')[0]
         const inicioSemana = new Date()
@@ -251,11 +260,13 @@ export function useBarberDashboardData(barberId: string) {
         // Buscar agenda de hoje
         const { data: agendaHoje } = await supabase
           .from('appointments')
-          .select(`
+          .select(
+            `
             *,
             cliente:profiles!appointments_cliente_id_fkey(nome),
             service:services!appointments_service_id_fkey(nome, preco)
-          `)
+          `
+          )
           .eq('barbeiro_id', barberId)
           .gte('data_agendamento', `${hoje}T00:00:00`)
           .lt('data_agendamento', `${hoje}T23:59:59`)
@@ -267,10 +278,12 @@ export function useBarberDashboardData(barberId: string) {
           // Ganhos de hoje
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('barbeiro_id', barberId)
             .eq('status', 'concluido')
             .gte('data_agendamento', `${hoje}T00:00:00`)
@@ -279,10 +292,12 @@ export function useBarberDashboardData(barberId: string) {
           // Ganhos da semana
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('barbeiro_id', barberId)
             .eq('status', 'concluido')
             .gte('data_agendamento', inicioSemana.toISOString()),
@@ -290,20 +305,24 @@ export function useBarberDashboardData(barberId: string) {
           // Ganhos do mês
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('barbeiro_id', barberId)
             .eq('status', 'concluido')
-            .gte('data_agendamento', inicioMes.toISOString())
+            .gte('data_agendamento', inicioMes.toISOString()),
         ])
 
         const calcularGanhos = (dados: any[]) => {
-          return dados?.reduce((sum, apt) => {
-            const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-            return sum + preco
-          }, 0) || 0
+          return (
+            dados?.reduce((sum, apt) => {
+              const preco = apt.preco_final || (apt.service as any)?.preco || 0
+              return sum + preco
+            }, 0) || 0
+          )
         }
 
         setData({
@@ -316,10 +335,9 @@ export function useBarberDashboardData(barberId: string) {
           loading: false,
           error: null,
         })
-
       } catch (error) {
-        console.error('Erro ao buscar dados do barbeiro:', error)
-        setData(prev => ({
+        // console.error('Erro ao buscar dados do barbeiro:', error)
+        setData((prev) => ({
           ...prev,
           loading: false,
           error: 'Erro ao carregar dados do barbeiro.',

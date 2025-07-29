@@ -7,7 +7,8 @@ import { useServices } from '../use-services'
 
 // Mock do supabase
 jest.mock('@/lib/supabase')
-const mockSupabase = require('@/lib/supabase').supabase
+import { supabase } from '@/lib/supabase'
+const mockSupabase = supabase
 
 describe('useServices', () => {
   const mockServices = [
@@ -21,7 +22,7 @@ describe('useServices', () => {
       ativo: true,
       ordem: 1,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
       id: 'service-2',
@@ -33,7 +34,7 @@ describe('useServices', () => {
       ativo: true,
       ordem: 2,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
     },
     {
       id: 'service-3',
@@ -45,27 +46,27 @@ describe('useServices', () => {
       ativo: true,
       ordem: 3,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    }
+      updated_at: new Date().toISOString(),
+    },
   ]
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
+
     // Limpar cache global
     jest.resetModules()
-    
+
     mockSupabase.from.mockReturnValue({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           order: jest.fn().mockReturnValue({
             order: jest.fn().mockResolvedValue({
               data: mockServices,
-              error: null
-            })
-          })
-        })
-      })
+              error: null,
+            }),
+          }),
+        }),
+      }),
     })
   })
 
@@ -78,7 +79,7 @@ describe('useServices', () => {
 
     // Aguardar carregamento
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(result.current.loading).toBe(false)
@@ -90,7 +91,7 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Aplicar filtro por categoria
@@ -107,7 +108,7 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Filtrar por faixa de preço
@@ -116,14 +117,14 @@ describe('useServices', () => {
     })
 
     expect(result.current.filteredServices).toHaveLength(2)
-    expect(result.current.filteredServices.every(s => s.preco >= 20 && s.preco <= 30)).toBe(true)
+    expect(result.current.filteredServices.every((s) => s.preco >= 20 && s.preco <= 30)).toBe(true)
   })
 
   it('deve filtrar por duração', async () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Filtrar por duração mínima
@@ -132,14 +133,14 @@ describe('useServices', () => {
     })
 
     expect(result.current.filteredServices).toHaveLength(2)
-    expect(result.current.filteredServices.every(s => s.duracao_minutos >= 30)).toBe(true)
+    expect(result.current.filteredServices.every((s) => s.duracao_minutos >= 30)).toBe(true)
   })
 
   it('deve filtrar por busca textual', async () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Buscar por texto
@@ -154,7 +155,7 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Aplicar filtro
@@ -178,13 +179,13 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Buscar ordenado por preço decrescente
     const resultadoBusca = result.current.searchServices({
       ordenarPor: 'preco',
-      ordem: 'desc'
+      ordem: 'desc',
     })
 
     expect(resultadoBusca).toHaveLength(3)
@@ -197,13 +198,13 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Buscar por categoria e texto
     const resultadoBusca = result.current.searchServices({
       categoria: 'Combo',
-      query: 'corte'
+      query: 'corte',
     })
 
     expect(resultadoBusca).toHaveLength(1)
@@ -212,24 +213,24 @@ describe('useServices', () => {
 
   it('deve lidar com erro ao carregar serviços', async () => {
     const errorMessage = 'Erro de conexão'
-    
+
     mockSupabase.from.mockReturnValue({
       select: jest.fn().mockReturnValue({
         eq: jest.fn().mockReturnValue({
           order: jest.fn().mockReturnValue({
             order: jest.fn().mockResolvedValue({
               data: null,
-              error: new Error(errorMessage)
-            })
-          })
-        })
-      })
+              error: new Error(errorMessage),
+            }),
+          }),
+        }),
+      }),
     })
 
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(result.current.loading).toBe(false)
@@ -242,7 +243,7 @@ describe('useServices', () => {
     const { result: result1 } = renderHook(() => useServices({ enableCache: true }))
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(mockSupabase.from).toHaveBeenCalledTimes(1)
@@ -252,7 +253,7 @@ describe('useServices', () => {
     const { result: result2 } = renderHook(() => useServices({ enableCache: true }))
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     // Não deve fazer nova chamada ao banco
@@ -264,7 +265,7 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices())
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(mockSupabase.from).toHaveBeenCalledTimes(1)
@@ -281,7 +282,7 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices({ enableCache: true }))
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(mockSupabase.from).toHaveBeenCalledTimes(1)
@@ -295,7 +296,7 @@ describe('useServices', () => {
     const { result: result2 } = renderHook(() => useServices({ enableCache: true }))
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(mockSupabase.from).toHaveBeenCalledTimes(2)
@@ -305,7 +306,7 @@ describe('useServices', () => {
     const { result } = renderHook(() => useServices({ autoFetch: false }))
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(mockSupabase.from).not.toHaveBeenCalled()
@@ -314,14 +315,14 @@ describe('useServices', () => {
   })
 
   it('deve aplicar filtros iniciais', async () => {
-    const { result } = renderHook(() => 
-      useServices({ 
-        filters: { categoria: 'Barba' }
+    const { result } = renderHook(() =>
+      useServices({
+        filters: { categoria: 'Barba' },
       })
     )
 
     await act(async () => {
-      await new Promise(resolve => setTimeout(resolve, 0))
+      await new Promise((resolve) => setTimeout(resolve, 0))
     })
 
     expect(result.current.currentFilters).toEqual({ categoria: 'Barba' })

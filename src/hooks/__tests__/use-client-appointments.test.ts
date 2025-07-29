@@ -10,21 +10,25 @@ jest.mock('../use-auth')
 jest.mock('../use-appointments')
 jest.mock('@/lib/supabase')
 
-const mockUseAuth = require('../use-auth').useAuth as jest.Mock
-const mockUseAppointments = require('../use-appointments').useAppointments as jest.Mock
-const mockSupabase = require('@/lib/supabase').supabase
+import { useAuth } from '../use-auth'
+import { useAppointments } from '../use-appointments'
+import { supabase } from '@/lib/supabase'
+
+const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
+const mockUseAppointments = useAppointments as jest.MockedFunction<typeof useAppointments>
+const mockSupabase = supabase
 
 describe('useClientAppointments', () => {
   const mockUser = {
     id: 'user-123',
-    email: 'cliente@test.com'
+    email: 'cliente@test.com',
   }
 
   const mockProfile = {
     id: 'user-123',
     nome: 'Cliente Teste',
     email: 'cliente@test.com',
-    role: 'client'
+    role: 'client',
   }
 
   const mockAppointments = [
@@ -40,7 +44,7 @@ describe('useClientAppointments', () => {
       updated_at: new Date().toISOString(),
       cliente: { id: 'user-123', nome: 'Cliente Teste', email: 'cliente@test.com' },
       barbeiro: { id: 'barber-1', nome: 'Barbeiro Teste' },
-      service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 }
+      service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 },
     },
     {
       id: 'apt-2',
@@ -54,7 +58,7 @@ describe('useClientAppointments', () => {
       updated_at: new Date().toISOString(),
       cliente: { id: 'user-123', nome: 'Cliente Teste', email: 'cliente@test.com' },
       barbeiro: { id: 'barber-1', nome: 'Barbeiro Teste' },
-      service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 }
+      service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 },
     },
     {
       id: 'apt-3',
@@ -68,8 +72,8 @@ describe('useClientAppointments', () => {
       updated_at: new Date().toISOString(),
       cliente: { id: 'other-user', nome: 'Outro Cliente', email: 'outro@test.com' },
       barbeiro: { id: 'barber-1', nome: 'Barbeiro Teste' },
-      service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 }
-    }
+      service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 },
+    },
   ]
 
   beforeEach(() => {
@@ -77,7 +81,7 @@ describe('useClientAppointments', () => {
 
     mockUseAuth.mockReturnValue({
       user: mockUser,
-      profile: mockProfile
+      profile: mockProfile,
     })
 
     mockUseAppointments.mockReturnValue({
@@ -85,7 +89,7 @@ describe('useClientAppointments', () => {
       loading: false,
       error: null,
       updateAppointment: jest.fn().mockResolvedValue({ success: true }),
-      refetch: jest.fn()
+      refetch: jest.fn(),
     })
 
     mockSupabase.from.mockReturnValue({
@@ -95,16 +99,16 @@ describe('useClientAppointments', () => {
             gte: jest.fn().mockReturnValue({
               lte: jest.fn().mockResolvedValue({
                 data: [],
-                error: null
-              })
-            })
-          })
-        })
+                error: null,
+              }),
+            }),
+          }),
+        }),
       }),
       insert: jest.fn().mockResolvedValue({
         data: null,
-        error: null
-      })
+        error: null,
+      }),
     })
   })
 
@@ -112,7 +116,7 @@ describe('useClientAppointments', () => {
     const { result } = renderHook(() => useClientAppointments())
 
     expect(result.current.appointments).toHaveLength(2) // Apenas apt-1 e apt-2
-    expect(result.current.appointments.every(apt => apt.cliente_id === 'user-123')).toBe(true)
+    expect(result.current.appointments.every((apt) => apt.cliente_id === 'user-123')).toBe(true)
   })
 
   it('deve separar agendamentos futuros e passados corretamente', () => {
@@ -132,7 +136,7 @@ describe('useClientAppointments', () => {
 
     // Agendamento futuro deve poder ser cancelado (mais de 24h)
     expect(result.current.canCancelAppointment('apt-1')).toBe(true)
-    
+
     // Agendamento passado não deve poder ser cancelado
     expect(result.current.canCancelAppointment('apt-2')).toBe(false)
   })
@@ -142,7 +146,7 @@ describe('useClientAppointments', () => {
 
     // Agendamento futuro deve poder ser reagendado (mais de 12h)
     expect(result.current.canRescheduleAppointment('apt-1')).toBe(true)
-    
+
     // Agendamento passado não deve poder ser reagendado
     expect(result.current.canRescheduleAppointment('apt-2')).toBe(false)
   })
@@ -151,7 +155,7 @@ describe('useClientAppointments', () => {
     const { result } = renderHook(() => useClientAppointments())
 
     const appointment = result.current.appointments[0]
-    
+
     expect(appointment).toHaveProperty('canCancel')
     expect(appointment).toHaveProperty('canReschedule')
     expect(appointment).toHaveProperty('isUpcoming')
@@ -166,7 +170,7 @@ describe('useClientAppointments', () => {
       loading: false,
       error: null,
       updateAppointment: mockUpdateAppointment,
-      refetch: jest.fn()
+      refetch: jest.fn(),
     })
 
     const { result } = renderHook(() => useClientAppointments())
@@ -178,7 +182,7 @@ describe('useClientAppointments', () => {
 
     expect(mockUpdateAppointment).toHaveBeenCalledWith('apt-1', {
       status: 'cancelado',
-      observacoes: 'Cancelado: Mudança de planos'
+      observacoes: 'Cancelado: Mudança de planos',
     })
   })
 
@@ -189,7 +193,7 @@ describe('useClientAppointments', () => {
       loading: false,
       error: null,
       updateAppointment: mockUpdateAppointment,
-      refetch: jest.fn()
+      refetch: jest.fn(),
     })
 
     const { result } = renderHook(() => useClientAppointments())
@@ -202,7 +206,7 @@ describe('useClientAppointments', () => {
 
     expect(mockUpdateAppointment).toHaveBeenCalledWith('apt-1', {
       data_agendamento: newDateTime,
-      status: 'pendente'
+      status: 'pendente',
     })
   })
 
@@ -240,8 +244,8 @@ describe('useClientAppointments', () => {
         updated_at: new Date().toISOString(),
         cliente: { id: 'user-123', nome: 'Cliente Teste', email: 'cliente@test.com' },
         barbeiro: { id: 'barber-1', nome: 'Barbeiro Teste' },
-        service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 }
-      }
+        service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 },
+      },
     ]
 
     mockUseAppointments.mockReturnValue({
@@ -249,7 +253,7 @@ describe('useClientAppointments', () => {
       loading: false,
       error: null,
       updateAppointment: jest.fn(),
-      refetch: jest.fn()
+      refetch: jest.fn(),
     })
 
     const { result } = renderHook(() => useClientAppointments())
@@ -277,8 +281,8 @@ describe('useClientAppointments', () => {
         updated_at: new Date().toISOString(),
         cliente: { id: 'user-123', nome: 'Cliente Teste', email: 'cliente@test.com' },
         barbeiro: { id: 'barber-1', nome: 'Barbeiro Teste' },
-        service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 }
-      }
+        service: { id: 'service-1', nome: 'Corte', preco: 30, duracao_minutos: 30 },
+      },
     ]
 
     mockUseAppointments.mockReturnValue({
@@ -286,7 +290,7 @@ describe('useClientAppointments', () => {
       loading: false,
       error: null,
       updateAppointment: jest.fn(),
-      refetch: jest.fn()
+      refetch: jest.fn(),
     })
 
     const { result } = renderHook(() => useClientAppointments())

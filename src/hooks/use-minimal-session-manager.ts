@@ -14,7 +14,7 @@ export function useMinimalSessionManager() {
     isValid: false,
     expiresAt: null,
   })
-  
+
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // Função simples para verificar sessão
@@ -42,12 +42,12 @@ export function useMinimalSessionManager() {
   // Efeito simples com dependência mínima
   useEffect(() => {
     checkSession()
-    
+
     // Verificar a cada 2 minutos
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
-    
+
     intervalRef.current = setInterval(checkSession, 120000) // 2 minutos
 
     return () => {
@@ -55,12 +55,12 @@ export function useMinimalSessionManager() {
         clearInterval(intervalRef.current)
       }
     }
-  }, [session?.access_token, loading])
+  }, [session?.access_token, loading, checkSession])
 
   return {
     isSessionValid: sessionState.isValid,
     expiresAt: sessionState.expiresAt,
-    timeUntilExpiry: sessionState.expiresAt 
+    timeUntilExpiry: sessionState.expiresAt
       ? Math.max(0, sessionState.expiresAt * 1000 - Date.now())
       : null,
     forceRefresh: async () => {

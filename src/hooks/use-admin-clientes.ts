@@ -54,18 +54,23 @@ interface UseAdminClientesReturn {
   totalClientes: number
   clientesAtivos: number
   clientesInativos: number
-  
+
   // Ações
-  updateCliente: (id: string, data: UpdateClienteData) => Promise<{ success: boolean; error?: string }>
+  updateCliente: (
+    id: string,
+    data: UpdateClienteData
+  ) => Promise<{ success: boolean; error?: string }>
   toggleClienteStatus: (id: string, ativo: boolean) => Promise<{ success: boolean; error?: string }>
   getClienteById: (id: string) => ClienteAdmin | undefined
-  getClienteStats: (id: string) => Promise<any>
-  exportClientes: (filtros?: ClienteFilters) => Promise<{ success: boolean; data?: any; error?: string }>
-  
+  getClienteStats: (id: string) => Promise<unknown>
+  exportClientes: (
+    filtros?: ClienteFilters
+  ) => Promise<{ success: boolean; data?: unknown; error?: string }>
+
   // Filtros
   setFilters: (filters: ClienteFilters) => void
   clearFilters: () => void
-  
+
   refetch: () => Promise<void>
 }
 
@@ -100,7 +105,9 @@ export function useAdminClientes(): UseAdminClientesReturn {
 
       // Aplicar filtros
       if (filters.busca) {
-        query = query.or(`nome.ilike.%${filters.busca}%,email.ilike.%${filters.busca}%,telefone.ilike.%${filters.busca}%`)
+        query = query.or(
+          `nome.ilike.%${filters.busca}%,email.ilike.%${filters.busca}%,telefone.ilike.%${filters.busca}%`
+        )
       }
 
       if (filters.status && filters.status !== 'all') {
@@ -129,53 +136,67 @@ export function useAdminClientes(): UseAdminClientesReturn {
           // Buscar agendamentos do cliente
           const { data: agendamentos } = await supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               id,
               data_agendamento,
               status,
               preco_final,
               service:services(nome, preco)
-            `)
+            `
+            )
             .eq('cliente_id', cliente.id)
 
           const totalAgendamentos = agendamentos?.length || 0
-          const agendamentosConcluidos = agendamentos?.filter(a => a.status === 'concluido').length || 0
-          const agendamentosCancelados = agendamentos?.filter(a => a.status === 'cancelado').length || 0
+          const agendamentosConcluidos =
+            agendamentos?.filter((a) => a.status === 'concluido').length || 0
+          const agendamentosCancelados =
+            agendamentos?.filter((a) => a.status === 'cancelado').length || 0
 
           // Calcular valor total gasto
-          const valorTotalGasto = agendamentos
-            ?.filter(a => a.status === 'concluido')
-            .reduce((sum, a) => sum + (a.preco_final || a.service?.preco || 0), 0) || 0
+          const valorTotalGasto =
+            agendamentos
+              ?.filter((a) => a.status === 'concluido')
+              .reduce((sum, a) => sum + (a.preco_final || a.service?.preco || 0), 0) || 0
 
           // Encontrar último agendamento
-          const ultimoAgendamento = agendamentos
-            ?.sort((a, b) => new Date(b.data_agendamento).getTime() - new Date(a.data_agendamento).getTime())[0]
+          const ultimoAgendamento = agendamentos?.sort(
+            (a, b) =>
+              new Date(b.data_agendamento).getTime() - new Date(a.data_agendamento).getTime()
+          )[0]
 
           // Calcular serviços favoritos
-          const servicosCount = agendamentos?.reduce((acc, a) => {
-            if (a.service?.nome) {
-              acc[a.service.nome] = (acc[a.service.nome] || 0) + 1
-            }
-            return acc
-          }, {} as Record<string, number>) || {}
+          const servicosCount =
+            agendamentos?.reduce(
+              (acc, a) => {
+                if (a.service?.nome) {
+                  acc[a.service.nome] = (acc[a.service.nome] || 0) + 1
+                }
+                return acc
+              },
+              {} as Record<string, number>
+            ) || {}
 
           const servicosFavoritos = Object.entries(servicosCount)
-            .sort(([,a], [,b]) => b - a)
+            .sort(([, a], [, b]) => b - a)
             .slice(0, 3)
             .map(([nome]) => nome)
 
           // Calcular frequência média
           let frequenciaMediaDias = 0
           if (agendamentosConcluidos > 1) {
-            const datasAgendamentos = agendamentos
-              ?.filter(a => a.status === 'concluido')
-              .map(a => new Date(a.data_agendamento))
-              .sort((a, b) => a.getTime() - b.getTime()) || []
+            const datasAgendamentos =
+              agendamentos
+                ?.filter((a) => a.status === 'concluido')
+                .map((a) => new Date(a.data_agendamento))
+                .sort((a, b) => a.getTime() - b.getTime()) || []
 
             if (datasAgendamentos.length > 1) {
               const intervalos = []
               for (let i = 1; i < datasAgendamentos.length; i++) {
-                const intervalo = (datasAgendamentos[i].getTime() - datasAgendamentos[i-1].getTime()) / (1000 * 60 * 60 * 24)
+                const intervalo =
+                  (datasAgendamentos[i].getTime() - datasAgendamentos[i - 1].getTime()) /
+                  (1000 * 60 * 60 * 24)
                 intervalos.push(intervalo)
               }
               frequenciaMediaDias = intervalos.reduce((sum, i) => sum + i, 0) / intervalos.length
@@ -199,7 +220,7 @@ export function useAdminClientes(): UseAdminClientesReturn {
             agendamentos_cancelados: agendamentosCancelados,
             agendamentos_concluidos: agendamentosConcluidos,
             frequencia_media_dias: Math.round(frequenciaMediaDias),
-            status
+            status,
           }
         })
       )
@@ -208,22 +229,26 @@ export function useAdminClientes(): UseAdminClientesReturn {
       let clientesFiltrados = clientesComStats
 
       if (filters.valor_gasto_min !== undefined) {
-        clientesFiltrados = clientesFiltrados.filter(c => c.valor_total_gasto >= filters.valor_gasto_min!)
+        clientesFiltrados = clientesFiltrados.filter(
+          (c) => c.valor_total_gasto >= filters.valor_gasto_min!
+        )
       }
 
       if (filters.valor_gasto_max !== undefined) {
-        clientesFiltrados = clientesFiltrados.filter(c => c.valor_total_gasto <= filters.valor_gasto_max!)
+        clientesFiltrados = clientesFiltrados.filter(
+          (c) => c.valor_total_gasto <= filters.valor_gasto_max!
+        )
       }
 
       if (filters.servico_favorito) {
-        clientesFiltrados = clientesFiltrados.filter(c => 
+        clientesFiltrados = clientesFiltrados.filter((c) =>
           c.servicos_favoritos.includes(filters.servico_favorito!)
         )
       }
 
       setClientes(clientesFiltrados)
     } catch (err) {
-      console.error('Erro ao buscar clientes:', err)
+      // console.error('Erro ao buscar clientes:', err)
       setError(err instanceof Error ? err.message : 'Erro ao buscar clientes')
     } finally {
       setLoading(false)
@@ -231,200 +256,219 @@ export function useAdminClientes(): UseAdminClientesReturn {
   }, [hasPermission, filters])
 
   // Função para atualizar cliente
-  const updateCliente = useCallback(async (id: string, data: UpdateClienteData) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update(data)
-        .eq('id', id)
-
-      if (updateError) {
-        throw updateError
+  const updateCliente = useCallback(
+    async (id: string, data: UpdateClienteData) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
 
-      // Atualizar lista local
-      setClientes(prev =>
-        prev.map(cliente =>
-          cliente.id === id
-            ? { ...cliente, ...data }
-            : cliente
+      try {
+        const { error: updateError } = await supabase.from('profiles').update(data).eq('id', id)
+
+        if (updateError) {
+          throw updateError
+        }
+
+        // Atualizar lista local
+        setClientes((prev) =>
+          prev.map((cliente) => (cliente.id === id ? { ...cliente, ...data } : cliente))
         )
-      )
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao atualizar cliente:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao atualizar cliente'
+        return { success: true }
+      } catch (err) {
+        // console.error('Erro ao atualizar cliente:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao atualizar cliente',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para ativar/desativar cliente
-  const toggleClienteStatus = useCallback(async (id: string, ativo: boolean) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
+  const toggleClienteStatus = useCallback(
+    async (id: string, ativo: boolean) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
+      }
 
-    try {
-      if (!ativo) {
-        // Verificar se cliente tem agendamentos futuros
-        const { data: agendamentosFuturos, error: checkError } = await supabase
-          .from('appointments')
-          .select('id')
-          .eq('cliente_id', id)
-          .gte('data_agendamento', new Date().toISOString())
-          .neq('status', 'cancelado')
+      try {
+        if (!ativo) {
+          // Verificar se cliente tem agendamentos futuros
+          const { data: agendamentosFuturos, error: checkError } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('cliente_id', id)
+            .gte('data_agendamento', new Date().toISOString())
+            .neq('status', 'cancelado')
 
-        if (checkError) {
-          throw checkError
-        }
+          if (checkError) {
+            throw checkError
+          }
 
-        if (agendamentosFuturos && agendamentosFuturos.length > 0) {
-          return {
-            success: false,
-            error: `Cliente possui ${agendamentosFuturos.length} agendamento(s) futuro(s). Cancele-os primeiro.`
+          if (agendamentosFuturos && agendamentosFuturos.length > 0) {
+            return {
+              success: false,
+              error: `Cliente possui ${agendamentosFuturos.length} agendamento(s) futuro(s). Cancele-os primeiro.`,
+            }
           }
         }
-      }
 
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({ ativo })
-        .eq('id', id)
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ ativo })
+          .eq('id', id)
 
-      if (updateError) {
-        throw updateError
-      }
+        if (updateError) {
+          throw updateError
+        }
 
-      // Atualizar lista local
-      setClientes(prev =>
-        prev.map(cliente =>
-          cliente.id === id
-            ? { ...cliente, ativo, status: ativo ? 'ativo' : 'inativo' }
-            : cliente
+        // Atualizar lista local
+        setClientes((prev) =>
+          prev.map((cliente) =>
+            cliente.id === id ? { ...cliente, ativo, status: ativo ? 'ativo' : 'inativo' } : cliente
+          )
         )
-      )
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao alterar status do cliente:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao alterar status do cliente'
+        return { success: true }
+      } catch (err) {
+        // console.error('Erro ao alterar status do cliente:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao alterar status do cliente',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para buscar cliente por ID
-  const getClienteById = useCallback((id: string) => {
-    return clientes.find(cliente => cliente.id === id)
-  }, [clientes])
+  const getClienteById = useCallback(
+    (id: string) => {
+      return clientes.find((cliente) => cliente.id === id)
+    },
+    [clientes]
+  )
 
   // Função para buscar estatísticas detalhadas do cliente
-  const getClienteStats = useCallback(async (id: string) => {
-    if (!hasPermission) {
-      return null
-    }
+  const getClienteStats = useCallback(
+    async (id: string) => {
+      if (!hasPermission) {
+        return null
+      }
 
-    try {
-      // Buscar todos os agendamentos do cliente
-      const { data: agendamentos } = await supabase
-        .from('appointments')
-        .select(`
+      try {
+        // Buscar todos os agendamentos do cliente
+        const { data: agendamentos } = await supabase
+          .from('appointments')
+          .select(
+            `
           *,
           service:services(nome, preco),
           barbeiro:profiles!appointments_barbeiro_id_fkey(nome)
-        `)
-        .eq('cliente_id', id)
-        .order('data_agendamento', { ascending: false })
+        `
+          )
+          .eq('cliente_id', id)
+          .order('data_agendamento', { ascending: false })
 
-      // Calcular estatísticas detalhadas
-      const stats = {
-        total_agendamentos: agendamentos?.length || 0,
-        agendamentos_concluidos: agendamentos?.filter(a => a.status === 'concluido').length || 0,
-        agendamentos_cancelados: agendamentos?.filter(a => a.status === 'cancelado').length || 0,
-        valor_total_gasto: agendamentos
-          ?.filter(a => a.status === 'concluido')
-          .reduce((sum, a) => sum + (a.preco_final || a.service?.preco || 0), 0) || 0,
-        servico_mais_usado: null,
-        barbeiro_preferido: null,
-        historico_agendamentos: agendamentos || []
-      }
-
-      // Encontrar serviço mais usado
-      const servicosCount = agendamentos?.reduce((acc, a) => {
-        if (a.service?.nome) {
-          acc[a.service.nome] = (acc[a.service.nome] || 0) + 1
+        // Calcular estatísticas detalhadas
+        const stats = {
+          total_agendamentos: agendamentos?.length || 0,
+          agendamentos_concluidos:
+            agendamentos?.filter((a) => a.status === 'concluido').length || 0,
+          agendamentos_cancelados:
+            agendamentos?.filter((a) => a.status === 'cancelado').length || 0,
+          valor_total_gasto:
+            agendamentos
+              ?.filter((a) => a.status === 'concluido')
+              .reduce((sum, a) => sum + (a.preco_final || a.service?.preco || 0), 0) || 0,
+          servico_mais_usado: null,
+          barbeiro_preferido: null,
+          historico_agendamentos: agendamentos || [],
         }
-        return acc
-      }, {} as Record<string, number>) || {}
 
-      if (Object.keys(servicosCount).length > 0) {
-        stats.servico_mais_usado = Object.entries(servicosCount)
-          .sort(([,a], [,b]) => b - a)[0][0]
-      }
+        // Encontrar serviço mais usado
+        const servicosCount =
+          agendamentos?.reduce(
+            (acc, a) => {
+              if (a.service?.nome) {
+                acc[a.service.nome] = (acc[a.service.nome] || 0) + 1
+              }
+              return acc
+            },
+            {} as Record<string, number>
+          ) || {}
 
-      // Encontrar barbeiro preferido
-      const barbeirosCount = agendamentos?.reduce((acc, a) => {
-        if (a.barbeiro?.nome) {
-          acc[a.barbeiro.nome] = (acc[a.barbeiro.nome] || 0) + 1
+        if (Object.keys(servicosCount).length > 0) {
+          stats.servico_mais_usado = Object.entries(servicosCount).sort(
+            ([, a], [, b]) => b - a
+          )[0][0]
         }
-        return acc
-      }, {} as Record<string, number>) || {}
 
-      if (Object.keys(barbeirosCount).length > 0) {
-        stats.barbeiro_preferido = Object.entries(barbeirosCount)
-          .sort(([,a], [,b]) => b - a)[0][0]
+        // Encontrar barbeiro preferido
+        const barbeirosCount =
+          agendamentos?.reduce(
+            (acc, a) => {
+              if (a.barbeiro?.nome) {
+                acc[a.barbeiro.nome] = (acc[a.barbeiro.nome] || 0) + 1
+              }
+              return acc
+            },
+            {} as Record<string, number>
+          ) || {}
+
+        if (Object.keys(barbeirosCount).length > 0) {
+          stats.barbeiro_preferido = Object.entries(barbeirosCount).sort(
+            ([, a], [, b]) => b - a
+          )[0][0]
+        }
+
+        return stats
+      } catch (err) {
+        // console.error('Erro ao buscar estatísticas do cliente:', err)
+        return null
       }
-
-      return stats
-    } catch (err) {
-      console.error('Erro ao buscar estatísticas do cliente:', err)
-      return null
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para exportar clientes
-  const exportClientes = useCallback(async (filtros?: ClienteFilters) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      // Usar filtros fornecidos ou filtros atuais
-      const filtrosExport = filtros || filters
-      
-      // Buscar dados para exportação (sem aplicar paginação)
-      const clientesParaExport = clientes.map(cliente => ({
-        Nome: cliente.nome,
-        Email: cliente.email,
-        Telefone: cliente.telefone || '',
-        'Data de Cadastro': new Date(cliente.data_cadastro).toLocaleDateString('pt-BR'),
-        'Total de Agendamentos': cliente.total_agendamentos,
-        'Valor Total Gasto': `R$ ${cliente.valor_total_gasto.toFixed(2)}`,
-        'Último Agendamento': cliente.ultimo_agendamento 
-          ? new Date(cliente.ultimo_agendamento).toLocaleDateString('pt-BR')
-          : 'Nunca',
-        'Serviços Favoritos': cliente.servicos_favoritos.join(', '),
-        'Frequência Média (dias)': cliente.frequencia_media_dias || 'N/A',
-        Status: cliente.status
-      }))
-
-      return { success: true, data: clientesParaExport }
-    } catch (err) {
-      console.error('Erro ao exportar clientes:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao exportar clientes'
+  const exportClientes = useCallback(
+    async (filtros?: ClienteFilters) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
-    }
-  }, [hasPermission, clientes, filters])
+
+      try {
+        // Buscar dados para exportação (sem aplicar paginação)
+        // Nota: filtros podem ser usados no futuro para filtrar dados de exportação
+        const clientesParaExport = clientes.map((cliente) => ({
+          Nome: cliente.nome,
+          Email: cliente.email,
+          Telefone: cliente.telefone || '',
+          'Data de Cadastro': new Date(cliente.data_cadastro).toLocaleDateString('pt-BR'),
+          'Total de Agendamentos': cliente.total_agendamentos,
+          'Valor Total Gasto': `R$ ${cliente.valor_total_gasto.toFixed(2)}`,
+          'Último Agendamento': cliente.ultimo_agendamento
+            ? new Date(cliente.ultimo_agendamento).toLocaleDateString('pt-BR')
+            : 'Nunca',
+          'Serviços Favoritos': cliente.servicos_favoritos.join(', '),
+          'Frequência Média (dias)': cliente.frequencia_media_dias || 'N/A',
+          Status: cliente.status,
+        }))
+
+        return { success: true, data: clientesParaExport }
+      } catch (err) {
+        // console.error('Erro ao exportar clientes:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao exportar clientes',
+        }
+      }
+    },
+    [hasPermission, clientes, filters]
+  )
 
   // Função para limpar filtros
   const clearFilters = useCallback(() => {
@@ -433,8 +477,8 @@ export function useAdminClientes(): UseAdminClientesReturn {
 
   // Estatísticas calculadas
   const totalClientes = clientes.length
-  const clientesAtivos = clientes.filter(c => c.status === 'ativo').length
-  const clientesInativos = clientes.filter(c => c.status === 'inativo').length
+  const clientesAtivos = clientes.filter((c) => c.status === 'ativo').length
+  const clientesInativos = clientes.filter((c) => c.status === 'inativo').length
 
   // Buscar clientes quando filtros mudarem
   useEffect(() => {
@@ -458,6 +502,6 @@ export function useAdminClientes(): UseAdminClientesReturn {
     exportClientes,
     setFilters,
     clearFilters,
-    refetch: fetchClientes
+    refetch: fetchClientes,
   }
 }

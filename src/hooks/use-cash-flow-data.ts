@@ -65,7 +65,7 @@ export function useCashFlowData() {
 
     const fetchCashFlowData = async () => {
       try {
-        setData(prev => ({ ...prev, loading: true, error: null }))
+        setData((prev) => ({ ...prev, loading: true, error: null }))
 
         const hoje = new Date().toISOString().split('T')[0]
         const inicioHoje = `${hoje}T00:00:00`
@@ -80,15 +80,17 @@ export function useCashFlowData() {
           transacoesAnterioresResult,
           configResult,
           evolucaoResult,
-          movimentacoesResult
+          movimentacoesResult,
         ] = await Promise.all([
           // Entradas de hoje (agendamentos concluídos)
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('status', 'concluido')
             .gte('data_agendamento', inicioHoje)
             .lte('data_agendamento', fimHoje),
@@ -99,16 +101,18 @@ export function useCashFlowData() {
             .select('valor')
             .gte('data_despesa', inicioHoje)
             .lte('data_despesa', fimHoje)
-            .then(result => result)
+            .then((result) => result)
             .catch(() => ({ data: [], error: null })),
 
           // Saldo anterior (receitas acumuladas até ontem)
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('status', 'concluido')
             .lt('data_agendamento', inicioHoje),
 
@@ -133,44 +137,69 @@ export function useCashFlowData() {
           getWeeklyEvolution(),
 
           // Movimentações recentes (últimas 10)
-          getRecentMovements()
+          getRecentMovements(),
         ])
 
+        // Tipos para os dados do banco
+        interface AppointmentData {
+          preco_final?: number
+          service?: { preco?: number }
+        }
+
+        interface ExpenseData {
+          valor?: number
+        }
+
+        interface TransactionData {
+          tipo: 'RECEITA' | 'DESPESA'
+          valor: string | number
+        }
+
         // Calcular entradas de hoje (agendamentos)
-        const entradasAgendamentos = entradasResult.data?.reduce((sum: number, apt: any) => {
-          const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-          return sum + preco
-        }, 0) || 0
+        const entradasAgendamentos =
+          entradasResult.data?.reduce((sum: number, apt: AppointmentData) => {
+            const preco = apt.preco_final || apt.service?.preco || 0
+            return sum + preco
+          }, 0) || 0
 
         // Calcular saídas de hoje (despesas tradicionais)
-        const saidasTradicional = saidasResult.data?.reduce((sum: number, expense: any) => {
-          return sum + (expense.valor || 0)
-        }, 0) || 0
+        const saidasTradicional =
+          saidasResult.data?.reduce((sum: number, expense: ExpenseData) => {
+            return sum + (expense.valor || 0)
+          }, 0) || 0
 
         // Calcular saldo anterior (agendamentos)
-        const saldoAnteriorAgendamentos = saldoAnteriorResult.data?.reduce((sum: number, apt: any) => {
-          const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-          return sum + preco
-        }, 0) || 0
+        const saldoAnteriorAgendamentos =
+          saldoAnteriorResult.data?.reduce((sum: number, apt: AppointmentData) => {
+            const preco = apt.preco_final || apt.service?.preco || 0
+            return sum + preco
+          }, 0) || 0
 
         // Processar transações do PDV de hoje
         const transacoesHoje = transacoesHojeResult.data || []
         const entradasTransacoes = transacoesHoje
-          .filter((t: any) => t.tipo === 'RECEITA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
-        
+          .filter((t: TransactionData) => t.tipo === 'RECEITA')
+          .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
+
         const saidasTransacoes = transacoesHoje
-          .filter((t: any) => t.tipo === 'DESPESA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
+          .filter((t: TransactionData) => t.tipo === 'DESPESA')
+          .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
 
         // Processar transações anteriores do PDV
         const transacoesAnteriores = transacoesAnterioresResult.data || []
-        const saldoAnteriorTransacoes = transacoesAnteriores
-          .filter((t: any) => t.tipo === 'RECEITA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0) -
+        const saldoAnteriorTransacoes =
           transacoesAnteriores
-          .filter((t: any) => t.tipo === 'DESPESA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
+            .filter((t: TransactionData) => t.tipo === 'RECEITA')
+            .reduce(
+              (sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0),
+              0
+            ) -
+          transacoesAnteriores
+            .filter((t: TransactionData) => t.tipo === 'DESPESA')
+            .reduce(
+              (sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0),
+              0
+            )
 
         // Combinar todas as fontes
         const entradasDia = entradasAgendamentos + entradasTransacoes
@@ -199,7 +228,7 @@ export function useCashFlowData() {
         // Projeção de 30 dias (baseada na média diária)
         const mediaDiariaEntradas = await calcularMediaDiariaEntradas()
         const mediaDiariaSaidas = await calcularMediaDiariaSaidas()
-        const saldoProjetado = saldoAtual + ((mediaDiariaEntradas - mediaDiariaSaidas) * 30)
+        const saldoProjetado = saldoAtual + (mediaDiariaEntradas - mediaDiariaSaidas) * 30
 
         const resumo: CashFlowSummary = {
           saldoAtual,
@@ -218,13 +247,12 @@ export function useCashFlowData() {
           lastUpdate: new Date(),
           alertaSaldoBaixo: saldoAtual < limiteMinimoAlerta,
         })
-
       } catch (error) {
-        console.error('Erro ao buscar dados de fluxo de caixa:', error)
-        
+        // console.error('Erro ao buscar dados de fluxo de caixa:', error)
+
         // Fallback com dados estimados
         const fallbackData = await getFallbackCashFlowData()
-        
+
         setData({
           ...fallbackData,
           loading: false,
@@ -244,7 +272,7 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
   try {
     const diasSemana = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
     const evolucao: WeeklyEvolution[] = []
-    
+
     // Buscar dados dos últimos 7 dias
     for (let i = 6; i >= 0; i--) {
       const data = new Date()
@@ -256,10 +284,12 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
       const [entradasResult, saidasResult, transacoesResult] = await Promise.all([
         supabase
           .from('appointments')
-          .select(`
+          .select(
+            `
             preco_final,
             service:services!appointments_service_id_fkey(preco)
-          `)
+          `
+          )
           .eq('status', 'concluido')
           .gte('data_agendamento', inicioDay)
           .lte('data_agendamento', fimDay),
@@ -269,34 +299,50 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
           .select('valor')
           .gte('data_despesa', inicioDay)
           .lte('data_despesa', fimDay)
-          .then(result => result)
+          .then((result) => result)
           .catch(() => ({ data: [] })),
 
         supabase
           .from('transacoes_financeiras')
           .select('tipo, valor')
           .eq('status', 'CONFIRMADA')
-          .eq('data_transacao', diaStr)
+          .eq('data_transacao', diaStr),
       ])
 
-      const entradasAgendamentos = entradasResult.data?.reduce((sum: number, apt: any) => {
-        const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-        return sum + preco
-      }, 0) || 0
+      interface AppointmentData {
+        preco_final?: number
+        service?: { preco?: number }
+      }
 
-      const saidasTradicional = saidasResult.data?.reduce((sum: number, expense: any) => {
-        return sum + (expense.valor || 0)
-      }, 0) || 0
+      interface ExpenseData {
+        valor?: number
+      }
+
+      interface TransactionData {
+        tipo: 'RECEITA' | 'DESPESA'
+        valor: string | number
+      }
+
+      const entradasAgendamentos =
+        entradasResult.data?.reduce((sum: number, apt: AppointmentData) => {
+          const preco = apt.preco_final || apt.service?.preco || 0
+          return sum + preco
+        }, 0) || 0
+
+      const saidasTradicional =
+        saidasResult.data?.reduce((sum: number, expense: ExpenseData) => {
+          return sum + (expense.valor || 0)
+        }, 0) || 0
 
       // Processar transações do PDV
       const transacoes = transacoesResult.data || []
       const entradasTransacoes = transacoes
-        .filter((t: any) => t.tipo === 'RECEITA')
-        .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
-      
+        .filter((t: TransactionData) => t.tipo === 'RECEITA')
+        .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
+
       const saidasTransacoes = transacoes
-        .filter((t: any) => t.tipo === 'DESPESA')
-        .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
+        .filter((t: TransactionData) => t.tipo === 'DESPESA')
+        .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
 
       // Combinar todas as fontes
       const entradas = entradasAgendamentos + entradasTransacoes
@@ -306,14 +352,14 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
         dia: diasSemana[data.getDay()],
         entradas,
         saidas,
-        saldo: entradas - saidas
+        saldo: entradas - saidas,
       })
     }
 
     return evolucao
   } catch (error) {
-    console.error('Erro ao buscar evolução semanal:', error)
-    
+    // console.error('Erro ao buscar evolução semanal:', error)
+
     // Fallback com dados baseados em padrões típicos
     return [
       { dia: 'Seg', entradas: 800, saidas: 200, saldo: 600 },
@@ -322,7 +368,7 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
       { dia: 'Qui', entradas: 1200, saidas: 220, saldo: 980 },
       { dia: 'Sex', entradas: 1400, saidas: 300, saldo: 1100 },
       { dia: 'Sáb', entradas: 1800, saidas: 180, saldo: 1620 },
-      { dia: 'Dom', entradas: 600, saidas: 100, saldo: 500 }
+      { dia: 'Dom', entradas: 600, saidas: 100, saldo: 500 },
     ]
   }
 }
@@ -335,7 +381,8 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
     // Buscar transações do PDV (mais recentes e prioritárias)
     const { data: transacoesPDV } = await supabase
       .from('transacoes_financeiras')
-      .select(`
+      .select(
+        `
         id,
         tipo,
         valor,
@@ -343,7 +390,8 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
         data_transacao,
         metodo_pagamento,
         created_at
-      `)
+      `
+      )
       .eq('status', 'CONFIRMADA')
       .order('created_at', { ascending: false })
       .limit(15)
@@ -351,43 +399,63 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
     // Buscar agendamentos recentes (entradas)
     const { data: agendamentos } = await supabase
       .from('appointments')
-      .select(`
+      .select(
+        `
         id,
         preco_final,
         data_agendamento,
         service:services!appointments_service_id_fkey(nome, preco),
         cliente:profiles!appointments_cliente_id_fkey(nome)
-      `)
+      `
+      )
       .eq('status', 'concluido')
       .order('data_agendamento', { ascending: false })
       .limit(5)
 
+    // Tipos para os dados
+    interface TransacaoPDV {
+      id: string
+      tipo: 'RECEITA' | 'DESPESA'
+      valor: string | number
+      descricao: string
+      created_at: string
+      metodo_pagamento?: string
+    }
+
+    interface AgendamentoData {
+      id: string
+      preco_final?: number
+      data_agendamento: string
+      service?: { nome?: string; preco?: number }
+      cliente?: { nome?: string }
+    }
+
     // Adicionar transações do PDV (prioridade alta)
-    transacoesPDV?.forEach((transacao: any) => {
+    transacoesPDV?.forEach((transacao: TransacaoPDV) => {
       movimentacoes.push({
         id: transacao.id,
         tipo: transacao.tipo === 'RECEITA' ? 'ENTRADA' : 'SAIDA',
-        valor: parseFloat(transacao.valor) || 0,
+        valor: parseFloat(String(transacao.valor)) || 0,
         descricao: transacao.descricao,
         categoria: transacao.tipo === 'RECEITA' ? 'Serviços PDV' : 'Despesas PDV',
         data: new Date(transacao.created_at),
-        metodo_pagamento: transacao.metodo_pagamento || 'Não especificado'
+        metodo_pagamento: transacao.metodo_pagamento || 'Não especificado',
       })
     })
 
     // Adicionar agendamentos como entradas (apenas se não tiver muitas transações PDV)
     if (movimentacoes.length < 10) {
-      agendamentos?.forEach((apt: any) => {
-        const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
+      agendamentos?.forEach((apt: AgendamentoData) => {
+        const preco = apt.preco_final || apt.service?.preco || 0
         if (preco > 0) {
           movimentacoes.push({
             id: apt.id,
             tipo: 'ENTRADA',
             valor: preco,
-            descricao: `${(apt.service as any)?.nome || 'Serviço'} - ${(apt.cliente as any)?.nome || 'Cliente'}`,
+            descricao: `${apt.service?.nome || 'Serviço'} - ${apt.cliente?.nome || 'Cliente'}`,
             categoria: 'Agendamentos',
             data: new Date(apt.data_agendamento),
-            metodo_pagamento: 'Não especificado'
+            metodo_pagamento: 'Não especificado',
           })
         }
       })
@@ -400,11 +468,18 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
         .select('id, valor, descricao, data_despesa, categoria')
         .order('data_despesa', { ascending: false })
         .limit(5)
-        .then(result => result)
+        .then((result) => result)
         .catch(() => ({ data: [] }))
 
       // Adicionar despesas como saídas
-      despesasResult.data?.forEach((desp: any) => {
+      interface DespesaData {
+        id: string
+        valor: number
+        descricao?: string
+        data_despesa: string
+      }
+
+      despesasResult.data?.forEach((desp: DespesaData) => {
         if (desp.valor > 0) {
           movimentacoes.push({
             id: desp.id,
@@ -413,7 +488,7 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
             descricao: desp.descricao || 'Despesa',
             categoria: 'Despesas Tradicionais',
             data: new Date(desp.data_despesa),
-            metodo_pagamento: 'Não especificado'
+            metodo_pagamento: 'Não especificado',
           })
         }
       })
@@ -426,17 +501,16 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
 
     // Se temos dados reais, retornar apenas eles
     if (movimentacoesOrdenadas.length > 0) {
-      console.log(`✅ Carregadas ${movimentacoesOrdenadas.length} movimentações reais`)
+      // console.log(`✅ Carregadas ${movimentacoesOrdenadas.length} movimentações reais`)
       return movimentacoesOrdenadas
     }
 
     // Se não há dados reais, retornar array vazio em vez de dados mockados
-    console.log('⚠️ Nenhuma movimentação real encontrada')
+    // console.log('⚠️ Nenhuma movimentação real encontrada')
     return []
-
   } catch (error) {
-    console.error('❌ Erro ao buscar movimentações recentes:', error)
-    
+    // console.error('❌ Erro ao buscar movimentações recentes:', error)
+
     // Em caso de erro, retornar array vazio em vez de dados mockados
     return []
   }
@@ -450,21 +524,29 @@ async function calcularMediaDiariaEntradas(): Promise<number> {
 
     const { data } = await supabase
       .from('appointments')
-      .select(`
+      .select(
+        `
         preco_final,
         service:services!appointments_service_id_fkey(preco)
-      `)
+      `
+      )
       .eq('status', 'concluido')
       .gte('data_agendamento', seteDiasAtras.toISOString())
 
-    const totalSemana = data?.reduce((sum: number, apt: any) => {
-      const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-      return sum + preco
-    }, 0) || 0
+    interface AppointmentData {
+      preco_final?: number
+      service?: { preco?: number }
+    }
+
+    const totalSemana =
+      data?.reduce((sum: number, apt: AppointmentData) => {
+        const preco = apt.preco_final || apt.service?.preco || 0
+        return sum + preco
+      }, 0) || 0
 
     return totalSemana / 7
   } catch (error) {
-    console.error('Erro ao calcular média de entradas:', error)
+    // console.error('Erro ao calcular média de entradas:', error)
     return 500 // Valor padrão
   }
 }
@@ -480,9 +562,14 @@ async function calcularMediaDiariaSaidas(): Promise<number> {
       .select('valor')
       .gte('data_despesa', seteDiasAtras.toISOString())
 
-    const totalSemana = data?.reduce((sum: number, expense: any) => {
-      return sum + (expense.valor || 0)
-    }, 0) || 0
+    interface ExpenseData {
+      valor?: number
+    }
+
+    const totalSemana =
+      data?.reduce((sum: number, expense: ExpenseData) => {
+        return sum + (expense.valor || 0)
+      }, 0) || 0
 
     return totalSemana / 7
   } catch (error) {
@@ -498,17 +585,25 @@ async function getFallbackCashFlowData(): Promise<Omit<CashFlowData, 'loading' |
     // Tentar buscar pelo menos as receitas dos últimos dias
     const { data: receitasRecentes } = await supabase
       .from('appointments')
-      .select(`
+      .select(
+        `
         preco_final,
         service:services!appointments_service_id_fkey(preco)
-      `)
+      `
+      )
       .eq('status', 'concluido')
       .gte('data_agendamento', new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()) // Últimos 3 dias
 
-    const receitaRecente = receitasRecentes?.reduce((sum: number, apt: any) => {
-      const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-      return sum + preco
-    }, 0) || 0
+    interface AppointmentData {
+      preco_final?: number
+      service?: { preco?: number }
+    }
+
+    const receitaRecente =
+      receitasRecentes?.reduce((sum: number, apt: AppointmentData) => {
+        const preco = apt.preco_final || apt.service?.preco || 0
+        return sum + preco
+      }, 0) || 0
 
     const mediadiaria = receitaRecente / 3
     const saldoEstimado = mediadiaria * 10 // 10 dias de receita como saldo
@@ -518,7 +613,7 @@ async function getFallbackCashFlowData(): Promise<Omit<CashFlowData, 'loading' |
         saldoAtual: saldoEstimado,
         entradasDia: mediadiaria,
         saidasDia: mediadiaria * 0.2, // 20% como saídas
-        saldoProjetado: saldoEstimado + (mediadiaria * 0.8 * 30), // Projeção 30 dias
+        saldoProjetado: saldoEstimado + mediadiaria * 0.8 * 30, // Projeção 30 dias
         limiteMinimoAlerta: 5000,
       },
       evolucaoSemanal: await getWeeklyEvolution(),
@@ -527,8 +622,8 @@ async function getFallbackCashFlowData(): Promise<Omit<CashFlowData, 'loading' |
       alertaSaldoBaixo: saldoEstimado < 5000,
     }
   } catch (error) {
-    console.error('Erro no fallback:', error)
-    
+    // console.error('Erro no fallback:', error)
+
     // Último recurso: dados padrão
     return {
       resumo: {
@@ -545,7 +640,7 @@ async function getFallbackCashFlowData(): Promise<Omit<CashFlowData, 'loading' |
         { dia: 'Qui', entradas: 1200, saidas: 220, saldo: 980 },
         { dia: 'Sex', entradas: 1400, saidas: 300, saldo: 1100 },
         { dia: 'Sáb', entradas: 1800, saidas: 180, saldo: 1620 },
-        { dia: 'Dom', entradas: 600, saidas: 100, saldo: 500 }
+        { dia: 'Dom', entradas: 600, saidas: 100, saldo: 500 },
       ],
       movimentacoes: [
         {
@@ -555,8 +650,8 @@ async function getFallbackCashFlowData(): Promise<Omit<CashFlowData, 'loading' |
           descricao: 'Serviços realizados',
           categoria: 'Serviços',
           data: new Date(),
-          metodo_pagamento: 'Dinheiro'
-        }
+          metodo_pagamento: 'Dinheiro',
+        },
       ],
       lastUpdate: new Date(),
       alertaSaldoBaixo: false,
@@ -582,19 +677,19 @@ export function useCashFlowSettings() {
       // TODO: Implementar tabela user_settings no banco quando necessário
       const settingsKey = `cash_flow_settings_${profile.id}`
       const currentSettings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
-      
+
       const newSettings = {
         ...currentSettings,
         limite_minimo_caixa: novoLimite,
-        updated_at: new Date().toISOString()
+        updated_at: new Date().toISOString(),
       }
-      
+
       localStorage.setItem(settingsKey, JSON.stringify(newSettings))
-      
-      console.log('Configuração salva no localStorage:', newSettings)
+
+      // console.log('Configuração salva no localStorage:', newSettings)
       return true
     } catch (error) {
-      console.error('Erro ao atualizar limite mínimo:', error)
+      // console.error('Erro ao atualizar limite mínimo:', error)
       return false
     }
   }
@@ -612,7 +707,7 @@ export function useCashFlowSettings() {
       const settings = JSON.parse(localStorage.getItem(settingsKey) || '{}')
       return settings.limite_minimo_caixa || 5000
     } catch (error) {
-      console.error('Erro ao buscar limite mínimo:', error)
+      // console.error('Erro ao buscar limite mínimo:', error)
       return 5000
     }
   }

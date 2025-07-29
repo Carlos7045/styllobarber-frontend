@@ -36,11 +36,11 @@ interface UseAgendamentosPendentesReturn {
   clientes: Cliente[]
   agendamentosPendentes: AgendamentoPendente[]
   clientesComPendencias: string[]
-  
+
   // Estados
   loading: boolean
   error: string | null
-  
+
   // Ações
   buscarPorCliente: (nomeCliente: string) => AgendamentoPendente[]
   buscarClientesPorNome: (nomeCliente: string) => Cliente[]
@@ -70,18 +70,18 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
         return
       }
 
-      const clientesFormatados = clientesData?.map(cliente => ({
-        id: cliente.id,
-        nome: cliente.nome,
-        telefone: cliente.telefone,
-        email: cliente.email
-      })) || []
+      const clientesFormatados =
+        clientesData?.map((cliente) => ({
+          id: cliente.id,
+          nome: cliente.nome,
+          telefone: cliente.telefone,
+          email: cliente.email,
+        })) || []
 
       console.log(`${clientesFormatados.length} clientes carregados`)
       setClientes(clientesFormatados)
-
     } catch (err) {
-      console.error('Erro ao carregar clientes:', err)
+      // console.error('Erro ao carregar clientes:', err)
       setClientes([])
     }
   }, [])
@@ -95,7 +95,8 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
       // Buscar agendamentos concluídos que ainda não foram pagos
       const { data: agendamentos, error: agendamentosError } = await supabase
         .from('appointments')
-        .select(`
+        .select(
+          `
           id,
           data_agendamento,
           preco_final,
@@ -104,12 +105,16 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
           cliente:profiles!appointments_cliente_id_fkey(id, nome, telefone),
           barbeiro:profiles!appointments_barbeiro_id_fkey(id, nome),
           service:services!appointments_service_id_fkey(id, nome, preco, duracao_minutos)
-        `)
+        `
+        )
         .eq('status', 'concluido')
         .order('data_agendamento', { ascending: false })
 
       if (agendamentosError) {
-        console.warn('Erro ao carregar agendamentos pendentes, usando dados de fallback:', agendamentosError)
+        console.warn(
+          'Erro ao carregar agendamentos pendentes, usando dados de fallback:',
+          agendamentosError
+        )
         setAgendamentosPendentes(getAgendamentosFallback())
         return
       }
@@ -121,11 +126,36 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
       }
 
       // Processar dados
-      const agendamentosProcessados = agendamentos.map(agendamento => {
-        const cliente = agendamento.cliente as any
-        const barbeiro = agendamento.barbeiro as any
-        const servico = agendamento.service as any
-        
+      interface ClienteData {
+        nome?: string
+        telefone?: string
+      }
+
+      interface BarbeiroData {
+        id?: string
+        nome?: string
+      }
+
+      interface ServicoData {
+        nome?: string
+        preco?: number
+      }
+
+      interface AgendamentoRaw {
+        id: string
+        data_agendamento: string
+        horario: string
+        preco_final?: number
+        cliente?: ClienteData
+        barbeiro?: BarbeiroData
+        service?: ServicoData
+      }
+
+      const agendamentosProcessados = agendamentos.map((agendamento: AgendamentoRaw) => {
+        const cliente = agendamento.cliente
+        const barbeiro = agendamento.barbeiro
+        const servico = agendamento.service
+
         return {
           id: agendamento.id,
           cliente_nome: cliente?.nome || 'Cliente não encontrado',
@@ -135,23 +165,26 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
           data_agendamento: agendamento.data_agendamento,
           hora_inicio: '14:00', // Valor padrão - pode ser expandido futuramente
           hora_fim: '15:00', // Valor padrão - pode ser expandido futuramente
-          servicos: servico ? [{
-            id: servico.id,
-            nome: servico.nome,
-            preco: servico.preco,
-            duracao: servico.duracao_minutos || 30
-          }] : [],
+          servicos: servico
+            ? [
+                {
+                  id: servico.id,
+                  nome: servico.nome,
+                  preco: servico.preco,
+                  duracao: servico.duracao_minutos || 30,
+                },
+              ]
+            : [],
           valor_total: agendamento.preco_final || servico?.preco || 0,
           status: 'CONCLUIDO' as const,
-          observacoes: agendamento.observacoes
+          observacoes: agendamento.observacoes,
         }
       })
 
       console.log(`${agendamentosProcessados.length} agendamentos carregados`)
       setAgendamentosPendentes(agendamentosProcessados)
-
     } catch (err) {
-      console.error('Erro ao carregar agendamentos pendentes:', err)
+      // console.error('Erro ao carregar agendamentos pendentes:', err)
       setError('Erro ao carregar agendamentos pendentes')
       setAgendamentosPendentes(getAgendamentosFallback())
     } finally {
@@ -160,50 +193,55 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
   }, [])
 
   // Buscar clientes por nome
-  const buscarClientesPorNome = useCallback((nomeCliente: string): Cliente[] => {
-    if (!nomeCliente.trim()) return clientes.slice(0, 10) // Mostrar os primeiros 10
-    
-    const termo = nomeCliente.toLowerCase().trim()
-    return clientes.filter(cliente =>
-      cliente.nome.toLowerCase().includes(termo)
-    ).slice(0, 10) // Limitar a 10 resultados
-  }, [clientes])
+  const buscarClientesPorNome = useCallback(
+    (nomeCliente: string): Cliente[] => {
+      if (!nomeCliente.trim()) return clientes.slice(0, 10) // Mostrar os primeiros 10
+
+      const termo = nomeCliente.toLowerCase().trim()
+      return clientes.filter((cliente) => cliente.nome.toLowerCase().includes(termo)).slice(0, 10) // Limitar a 10 resultados
+    },
+    [clientes]
+  )
 
   // Buscar agendamentos por nome do cliente
-  const buscarPorCliente = useCallback((nomeCliente: string): AgendamentoPendente[] => {
-    if (!nomeCliente.trim()) return []
-    
-    const termo = nomeCliente.toLowerCase().trim()
-    return agendamentosPendentes.filter(agendamento =>
-      agendamento.cliente_nome.toLowerCase().includes(termo)
-    )
-  }, [agendamentosPendentes])
+  const buscarPorCliente = useCallback(
+    (nomeCliente: string): AgendamentoPendente[] => {
+      if (!nomeCliente.trim()) return []
+
+      const termo = nomeCliente.toLowerCase().trim()
+      return agendamentosPendentes.filter((agendamento) =>
+        agendamento.cliente_nome.toLowerCase().includes(termo)
+      )
+    },
+    [agendamentosPendentes]
+  )
 
   // Marcar agendamento como pago
-  const marcarComoPago = useCallback(async (agendamentoId: string, transacaoId: string): Promise<boolean> => {
-    try {
-      // Por enquanto, apenas simular sucesso já que não temos campo 'pago' na tabela appointments
-      console.log(`Simulando marcação do agendamento ${agendamentoId} como pago com transação ${transacaoId}`)
-      
-      // Atualizar lista local
-      setAgendamentosPendentes(prev => 
-        prev.filter(agendamento => agendamento.id !== agendamentoId)
-      )
+  const marcarComoPago = useCallback(
+    async (agendamentoId: string, transacaoId: string): Promise<boolean> => {
+      try {
+        // Por enquanto, apenas simular sucesso já que não temos campo 'pago' na tabela appointments
+        console.log(
+          `Simulando marcação do agendamento ${agendamentoId} como pago com transação ${transacaoId}`
+        )
 
-      return true
+        // Atualizar lista local
+        setAgendamentosPendentes((prev) =>
+          prev.filter((agendamento) => agendamento.id !== agendamentoId)
+        )
 
-    } catch (err) {
-      console.error('Erro ao marcar como pago:', err)
-      return false
-    }
-  }, [])
+        return true
+      } catch (err) {
+        // console.error('Erro ao marcar como pago:', err)
+        return false
+      }
+    },
+    []
+  )
 
   // Refresh dos dados
   const refresh = useCallback(async () => {
-    await Promise.all([
-      carregarClientes(),
-      carregarAgendamentosPendentes()
-    ])
+    await Promise.all([carregarClientes(), carregarAgendamentosPendentes()])
   }, [carregarClientes, carregarAgendamentosPendentes])
 
   // Carregar dados iniciais
@@ -213,33 +251,34 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
 
   // Lista de clientes com pendências (para autocomplete)
   const clientesComPendencias = [
-    ...clientes.map(c => c.nome),
-    ...agendamentosPendentes.map(a => a.cliente_nome)
-  ].filter((nome, index, array) => array.indexOf(nome) === index)
-   .sort()
+    ...clientes.map((c) => c.nome),
+    ...agendamentosPendentes.map((a) => a.cliente_nome),
+  ]
+    .filter((nome, index, array) => array.indexOf(nome) === index)
+    .sort()
 
   return {
     // Dados
     clientes,
     agendamentosPendentes,
     clientesComPendencias,
-    
+
     // Estados
     loading,
     error,
-    
+
     // Ações
     buscarPorCliente,
     buscarClientesPorNome,
     marcarComoPago,
-    refresh
+    refresh,
   }
 }
 
 // Dados de fallback para desenvolvimento
 function getAgendamentosFallback(): AgendamentoPendente[] {
   const agora = new Date()
-  
+
   return [
     {
       id: '1',
@@ -251,12 +290,12 @@ function getAgendamentosFallback(): AgendamentoPendente[] {
       hora_inicio: '14:00',
       hora_fim: '15:00',
       servicos: [
-        { id: '1', nome: 'Corte Simples', preco: 25.00, duracao: 30 },
-        { id: '3', nome: 'Barba', preco: 20.00, duracao: 30 }
+        { id: '1', nome: 'Corte Simples', preco: 25.0, duracao: 30 },
+        { id: '3', nome: 'Barba', preco: 20.0, duracao: 30 },
       ],
-      valor_total: 45.00,
+      valor_total: 45.0,
       status: 'CONCLUIDO',
-      observacoes: 'Cliente preferencial'
+      observacoes: 'Cliente preferencial',
     },
     {
       id: '2',
@@ -267,11 +306,9 @@ function getAgendamentosFallback(): AgendamentoPendente[] {
       data_agendamento: agora.toISOString().split('T')[0],
       hora_inicio: '15:30',
       hora_fim: '16:30',
-      servicos: [
-        { id: '2', nome: 'Corte + Barba', preco: 45.00, duracao: 60 }
-      ],
-      valor_total: 45.00,
-      status: 'CONCLUIDO'
+      servicos: [{ id: '2', nome: 'Corte + Barba', preco: 45.0, duracao: 60 }],
+      valor_total: 45.0,
+      status: 'CONCLUIDO',
     },
     {
       id: '3',
@@ -283,13 +320,13 @@ function getAgendamentosFallback(): AgendamentoPendente[] {
       hora_inicio: '10:00',
       hora_fim: '11:15',
       servicos: [
-        { id: '1', nome: 'Corte Simples', preco: 25.00, duracao: 30 },
-        { id: '4', nome: 'Sobrancelha', preco: 15.00, duracao: 15 },
-        { id: '6', nome: 'Hidratação', preco: 30.00, duracao: 45 }
+        { id: '1', nome: 'Corte Simples', preco: 25.0, duracao: 30 },
+        { id: '4', nome: 'Sobrancelha', preco: 15.0, duracao: 15 },
+        { id: '6', nome: 'Hidratação', preco: 30.0, duracao: 45 },
       ],
-      valor_total: 70.00,
+      valor_total: 70.0,
       status: 'CONCLUIDO',
-      observacoes: 'Serviço completo realizado'
-    }
+      observacoes: 'Serviço completo realizado',
+    },
   ]
 }

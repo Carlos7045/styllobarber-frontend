@@ -2,18 +2,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search,
-  User,
-  Calendar,
-  Clock,
-  DollarSign,
-  Check,
-  X,
-  Phone,
-  Scissors
-} from 'lucide-react'
+import { motion } from 'framer-motion'
+import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Scissors } from 'lucide-react'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '../utils'
@@ -48,17 +38,17 @@ interface ClienteAgendamentoPickerProps {
 export const ClienteAgendamentoPicker = ({
   onAgendamentoSelected,
   onClose,
-  className = ''
+  className = '',
 }: ClienteAgendamentoPickerProps) => {
-  const { 
+  const {
     clientes,
-    agendamentosPendentes, 
-    clientesComPendencias, 
+    agendamentosPendentes,
+    clientesComPendencias,
     buscarPorCliente,
     buscarClientesPorNome,
-    loading 
+    loading,
   } = useAgendamentosPendentes()
-  
+
   const [searchTerm, setSearchTerm] = useState('')
   const [agendamentosFiltrados, setAgendamentosFiltrados] = useState<AgendamentoPendente[]>([])
   const [clientesSugeridos, setClientesSugeridos] = useState<any[]>([])
@@ -69,7 +59,7 @@ export const ClienteAgendamentoPicker = ({
     if (searchTerm.trim()) {
       const agendamentosEncontrados = buscarPorCliente(searchTerm)
       const clientesEncontrados = buscarClientesPorNome(searchTerm)
-      
+
       setAgendamentosFiltrados(agendamentosEncontrados)
       setClientesSugeridos(clientesEncontrados)
       setShowSuggestions(true)
@@ -94,19 +84,21 @@ export const ClienteAgendamentoPicker = ({
   }
 
   return (
-    <div className={`fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 ${className}`}>
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 ${className}`}
+    >
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.95 }}
-        className="w-full max-w-4xl max-h-[90vh] overflow-hidden"
+        className="max-h-[90vh] w-full max-w-4xl overflow-hidden"
       >
-        <Card className="bg-white dark:bg-secondary-graphite-light shadow-2xl">
+        <Card className="bg-white shadow-2xl dark:bg-secondary-graphite-light">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center justify-between mb-4">
+          <div className="border-b border-gray-200 p-6 dark:border-gray-700">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
                   <Search className="h-6 w-6 text-blue-600" />
                 </div>
                 <div>
@@ -114,7 +106,8 @@ export const ClienteAgendamentoPicker = ({
                     Buscar Cliente
                   </h2>
                   <p className="text-sm text-gray-600 dark:text-gray-300">
-                    Busque por qualquer cliente cadastrado ou selecione um agendamento para pagamento
+                    Busque por qualquer cliente cadastrado ou selecione um agendamento para
+                    pagamento
                   </p>
                 </div>
               </div>
@@ -129,32 +122,32 @@ export const ClienteAgendamentoPicker = ({
 
             {/* Campo de Busca */}
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Digite o nome do cliente (cadastrados ou com agendamentos)..."
-                className="w-full pl-12 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-lg"
+                className="w-full rounded-xl border-2 border-gray-300 bg-white py-3 pl-12 pr-4 text-lg text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-secondary-graphite dark:text-white"
                 autoFocus
               />
-              
+
               {/* Sugestões de Clientes */}
               {showSuggestions && searchTerm && (
-                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-secondary-graphite border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                <div className="absolute left-0 right-0 top-full z-10 mt-2 max-h-48 overflow-y-auto rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-600 dark:bg-secondary-graphite">
                   {clientesSugeridos.length > 0 && (
                     <>
-                      <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-b">
+                      <div className="border-b bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                         Clientes Cadastrados
                       </div>
                       {clientesSugeridos.map((cliente, index) => (
                         <button
                           key={`cliente-${index}`}
                           onClick={() => setSearchTerm(cliente.nome)}
-                          className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                          className="w-full border-b border-gray-100 px-4 py-3 text-left text-gray-900 last:border-b-0 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700"
                         >
                           <div className="flex items-center space-x-3">
-                            <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded">
+                            <div className="rounded bg-blue-100 p-1 dark:bg-blue-900/30">
                               <User className="h-3 w-3 text-blue-600" />
                             </div>
                             <div>
@@ -168,29 +161,30 @@ export const ClienteAgendamentoPicker = ({
                       ))}
                     </>
                   )}
-                  
+
                   {/* Separador se houver ambos */}
                   {clientesSugeridos.length > 0 && agendamentosFiltrados.length > 0 && (
-                    <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 bg-gray-50 dark:bg-gray-800 border-b">
+                    <div className="border-b bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-500 dark:bg-gray-800 dark:text-gray-400">
                       Com Agendamentos
                     </div>
                   )}
-                  
+
                   {/* Clientes com agendamentos */}
                   {agendamentosFiltrados.map((agendamento, index) => (
                     <button
                       key={`agendamento-${index}`}
                       onClick={() => setSearchTerm(agendamento.cliente_nome)}
-                      className="w-full px-4 py-3 text-left hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-white border-b border-gray-100 dark:border-gray-700 last:border-b-0"
+                      className="w-full border-b border-gray-100 px-4 py-3 text-left text-gray-900 last:border-b-0 hover:bg-gray-100 dark:border-gray-700 dark:text-white dark:hover:bg-gray-700"
                     >
                       <div className="flex items-center space-x-3">
-                        <div className="p-1 bg-green-100 dark:bg-green-900/30 rounded">
+                        <div className="rounded bg-green-100 p-1 dark:bg-green-900/30">
                           <Calendar className="h-3 w-3 text-green-600" />
                         </div>
                         <div>
                           <div className="font-medium">{agendamento.cliente_nome}</div>
                           <div className="text-xs text-gray-500">
-                            {formatDate(agendamento.data_agendamento)} - {formatCurrency(agendamento.valor_total)}
+                            {formatDate(agendamento.data_agendamento)} -{' '}
+                            {formatCurrency(agendamento.valor_total)}
                           </div>
                         </div>
                       </div>
@@ -202,24 +196,26 @@ export const ClienteAgendamentoPicker = ({
           </div>
 
           {/* Lista de Agendamentos */}
-          <div className="p-6 max-h-96 overflow-y-auto">
+          <div className="max-h-96 overflow-y-auto p-6">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-3"></div>
+                  <div className="mx-auto mb-3 h-8 w-8 animate-spin rounded-full border-b-2 border-blue-600"></div>
                   <p className="text-gray-600 dark:text-gray-300">Carregando agendamentos...</p>
                 </div>
               </div>
             ) : agendamentosFiltrados.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="p-4 bg-gray-100 dark:bg-gray-800 rounded-full w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100 p-4 dark:bg-gray-800">
                   <Calendar className="h-8 w-8 text-gray-400" />
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 font-medium">
+                <p className="font-medium text-gray-600 dark:text-gray-400">
                   {searchTerm ? 'Nenhum agendamento encontrado' : 'Nenhum agendamento pendente'}
                 </p>
-                <p className="text-sm text-gray-500 mt-1">
-                  {searchTerm ? 'Tente buscar por outro nome' : 'Todos os agendamentos já foram pagos'}
+                <p className="mt-1 text-sm text-gray-500">
+                  {searchTerm
+                    ? 'Tente buscar por outro nome'
+                    : 'Todos os agendamentos já foram pagos'}
                 </p>
               </div>
             ) : (
@@ -231,14 +227,16 @@ export const ClienteAgendamentoPicker = ({
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3, delay: index * 0.1 }}
                   >
-                    <Card className="p-4 hover:shadow-lg transition-all duration-300 cursor-pointer border-2 hover:border-blue-500"
-                          onClick={() => handleAgendamentoSelect(agendamento)}>
+                    <Card
+                      className="cursor-pointer border-2 p-4 transition-all duration-300 hover:border-blue-500 hover:shadow-lg"
+                      onClick={() => handleAgendamentoSelect(agendamento)}
+                    >
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           {/* Cliente e Barbeiro */}
-                          <div className="flex items-center space-x-4 mb-3">
+                          <div className="mb-3 flex items-center space-x-4">
                             <div className="flex items-center space-x-2">
-                              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                              <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
                                 <User className="h-4 w-4 text-blue-600" />
                               </div>
                               <div>
@@ -246,16 +244,16 @@ export const ClienteAgendamentoPicker = ({
                                   {agendamento.cliente_nome}
                                 </h3>
                                 {agendamento.cliente_telefone && (
-                                  <p className="text-xs text-gray-500 flex items-center space-x-1">
+                                  <p className="flex items-center space-x-1 text-xs text-gray-500">
                                     <Phone className="h-3 w-3" />
                                     <span>{agendamento.cliente_telefone}</span>
                                   </p>
                                 )}
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center space-x-2">
-                              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                              <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
                                 <Scissors className="h-4 w-4 text-green-600" />
                               </div>
                               <div>
@@ -268,25 +266,30 @@ export const ClienteAgendamentoPicker = ({
                           </div>
 
                           {/* Data e Hora */}
-                          <div className="flex items-center space-x-4 mb-3">
+                          <div className="mb-3 flex items-center space-x-4">
                             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                               <Calendar className="h-4 w-4" />
                               <span>{formatDate(agendamento.data_agendamento)}</span>
                             </div>
                             <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
                               <Clock className="h-4 w-4" />
-                              <span>{formatTime(agendamento.hora_inicio)} - {formatTime(agendamento.hora_fim)}</span>
+                              <span>
+                                {formatTime(agendamento.hora_inicio)} -{' '}
+                                {formatTime(agendamento.hora_fim)}
+                              </span>
                             </div>
                           </div>
 
                           {/* Serviços */}
                           <div className="mb-3">
-                            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Serviços:</p>
+                            <p className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+                              Serviços:
+                            </p>
                             <div className="flex flex-wrap gap-2">
                               {agendamento.servicos.map((servico, idx) => (
                                 <span
                                   key={idx}
-                                  className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-xs rounded-full text-gray-700 dark:text-gray-300"
+                                  className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-700 dark:bg-gray-700 dark:text-gray-300"
                                 >
                                   {servico.nome} - {formatCurrency(servico.preco)}
                                 </span>
@@ -296,15 +299,15 @@ export const ClienteAgendamentoPicker = ({
 
                           {/* Observações */}
                           {agendamento.observacoes && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400 italic">
+                            <p className="text-sm italic text-gray-600 dark:text-gray-400">
                               "{agendamento.observacoes}"
                             </p>
                           )}
                         </div>
 
                         {/* Valor Total */}
-                        <div className="text-right ml-4">
-                          <div className="flex items-center space-x-2 mb-2">
+                        <div className="ml-4 text-right">
+                          <div className="mb-2 flex items-center space-x-2">
                             <DollarSign className="h-5 w-5 text-green-600" />
                             <span className="text-2xl font-bold text-green-600 dark:text-green-400">
                               {formatCurrency(agendamento.valor_total)}
@@ -315,7 +318,7 @@ export const ClienteAgendamentoPicker = ({
                             size="sm"
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            <Check className="h-4 w-4 mr-2" />
+                            <Check className="mr-2 h-4 w-4" />
                             Pagar
                           </Button>
                         </div>
@@ -328,7 +331,7 @@ export const ClienteAgendamentoPicker = ({
           </div>
 
           {/* Footer */}
-          <div className="p-6 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-secondary-graphite">
+          <div className="border-t border-gray-200 bg-gray-50 p-6 dark:border-gray-700 dark:bg-secondary-graphite">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600 dark:text-gray-400">
                 {agendamentosFiltrados.length} agendamento(s) encontrado(s)

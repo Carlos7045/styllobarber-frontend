@@ -76,7 +76,7 @@ export function useFinancialData(periodo: string = 'mes') {
 
     const fetchFinancialData = async () => {
       try {
-        setData(prev => ({ ...prev, loading: true, error: null }))
+        setData((prev) => ({ ...prev, loading: true, error: null }))
 
         // Definir períodos baseado no filtro
         const { inicioAtual, fimAtual, inicioAnterior, fimAnterior } = getDateRanges(periodo)
@@ -91,16 +91,18 @@ export function useFinancialData(periodo: string = 'mes') {
           transacoesAnterioresResult,
           barbeirosResult,
           performanceResult,
-          evolucaoResult
+          evolucaoResult,
         ] = await Promise.all([
           // Receitas do período atual
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco),
               data_agendamento
-            `)
+            `
+            )
             .eq('status', 'concluido')
             .gte('data_agendamento', inicioAtual.toISOString())
             .lte('data_agendamento', fimAtual.toISOString()),
@@ -108,10 +110,12 @@ export function useFinancialData(periodo: string = 'mes') {
           // Receitas do período anterior (para calcular crescimento)
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               preco_final,
               service:services!appointments_service_id_fkey(preco)
-            `)
+            `
+            )
             .eq('status', 'concluido')
             .gte('data_agendamento', inicioAnterior.toISOString())
             .lte('data_agendamento', fimAnterior.toISOString()),
@@ -122,7 +126,7 @@ export function useFinancialData(periodo: string = 'mes') {
             .select('valor, data_despesa')
             .gte('data_despesa', inicioAtual.toISOString())
             .lte('data_despesa', fimAtual.toISOString())
-            .then(result => result)
+            .then((result) => result)
             .catch(() => ({ data: [], error: null })), // Fallback se não existir tabela
 
           // Despesas do período anterior
@@ -131,7 +135,7 @@ export function useFinancialData(periodo: string = 'mes') {
             .select('valor, data_despesa')
             .gte('data_despesa', inicioAnterior.toISOString())
             .lte('data_despesa', fimAnterior.toISOString())
-            .then(result => result)
+            .then((result) => result)
             .catch(() => ({ data: [], error: null })), // Fallback se não existir tabela
 
           // Transações financeiras do período atual (PDV)
@@ -160,59 +164,85 @@ export function useFinancialData(periodo: string = 'mes') {
           // Performance por barbeiro
           supabase
             .from('appointments')
-            .select(`
+            .select(
+              `
               barbeiro_id,
               preco_final,
               service:services!appointments_service_id_fkey(preco),
               barbeiro:profiles!appointments_barbeiro_id_fkey(nome)
-            `)
+            `
+            )
             .eq('status', 'concluido')
             .gte('data_agendamento', inicioAtual.toISOString())
             .lte('data_agendamento', fimAtual.toISOString()),
 
           // Evolução temporal (últimos 4 meses)
-          getEvolutionData()
+          getEvolutionData(),
         ])
 
         // Processar receitas dos agendamentos
         const receitas = receitasResult.data || []
         const receitasAnteriores = receitasAnterioresResult.data || []
-        
-        const receitaAgendamentos = receitas.reduce((sum: number, apt: any) => {
-          const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
+
+        // Tipos para os dados
+        interface AppointmentData {
+          preco_final?: number
+          service?: { preco?: number }
+        }
+
+        interface TransactionData {
+          tipo: 'RECEITA' | 'DESPESA'
+          valor: string | number
+        }
+
+        interface ExpenseData {
+          valor?: number
+        }
+
+        const receitaAgendamentos = receitas.reduce((sum: number, apt: AppointmentData) => {
+          const preco = apt.preco_final || apt.service?.preco || 0
           return sum + preco
         }, 0)
 
-        const receitaAgendamentosAnterior = receitasAnteriores.reduce((sum: number, apt: any) => {
-          const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-          return sum + preco
-        }, 0)
+        const receitaAgendamentosAnterior = receitasAnteriores.reduce(
+          (sum: number, apt: AppointmentData) => {
+            const preco = apt.preco_final || apt.service?.preco || 0
+            return sum + preco
+          },
+          0
+        )
 
         // Processar transações financeiras (PDV)
         const transacoes = transacoesResult.data || []
         const transacoesAnteriores = transacoesAnterioresResult.data || []
-        
+
         const receitaTransacoes = transacoes
-          .filter((t: any) => t.tipo === 'RECEITA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
-        
+          .filter((t: TransactionData) => t.tipo === 'RECEITA')
+          .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
+
         const despesaTransacoes = transacoes
-          .filter((t: any) => t.tipo === 'DESPESA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
+          .filter((t: TransactionData) => t.tipo === 'DESPESA')
+          .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
 
         const receitaTransacoesAnterior = transacoesAnteriores
-          .filter((t: any) => t.tipo === 'RECEITA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
-        
+          .filter((t: TransactionData) => t.tipo === 'RECEITA')
+          .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
+
         const despesaTransacoesAnterior = transacoesAnteriores
-          .filter((t: any) => t.tipo === 'DESPESA')
-          .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
+          .filter((t: TransactionData) => t.tipo === 'DESPESA')
+          .reduce((sum: number, t: TransactionData) => sum + (parseFloat(String(t.valor)) || 0), 0)
 
         // Processar despesas tradicionais
         const despesas = despesasResult.data || []
         const despesasAnteriores = despesasAnterioresResult.data || []
-        const despesasTradicional = despesas.reduce((sum: number, desp: any) => sum + (desp.valor || 0), 0)
-        const despesasTradicionalAnterior = despesasAnteriores.reduce((sum: number, desp: any) => sum + (desp.valor || 0), 0)
+        const despesasTradicional = despesas.reduce(
+          (sum: number, desp: ExpenseData) => sum + (desp.valor || 0),
+          0
+        )
+        const despesasTradicionalAnterior = despesasAnteriores.reduce(
+          (sum: number, desp: ExpenseData) => sum + (desp.valor || 0),
+          0
+        )
 
         // Combinar todas as receitas e despesas
         const receitaBruta = receitaAgendamentos + receitaTransacoes
@@ -221,30 +251,49 @@ export function useFinancialData(periodo: string = 'mes') {
         const despesasTotalAnterior = despesaTransacoesAnterior + despesasTradicionalAnterior
 
         // Calcular métricas atuais
-        const numeroAtendimentos = receitas.length + transacoes.filter((t: any) => t.tipo === 'RECEITA').length
+        const numeroAtendimentos =
+          receitas.length + transacoes.filter((t: any) => t.tipo === 'RECEITA').length
         const ticketMedio = numeroAtendimentos > 0 ? receitaBruta / numeroAtendimentos : 0
         const receitaLiquida = receitaBruta - despesasTotal
         const lucroLiquido = receitaLiquida // Simplificado
-        const taxaCrescimento = receitaBrutaAnterior > 0 
-          ? ((receitaBruta - receitaBrutaAnterior) / receitaBrutaAnterior) * 100 
-          : 0
+        const taxaCrescimento =
+          receitaBrutaAnterior > 0
+            ? ((receitaBruta - receitaBrutaAnterior) / receitaBrutaAnterior) * 100
+            : 0
 
         // Calcular métricas anteriores
-        const numeroAtendimentosAnterior = receitasAnteriores.length + transacoesAnteriores.filter((t: any) => t.tipo === 'RECEITA').length
-        const ticketMedioAnterior = numeroAtendimentosAnterior > 0 ? receitaBrutaAnterior / numeroAtendimentosAnterior : 0
+        const numeroAtendimentosAnterior =
+          receitasAnteriores.length +
+          transacoesAnteriores.filter((t: TransactionData) => t.tipo === 'RECEITA').length
+        const ticketMedioAnterior =
+          numeroAtendimentosAnterior > 0 ? receitaBrutaAnterior / numeroAtendimentosAnterior : 0
         const receitaLiquidaAnterior = receitaBrutaAnterior - despesasTotalAnterior
         const lucroLiquidoAnterior = receitaLiquidaAnterior
 
         // Processar performance dos barbeiros
         const performanceMap = new Map<string, { nome: string; receita: number }>()
-        
+
+        // Tipos para performance
+        interface AppointmentPerformance {
+          barbeiro_id: string
+          barbeiro?: { nome?: string }
+          preco_final?: number
+          service?: { preco?: number }
+        }
+
+        interface TransactionPerformance {
+          tipo: 'RECEITA' | 'DESPESA'
+          barbeiro_id?: string
+          valor: string | number
+        }
+
         // Performance dos agendamentos
-        performanceResult.data?.forEach((apt: any) => {
-          const barbeiro = apt.barbeiro as any
+        performanceResult.data?.forEach((apt: AppointmentPerformance) => {
+          const barbeiro = apt.barbeiro
           const barbeiroId = apt.barbeiro_id
           const nome = barbeiro?.nome || 'Barbeiro'
-          const receita = apt.preco_final || ((apt.service as any)?.preco) || 0
-          
+          const receita = apt.preco_final || apt.service?.preco || 0
+
           if (performanceMap.has(barbeiroId)) {
             performanceMap.get(barbeiroId)!.receita += receita
           } else {
@@ -254,11 +303,11 @@ export function useFinancialData(periodo: string = 'mes') {
 
         // Performance das transações PDV (apenas receitas com barbeiro)
         transacoes
-          .filter((t: any) => t.tipo === 'RECEITA' && t.barbeiro_id)
-          .forEach((t: any) => {
-            const barbeiroId = t.barbeiro_id
-            const receita = parseFloat(t.valor) || 0
-            
+          .filter((t: TransactionPerformance) => t.tipo === 'RECEITA' && t.barbeiro_id)
+          .forEach((t: TransactionPerformance) => {
+            const barbeiroId = t.barbeiro_id!
+            const receita = parseFloat(String(t.valor)) || 0
+
             if (performanceMap.has(barbeiroId)) {
               performanceMap.get(barbeiroId)!.receita += receita
             } else {
@@ -272,7 +321,7 @@ export function useFinancialData(periodo: string = 'mes') {
         const performanceBarbeiros = Array.from(performanceMap.entries()).map(([id, data]) => ({
           id,
           nome: data.nome,
-          receitaGerada: data.receita
+          receitaGerada: data.receita,
         }))
 
         setData({
@@ -302,13 +351,12 @@ export function useFinancialData(periodo: string = 'mes') {
           loading: false,
           error: null,
         })
-
       } catch (error) {
-        console.error('Erro ao buscar dados financeiros:', error)
-        
+        // console.error('Erro ao buscar dados financeiros:', error)
+
         // Fallback com dados baseados em médias da indústria
         const fallbackData = getFallbackFinancialData()
-        
+
         setData({
           ...fallbackData,
           loading: false,
@@ -379,7 +427,20 @@ function getDateRanges(periodo: string) {
 // Função para buscar dados de evolução temporal
 async function getEvolutionData(): Promise<EvolutionData[]> {
   try {
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
+    const meses = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
+    ]
     const hoje = new Date()
     const evolucao: EvolutionData[] = []
 
@@ -391,10 +452,12 @@ async function getEvolutionData(): Promise<EvolutionData[]> {
       const [receitasResult, despesasResult, transacoesResult] = await Promise.all([
         supabase
           .from('appointments')
-          .select(`
+          .select(
+            `
             preco_final,
             service:services!appointments_service_id_fkey(preco)
-          `)
+          `
+          )
           .eq('status', 'concluido')
           .gte('data_agendamento', mes.toISOString())
           .lte('data_agendamento', proximoMes.toISOString()),
@@ -404,7 +467,7 @@ async function getEvolutionData(): Promise<EvolutionData[]> {
           .select('valor')
           .gte('data_despesa', mes.toISOString())
           .lte('data_despesa', proximoMes.toISOString())
-          .then(result => result)
+          .then((result) => result)
           .catch(() => ({ data: [] })),
 
         supabase
@@ -412,22 +475,24 @@ async function getEvolutionData(): Promise<EvolutionData[]> {
           .select('tipo, valor')
           .eq('status', 'CONFIRMADA')
           .gte('data_transacao', mes.toISOString().split('T')[0])
-          .lte('data_transacao', proximoMes.toISOString().split('T')[0])
+          .lte('data_transacao', proximoMes.toISOString().split('T')[0]),
       ])
 
-      const receitasAgendamentos = receitasResult.data?.reduce((sum: number, apt: any) => {
-        const preco = apt.preco_final || ((apt.service as any)?.preco) || 0
-        return sum + preco
-      }, 0) || 0
+      const receitasAgendamentos =
+        receitasResult.data?.reduce((sum: number, apt: any) => {
+          const preco = apt.preco_final || (apt.service as any)?.preco || 0
+          return sum + preco
+        }, 0) || 0
 
-      const despesasTradicional = despesasResult.data?.reduce((sum: number, desp: any) => sum + (desp.valor || 0), 0) || 0
+      const despesasTradicional =
+        despesasResult.data?.reduce((sum: number, desp: any) => sum + (desp.valor || 0), 0) || 0
 
       // Processar transações do PDV
       const transacoes = transacoesResult.data || []
       const receitasTransacoes = transacoes
         .filter((t: any) => t.tipo === 'RECEITA')
         .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
-      
+
       const despesasTransacoes = transacoes
         .filter((t: any) => t.tipo === 'DESPESA')
         .reduce((sum: number, t: any) => sum + (parseFloat(t.valor) || 0), 0)
@@ -440,22 +505,33 @@ async function getEvolutionData(): Promise<EvolutionData[]> {
         mes: meses[mes.getMonth()],
         receitas,
         despesas,
-        lucro: receitas - despesas
+        lucro: receitas - despesas,
       })
     }
 
     console.log(`✅ Evolução temporal carregada com dados reais de ${evolucao.length} meses`)
     return evolucao
   } catch (error) {
-    console.error('❌ Erro ao buscar evolução temporal:', error)
-    
+    // console.error('❌ Erro ao buscar evolução temporal:', error)
+
     // Em caso de erro, retornar dados mínimos baseados no mês atual
     const mesAtual = new Date().getMonth()
-    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
-    
-    return [
-      { mes: meses[mesAtual], receitas: 0, despesas: 0, lucro: 0 }
+    const meses = [
+      'Jan',
+      'Fev',
+      'Mar',
+      'Abr',
+      'Mai',
+      'Jun',
+      'Jul',
+      'Ago',
+      'Set',
+      'Out',
+      'Nov',
+      'Dez',
     ]
+
+    return [{ mes: meses[mesAtual], receitas: 0, despesas: 0, lucro: 0 }]
   }
 }
 
@@ -469,7 +545,7 @@ function getFallbackFinancialData(): Omit<FinancialData, 'loading' | 'error'> {
     ticketMedio: 75,
     numeroAtendimentos: 200,
     taxaCrescimento: 15.5,
-    comissoesPendentes: 2500
+    comissoesPendentes: 2500,
   }
 
   // Métricas anteriores com variação de -10% a +5%
@@ -481,7 +557,7 @@ function getFallbackFinancialData(): Omit<FinancialData, 'loading' | 'error'> {
     ticketMedio: 68,
     numeroAtendimentos: 191,
     taxaCrescimento: 0,
-    comissoesPendentes: 2200
+    comissoesPendentes: 2200,
   }
 
   return {
@@ -491,15 +567,15 @@ function getFallbackFinancialData(): Omit<FinancialData, 'loading' | 'error'> {
       { mes: 'Jan', receitas: 12000, despesas: 2800, lucro: 9200 },
       { mes: 'Fev', receitas: 13500, despesas: 2900, lucro: 10600 },
       { mes: 'Mar', receitas: 14200, despesas: 3100, lucro: 11100 },
-      { mes: 'Abr', receitas: 15000, despesas: 3000, lucro: 12000 }
+      { mes: 'Abr', receitas: 15000, despesas: 3000, lucro: 12000 },
     ],
     performanceBarbeiros: [
       { id: 'fallback-1', nome: 'Dados Estimados - Barbeiro A', receitaGerada: 8000 },
-      { id: 'fallback-2', nome: 'Dados Estimados - Barbeiro B', receitaGerada: 7000 }
+      { id: 'fallback-2', nome: 'Dados Estimados - Barbeiro B', receitaGerada: 7000 },
     ],
     barbeiros: [
       { id: 'fallback-1', nome: 'Dados Estimados - Barbeiro A' },
-      { id: 'fallback-2', nome: 'Dados Estimados - Barbeiro B' }
-    ]
+      { id: 'fallback-2', nome: 'Dados Estimados - Barbeiro B' },
+    ],
   }
 }
