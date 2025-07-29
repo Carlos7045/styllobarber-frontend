@@ -127,7 +127,10 @@ export default function AgendamentosPage() {
                           </h3>
                           <p className="text-sm text-text-muted">
                             {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR')} às{' '}
-                            {appointment.horario_agendamento}
+                            {new Date(appointment.data_agendamento).toLocaleTimeString('pt-BR', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
                           </p>
                           {appointment.barbeiro && (
                             <p className="text-sm text-text-muted">

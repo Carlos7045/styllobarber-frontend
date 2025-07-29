@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import {
   Users,
   Plus,
@@ -28,7 +28,7 @@ import { useBarberClients } from '@/hooks/use-barber-clients'
 import { useAdminClientes } from '@/hooks/use-admin-clientes'
 
 export default function ClientesPage() {
-  const { barbeiroNome, isBarber, isAdmin } = useBarberPermissions()
+  const { isBarber, isAdmin } = useBarberPermissions()
 
   // Usar hooks específicos baseado no papel do usuário
   const barberClientsData = useBarberClients()
@@ -47,6 +47,24 @@ export default function ClientesPage() {
     clearFilters,
   } = isAdmin ? adminClientsData : barberClientsData
 
+  // Função auxiliar para garantir compatibilidade de filtros
+  const updateFilters = useCallback(
+    (newFilters: any) => {
+      if (isAdmin) {
+        setFilters(newFilters)
+      } else {
+        // Para barbeiros, garantir que apenas campos compatíveis sejam usados
+        const compatibleFilters = {
+          busca: newFilters.busca,
+          status: newFilters.status === 'bloqueado' ? 'all' : newFilters.status,
+          periodo: newFilters.periodo,
+        }
+        setFilters(compatibleFilters)
+      }
+    },
+    [isAdmin, setFilters]
+  )
+
   // Estados locais para compatibilidade com o UI existente
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
@@ -54,12 +72,12 @@ export default function ClientesPage() {
   // Sincronizar filtros locais com os hooks
   const handleSearchChange = (value: string) => {
     setSearchTerm(value)
-    setFilters({ ...filters, busca: value })
+    updateFilters({ ...filters, busca: value })
   }
 
   const handleStatusChange = (value: string) => {
     setStatusFilter(value)
-    setFilters({ ...filters, status: value as any })
+    updateFilters({ ...filters, status: value })
   }
 
   // Para compatibilidade, usar os dados filtrados dos hooks
@@ -80,9 +98,7 @@ export default function ClientesPage() {
                   {isBarber ? 'Meus Clientes' : 'Gestão de Clientes'}
                 </h1>
                 <p className="text-lg font-medium text-gray-600 dark:text-gray-300">
-                  {isBarber
-                    ? `Seus clientes atendidos, ${barbeiroNome || 'Barbeiro'}`
-                    : 'Gerencie todos os clientes da barbearia'}
+                  {isBarber ? 'Seus clientes atendidos' : 'Gerencie todos os clientes da barbearia'}
                 </p>
               </div>
             </div>
@@ -113,12 +129,13 @@ export default function ClientesPage() {
                 <option value="">Todos os clientes</option>
                 <option value="ativo">Clientes Ativos</option>
                 <option value="inativo">Clientes Inativos</option>
+                {isAdmin && <option value="bloqueado">Clientes Bloqueados</option>}
               </select>
 
               {isBarber && (
                 <select
                   value={filters.periodo || 'todos'}
-                  onChange={(e) => setFilters({ ...filters, periodo: e.target.value as any })}
+                  onChange={(e) => updateFilters({ ...filters, periodo: e.target.value })}
                   className="min-w-[120px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-gold dark:border-secondary-graphite-card/30 dark:bg-secondary-graphite-light dark:text-white"
                 >
                   <option value="todos">Todos os períodos</option>
