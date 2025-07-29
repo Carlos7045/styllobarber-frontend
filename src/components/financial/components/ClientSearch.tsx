@@ -140,26 +140,26 @@ const ClienteItem = ({
       className="border border-gray-200 rounded-lg overflow-hidden"
     >
       <div 
-        className="p-4 hover:bg-gray-50 cursor-pointer"
+        className="p-4 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-blue-100 rounded-full">
-              <User className="h-5 w-5 text-blue-600" />
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+              <User className="h-5 w-5 text-blue-600 dark:text-blue-400" />
             </div>
             
             <div>
-              <h4 className="font-medium text-gray-900">{cliente.nome}</h4>
+              <h4 className="font-medium text-gray-900 dark:text-white">{cliente.nome}</h4>
               <div className="flex items-center space-x-3 mt-1">
                 {cliente.telefone && (
-                  <div className="flex items-center space-x-1 text-sm text-gray-500">
+                  <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
                     <Phone className="h-3 w-3" />
                     <span>{cliente.telefone}</span>
                   </div>
                 )}
                 {cliente.ultimoAtendimento && (
-                  <div className="flex items-center space-x-1 text-sm text-gray-500">
+                  <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
                     <Clock className="h-3 w-3" />
                     <span>Último: {formatDate(cliente.ultimoAtendimento)}</span>
                   </div>
@@ -201,10 +201,10 @@ const ClienteItem = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3 }}
-            className="border-t border-gray-200 bg-gray-50"
+            className="border-t border-gray-200 dark:border-secondary-graphite-card/30 bg-gray-50 dark:bg-secondary-graphite-card"
           >
             <div className="p-4">
-              <h5 className="font-medium text-gray-900 mb-3">
+              <h5 className="font-medium text-gray-900 dark:text-white mb-3">
                 Agendamentos ({agendamentosCliente.length})
               </h5>
               
@@ -233,15 +233,15 @@ const AgendamentoItem = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'CONFIRMADO':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
       case 'PENDENTE_PAGAMENTO':
-        return 'bg-orange-100 text-orange-700'
+        return 'bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
       case 'REALIZADO':
-        return 'bg-green-100 text-green-700'
+        return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
       case 'CANCELADO':
-        return 'bg-red-100 text-red-700'
+        return 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
       default:
-        return 'bg-gray-100 text-gray-700'
+        return 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300'
     }
   }
 
@@ -265,15 +265,15 @@ const AgendamentoItem = ({
 
   return (
     <div className={`p-3 rounded-lg border ${
-      isPendentePagamento ? 'border-orange-200 bg-orange-50' : 
-      isConfirmado ? 'border-blue-200 bg-blue-50' : 
-      'border-gray-200 bg-white'
+      isPendentePagamento ? 'border-orange-200 dark:border-orange-800/30 bg-orange-50 dark:bg-orange-900/20' : 
+      isConfirmado ? 'border-blue-200 dark:border-blue-800/30 bg-blue-50 dark:bg-blue-900/20' : 
+      'border-gray-200 bg-white dark:bg-background-dark-elevated dark:border-secondary-graphite-card/30'
     }`}>
       <div className="flex items-center justify-between">
         <div className="flex-1">
           <div className="flex items-center space-x-2 mb-2">
             <Scissors className="h-4 w-4 text-gray-500" />
-            <span className="font-medium text-gray-900">{agendamento.servicoNome}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{agendamento.servicoNome}</span>
             <Badge 
               className={`text-xs ${getStatusColor(agendamento.status)}`}
             >
@@ -300,7 +300,7 @@ const AgendamentoItem = ({
         </div>
         
         <div className="text-right ml-4">
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-lg font-bold text-gray-900 dark:text-white">
             {formatCurrency(agendamento.valorTotal)}
           </p>
           
@@ -405,7 +405,7 @@ export const ClientSearch = ({
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar cliente por nome, telefone ou email..."
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-secondary-graphite-card/30 rounded-md bg-white dark:bg-background-dark-card text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
         
         {searchTerm && (
@@ -434,12 +434,12 @@ export const ClientSearch = ({
               {loading ? (
                 <div className="flex items-center justify-center py-8">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-                  <span className="ml-2 text-gray-600">Buscando clientes...</span>
+                  <span className="ml-2 text-gray-600 dark:text-gray-300">Buscando clientes...</span>
                 </div>
               ) : clientes.length > 0 ? (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-medium text-gray-900">
+                    <h4 className="font-medium text-gray-900 dark:text-white">
                       {clientes.length} cliente{clientes.length > 1 ? 's' : ''} encontrado{clientes.length > 1 ? 's' : ''}
                     </h4>
                     <Button
@@ -462,9 +462,9 @@ export const ClientSearch = ({
                 </div>
               ) : (
                 <div className="text-center py-8">
-                  <User className="h-12 w-12 text-gray-300 mx-auto mb-3" />
-                  <p className="text-gray-500">Nenhum cliente encontrado</p>
-                  <p className="text-sm text-gray-400 mt-1">
+                  <User className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-gray-500 dark:text-gray-400">Nenhum cliente encontrado</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">
                     Tente buscar por nome, telefone ou email
                   </p>
                 </div>

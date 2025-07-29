@@ -143,7 +143,7 @@ const navigationItems: Record<string, NavItem[]> = {
     {
       id: 'meus-clientes',
       label: 'Meus Clientes',
-      href: '/dashboard/clientes',
+      href: '/dashboard/usuarios',
       icon: Users,
     },
     {
@@ -331,7 +331,7 @@ export function Sidebar({
             onClick={() => setIsMobileOpen(false)}
             className="lg:hidden"
           >
-            <X className="h-4 w-4" />
+            <X className="h-4 w-4 text-text-primary" />
           </Button>
         </div>
 
@@ -451,7 +451,15 @@ export function useSidebar() {
     }
     
     if (savedDarkMode) {
-      setIsDarkMode(JSON.parse(savedDarkMode))
+      const darkMode = JSON.parse(savedDarkMode)
+      setIsDarkMode(darkMode)
+      
+      // Aplicar classe dark no documento na inicialização
+      if (darkMode) {
+        document.documentElement.classList.add('dark')
+      } else {
+        document.documentElement.classList.remove('dark')
+      }
     }
   }, [])
 

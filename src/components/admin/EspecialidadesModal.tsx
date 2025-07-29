@@ -215,7 +215,7 @@ export const EspecialidadesModal: React.FC<EspecialidadesModalProps> = ({
               onClick={handleDeselectAll}
               disabled={loading || servicesLoading || selectedServiceIds.length === 0}
             >
-              <X className="h-4 w-4 mr-1" />
+              <X className="h-4 w-4 mr-1 text-text-primary" />
               Desmarcar Todos
             </Button>
           </div>

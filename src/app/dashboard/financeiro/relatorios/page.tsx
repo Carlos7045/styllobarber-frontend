@@ -14,7 +14,9 @@ export const metadata: Metadata = {
 export default function RelatoriosPage() {
   return (
     <Container className="py-8">
-      <ReportsCenter />
+      <div className="max-w-7xl mx-auto space-y-8">
+        <ReportsCenter />
+      </div>
     </Container>
   )
 }

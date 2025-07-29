@@ -115,9 +115,9 @@ export function ExpenseList({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md">
+    <div className="bg-white dark:bg-secondary-graphite-light rounded-lg shadow-md border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
       {/* Cabeçalho */}
-      <div className="p-6 border-b border-gray-200">
+      <div className="p-6 border-b border-gray-200 dark:border-secondary-graphite-card/30">
         <div className="flex justify-between items-center">
           <div>
             <h2 className="text-xl font-semibold text-gray-900">
@@ -260,7 +260,7 @@ export function ExpenseList({
             </div>
           ) : (
             expenses.map((expense) => (
-              <div key={expense.id} className="p-6 hover:bg-gray-50">
+              <div key={expense.id} className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
@@ -339,8 +339,8 @@ export function ExpenseList({
       {/* Modal de confirmação de exclusão */}
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-medium text-gray-900 mb-4">
+          <div className="bg-white dark:bg-secondary-graphite-light rounded-lg p-6 max-w-md w-full mx-4 border border-gray-200 dark:border-secondary-graphite">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
               Confirmar Exclusão
             </h3>
             <p className="text-gray-600 mb-6">

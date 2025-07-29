@@ -17,7 +17,7 @@ const badgeVariants = cva(
         warning: 'border-transparent bg-warning text-primary-black hover:bg-warning-dark',
         error: 'border-transparent bg-error text-neutral-white hover:bg-error-dark',
         info: 'border-transparent bg-info text-neutral-white hover:bg-info-dark',
-        outline: 'border-border-default text-text-primary hover:bg-neutral-light-gray',
+        outline: 'border-border-default dark:border-secondary-graphite-card/50 text-text-primary dark:text-white hover:bg-neutral-light-gray dark:hover:bg-secondary-graphite-card/30',
         'outline-primary': 'border-primary-gold text-primary-gold hover:bg-primary-gold/10',
         'outline-success': 'border-success text-success hover:bg-success/10',
         'outline-warning': 'border-warning text-warning hover:bg-warning/10',

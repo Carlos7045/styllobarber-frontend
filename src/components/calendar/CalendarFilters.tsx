@@ -68,14 +68,13 @@ export function CalendarFiltersComponent({
         <Button
           variant="outline"
           onClick={() => setIsOpen(!isOpen)}
-          className="relative"
+          className="relative bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-gradient-to-r hover:from-primary-gold/10 hover:to-primary-gold/20 dark:hover:bg-primary-gold/20 text-gray-700 dark:text-gray-300 font-semibold px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
         >
           <Filter className="h-4 w-4 mr-2" />
           Filtros
           {activeFiltersCount > 0 && (
             <Badge 
-              variant="secondary" 
-              className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+              className="ml-2 h-6 w-6 rounded-full p-0 flex items-center justify-center text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold shadow-sm"
             >
               {activeFiltersCount}
             </Badge>
@@ -165,22 +164,30 @@ export function CalendarFiltersComponent({
               <label className="text-sm font-medium mb-2 block">
                 Barbeiro
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <Button
-                  variant={!localFilters.barbeiro_id ? 'primary' : 'outline'}
+                  variant={!localFilters.barbeiro_id ? 'default' : 'outline'}
                   size="sm"
                   onClick={() => setLocalFilters(prev => ({ ...prev, barbeiro_id: undefined }))}
-                  className="justify-start"
+                  className={`justify-start font-semibold px-4 py-2 rounded-lg transition-all duration-300 ${
+                    !localFilters.barbeiro_id 
+                      ? 'bg-gradient-to-r from-primary-gold to-primary-gold-dark text-primary-black shadow-lg transform scale-105' 
+                      : 'bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 text-gray-700 dark:text-gray-300'
+                  }`}
                 >
                   Todos
                 </Button>
                 {barbeiros.map((barbeiro) => (
                   <Button
                     key={barbeiro.id}
-                    variant={localFilters.barbeiro_id === barbeiro.id ? 'primary' : 'outline'}
+                    variant={localFilters.barbeiro_id === barbeiro.id ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setLocalFilters(prev => ({ ...prev, barbeiro_id: barbeiro.id }))}
-                    className="justify-start"
+                    className={`justify-start font-semibold px-4 py-2 rounded-lg transition-all duration-300 ${
+                      localFilters.barbeiro_id === barbeiro.id 
+                        ? 'bg-gradient-to-r from-primary-gold to-primary-gold-dark text-primary-black shadow-lg transform scale-105' 
+                        : 'bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 text-gray-700 dark:text-gray-300'
+                    }`}
                   >
                     {barbeiro.nome}
                   </Button>
@@ -193,14 +200,18 @@ export function CalendarFiltersComponent({
               <label className="text-sm font-medium mb-2 block">
                 Status do Agendamento
               </label>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {(Object.keys(APPOINTMENT_STATUS_LABELS) as AppointmentStatus[]).map((status) => (
                   <Button
                     key={status}
-                    variant={(localFilters.status || []).includes(status) ? 'primary' : 'outline'}
+                    variant={(localFilters.status || []).includes(status) ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => toggleStatus(status)}
-                    className="justify-start"
+                    className={`justify-start font-semibold px-4 py-2 rounded-lg transition-all duration-300 ${
+                      (localFilters.status || []).includes(status) 
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg transform scale-105' 
+                        : 'bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 text-gray-700 dark:text-gray-300'
+                    }`}
                   >
                     {APPOINTMENT_STATUS_LABELS[status]}
                   </Button>
@@ -244,22 +255,27 @@ export function CalendarFiltersComponent({
             </div>
 
             {/* Ações */}
-            <div className="flex items-center justify-between pt-4 border-t">
+            <div className="flex items-center justify-between pt-6 border-t border-gray-200 dark:border-secondary-graphite-card/30">
               <Button
                 variant="outline"
                 onClick={clearFilters}
+                className="bg-white dark:bg-secondary-graphite-light border-2 border-red-300 dark:border-red-700 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 font-semibold px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
               >
                 Limpar Filtros
               </Button>
               
-              <div className="flex gap-2">
+              <div className="flex gap-3">
                 <Button
                   variant="outline"
                   onClick={() => setIsOpen(false)}
+                  className="bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-gray-500 hover:bg-gray-50 dark:hover:bg-secondary-graphite-hover text-gray-700 dark:text-gray-300 font-semibold px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all duration-300"
                 >
                   Cancelar
                 </Button>
-                <Button onClick={applyFilters}>
+                <Button 
+                  onClick={applyFilters}
+                  className="bg-gradient-to-r from-primary-gold to-primary-gold-dark hover:from-primary-gold-dark hover:to-primary-gold text-primary-black font-bold px-6 py-2 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                >
                   Aplicar Filtros
                 </Button>
               </div>

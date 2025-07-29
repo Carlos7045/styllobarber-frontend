@@ -114,74 +114,91 @@ export default function ServicosPage() {
   return (
     <Container className="py-8">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Serviços
-          </h1>
-          <p className="text-text-secondary">
-            Gerencie os serviços oferecidos pela barbearia
-          </p>
+        {/* Header Moderno */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+              <Scissors className="h-10 w-10 text-primary-black" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Serviços
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+                {isAdmin ? 'Gerencie os serviços oferecidos pela barbearia' : 'Nossos serviços premium'}
+              </p>
+            </div>
+          </div>
+          <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto"></div>
         </div>
 
         {/* Cards de estatísticas - apenas para admins */}
         {isAdmin && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card>
+            <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-primary-gold hover:shadow-xl hover:scale-105 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Serviços</CardTitle>
-                <Scissors className="h-4 w-4 text-text-secondary" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Total de Serviços</CardTitle>
+                <div className="p-2 bg-primary-gold/10 rounded-lg">
+                  <Scissors className="h-5 w-5 text-primary-gold" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{servicos.length}</div>
-                <p className="text-xs text-text-secondary">
+                <div className="text-3xl font-bold text-primary-gold">{servicos.length}</div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Serviços cadastrados
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-green-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Serviços Ativos</CardTitle>
-                <Scissors className="h-4 w-4 text-text-secondary" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Serviços Ativos</CardTitle>
+                <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                  <Scissors className="h-5 w-5 text-green-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{servicos.filter(s => s.ativo).length}</div>
-                <p className="text-xs text-text-secondary">
+                <div className="text-3xl font-bold text-green-600">{servicos.filter(s => s.ativo).length}</div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   {servicos.length > 0 ? Math.round((servicos.filter(s => s.ativo).length / servicos.length) * 100) : 0}% do total
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-blue-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Preço Médio</CardTitle>
-                <Scissors className="h-4 w-4 text-text-secondary" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Preço Médio</CardTitle>
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+                  <Scissors className="h-5 w-5 text-blue-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold text-blue-600">
                   {servicos.length > 0
                     ? formatarMoeda(servicos.reduce((sum, s) => sum + s.preco, 0) / servicos.length)
                     : 'R$ 0,00'
                   }
                 </div>
-                <p className="text-xs text-text-secondary">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Média de preços
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-purple-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Receita do Mês</CardTitle>
-                <BarChart3 className="h-4 w-4 text-text-secondary" />
+                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">Receita do Mês</CardTitle>
+                <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg">
+                  <BarChart3 className="h-5 w-5 text-purple-600" />
+                </div>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">
+                <div className="text-3xl font-bold text-purple-600">
                   {formatarMoeda(
                     servicos.reduce((sum, s) => sum + ((s as ServicoAdmin).receita_mes || 0), 0)
                   )}
                 </div>
-                <p className="text-xs text-text-secondary">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
                   Receita dos serviços
                 </p>
               </CardContent>
@@ -209,7 +226,7 @@ export default function ServicosPage() {
             {loading ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {[1, 2, 3, 4, 5, 6].map(i => (
-                  <div key={i} className="h-48 bg-neutral-light-gray animate-pulse rounded-lg" />
+                  <div key={i} className="h-48 bg-neutral-light-gray dark:bg-background-dark-card animate-pulse rounded-lg" />
                 ))}
               </div>
             ) : servicos.length === 0 ? (
@@ -226,15 +243,15 @@ export default function ServicosPage() {
               <>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                   {servicos.filter(s => s.ativo).map((servico) => (
-                    <Card key={servico.id} className="hover:shadow-md transition-shadow">
+                    <Card key={servico.id} className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 hover:shadow-xl hover:scale-105 dark:hover:bg-secondary-graphite-hover transition-all duration-300 shadow-sm">
                       <CardContent className="p-6">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="w-12 h-12 bg-primary-gold/10 rounded-full flex items-center justify-center">
-                            <Scissors className="h-6 w-6 text-primary-gold" />
+                          <div className="w-12 h-12 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-full flex items-center justify-center shadow-md">
+                            <Scissors className="h-6 w-6 text-primary-black" />
                           </div>
                           <div className="flex-1">
-                            <h3 className="font-semibold text-lg text-text-primary">{servico.nome}</h3>
-                            <p className="text-sm text-text-secondary">{servico.duracao_minutos} minutos</p>
+                            <h3 className="font-bold text-lg text-gray-900 dark:text-white">{servico.nome}</h3>
+                            <p className="text-sm font-medium text-gray-600 dark:text-gray-300">{servico.duracao_minutos} minutos</p>
                           </div>
                           {isAdmin && (
                             <div className="flex items-center gap-1">
@@ -259,36 +276,36 @@ export default function ServicosPage() {
                           )}
                         </div>
 
-                        <p className="text-text-secondary text-sm mb-4">
+                        <p className="text-gray-600 dark:text-gray-300 text-sm mb-4 font-medium">
                           {servico.descricao || 'Sem descrição'}
                         </p>
 
-                        {/* Estatísticas para admin */}
+                        {/* Estatísticas para admin - Melhorado */}
                         {isAdmin && (
-                          <div className="grid grid-cols-2 gap-4 mb-4 p-3 bg-neutral-light-gray rounded-lg">
+                          <div className="grid grid-cols-2 gap-4 mb-4 p-4 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-secondary-graphite-card dark:to-secondary-graphite-light rounded-xl border border-gray-200 dark:border-secondary-graphite-card/50 shadow-sm">
                             <div className="text-center">
-                              <div className="text-sm font-medium text-primary-gold">
+                              <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
                                 {(servico as ServicoAdmin).total_agendamentos || 0}
                               </div>
-                              <div className="text-xs text-text-secondary">Agendamentos</div>
+                              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Agendamentos</div>
                             </div>
                             <div className="text-center">
-                              <div className="text-sm font-medium text-success">
+                              <div className="text-lg font-bold text-green-600 dark:text-green-400">
                                 {formatarMoeda((servico as ServicoAdmin).receita_mes || 0)}
                               </div>
-                              <div className="text-xs text-text-secondary">Receita/Mês</div>
+                              <div className="text-xs font-medium text-gray-700 dark:text-gray-300">Receita/Mês</div>
                             </div>
                           </div>
                         )}
 
                         <div className="flex items-center justify-between">
-                          <div className="text-2xl font-bold text-primary-gold">
+                          <div className="text-3xl font-bold bg-gradient-to-r from-primary-gold to-primary-gold-dark bg-clip-text text-transparent">
                             {formatarMoeda(servico.preco)}
                           </div>
                           {!isAdmin && (
                             <Button
                               onClick={() => handleAgendar(servico.id)}
-                              className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black"
+                              className="bg-gradient-to-r from-primary-gold to-primary-gold-dark hover:from-primary-gold-dark hover:to-primary-gold text-primary-black font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
                             >
                               <Calendar className="h-4 w-4 mr-2" />
                               Agendar
@@ -308,25 +325,25 @@ export default function ServicosPage() {
                     </h3>
                     <div className="space-y-3">
                       {servicos.filter(s => !s.ativo).map((servico) => (
-                        <div key={servico.id} className="flex items-center justify-between p-4 border border-border-default rounded-lg opacity-60">
+                        <div key={servico.id} className="flex items-center justify-between p-4 border-2 border-gray-300 dark:border-secondary-graphite-card/50 rounded-xl bg-gray-50 dark:bg-secondary-graphite-card/30 opacity-75 hover:opacity-90 hover:shadow-md transition-all duration-300">
                           <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 bg-neutral-light-gray rounded-full flex items-center justify-center">
-                              <Scissors className="h-5 w-5 text-text-secondary" />
+                            <div className="w-10 h-10 bg-gray-200 dark:bg-secondary-graphite-light rounded-full flex items-center justify-center">
+                              <Scissors className="h-5 w-5 text-gray-500 dark:text-gray-400" />
                             </div>
                             <div>
-                              <h3 className="font-medium text-text-primary">{servico.nome}</h3>
-                              <p className="text-sm text-text-secondary">
+                              <h3 className="font-semibold text-gray-700 dark:text-gray-200">{servico.nome}</h3>
+                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
                                 {formatarMoeda(servico.preco)} • {servico.duracao_minutos} min
                               </p>
                               {isAdmin && (servico as ServicoAdmin).agendamentos_futuros > 0 && (
-                                <p className="text-xs text-warning">
+                                <p className="text-xs font-medium text-orange-600 dark:text-orange-400">
                                   {(servico as ServicoAdmin).agendamentos_futuros} agendamento(s) futuro(s)
                                 </p>
                               )}
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <span className="px-2 py-1 text-xs rounded-full bg-red-100 text-red-800">
+                            <span className="px-2 py-1 text-xs rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-400">
                               {isAdmin ? 'Desativado' : 'Indisponível'}
                             </span>
                             {isAdmin && (

@@ -135,7 +135,7 @@ export function ProfileHistory() {
       case 'delete':
         return 'text-red-600 bg-red-100'
       default:
-        return 'text-gray-600 bg-gray-100'
+        return 'text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-secondary-graphite-card'
     }
   }
 
@@ -193,7 +193,7 @@ export function ProfileHistory() {
         ) : (
           <div className="space-y-4">
             {changes.map((change) => (
-              <div key={change.id} className="flex items-start gap-4 p-4 bg-gray-50 rounded-lg">
+              <div key={change.id} className="flex items-start gap-4 p-4 bg-gray-50 dark:bg-background-dark-card rounded-lg hover:dark:bg-secondary-graphite-hover transition-colors">
                 {/* Ícone do campo */}
                 <div className={`p-2 rounded-full ${getActionColor(change.action)}`}>
                   {getFieldIcon(change.field)}

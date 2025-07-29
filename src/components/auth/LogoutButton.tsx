@@ -130,7 +130,7 @@ export function LogoutButton({
         className={`${className} ${variant === 'ghost' ? 'text-error hover:text-error-dark hover:bg-error/10' : ''}`}
         title="Sair do sistema"
       >
-        <LogOut className={`h-4 w-4 ${isLoggingOut ? 'animate-spin' : ''}`} />
+        <LogOut className={`h-4 w-4 ${isLoggingOut ? 'animate-spin' : ''} ${variant === 'ghost' ? 'text-error' : 'text-current'}`} />
         {showText && size !== 'icon' && (
           <span className="ml-2">
             {isLoggingOut ? 'Saindo...' : 'Sair'}

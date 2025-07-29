@@ -5,16 +5,16 @@ import { cn } from '@/lib/utils'
 // Variantes do card usando CVA
 const cardVariants = cva(
   // Classes base
-  'rounded-lg border bg-background-primary text-text-primary shadow-sm transition-all duration-200',
+  'rounded-lg border bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white shadow-sm transition-all duration-200',
   {
     variants: {
       // Variantes de estilo
       variant: {
-        default: 'border-border-default',
-        elevated: 'border-border-default shadow-lg hover:shadow-xl',
+        default: 'border-gray-200 dark:border-secondary-graphite-card/30 hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200',
+        elevated: 'border-gray-200 dark:border-secondary-graphite-card/30 shadow-lg hover:shadow-xl hover:border-primary-gold/50 transition-all duration-200',
         outlined: 'border-2 border-primary-gold shadow-none',
         ghost: 'border-transparent shadow-none bg-transparent',
-        dark: 'bg-background-dark-secondary border-border-dark text-text-inverse',
+        dark: 'bg-secondary-graphite-light border-secondary-graphite-card/30 text-white hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200',
         gradient: 'bg-gradient-to-br from-primary-gold to-primary-gold-dark text-primary-black border-transparent',
       },
       
@@ -100,7 +100,7 @@ const CardDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-text-muted', className)}
+    className={cn('text-sm text-gray-600 dark:text-gray-300', className)}
     {...props}
   />
 ))

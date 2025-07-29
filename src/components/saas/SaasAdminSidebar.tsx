@@ -74,7 +74,7 @@ export function SaasAdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white border-r border-gray-200 overflow-y-auto">
+    <aside className="fixed left-0 top-16 h-[calc(100vh-4rem)] w-64 bg-white dark:bg-secondary-graphite-light border-r border-gray-200 dark:border-secondary-graphite-card/30 overflow-y-auto">
       <div className="p-4">
         <nav className="space-y-2">
           {menuItems.map((item) => {
@@ -89,7 +89,7 @@ export function SaasAdminSidebar() {
                   'flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
                   isActive
                     ? 'bg-primary-gold/10 text-primary-gold border border-primary-gold/20'
-                    : 'text-text-muted hover:text-text-primary hover:bg-gray-50'
+                    : 'text-text-muted hover:text-text-primary hover:bg-gray-50 dark:hover:bg-secondary-graphite-hover'
                 )}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
@@ -107,7 +107,7 @@ export function SaasAdminSidebar() {
         </nav>
 
         {/* Informações do Sistema */}
-        <div className="mt-8 p-3 bg-gray-50 rounded-lg">
+        <div className="mt-8 p-3 bg-gray-50 dark:bg-background-dark-card rounded-lg">
           <div className="text-xs text-text-muted mb-2">
             Sistema
           </div>

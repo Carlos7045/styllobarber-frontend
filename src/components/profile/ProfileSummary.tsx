@@ -117,9 +117,9 @@ export function ProfileSummary() {
           {completionItems.map((item) => {
             const Icon = item.icon
             return (
-              <div key={item.key} className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors">
+              <div key={item.key} className="flex items-center gap-3 p-3 rounded-lg transition-colors">
                 <div className={`p-2 rounded-full flex-shrink-0 ${
-                  item.completed ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                  item.completed ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' : 'bg-gray-100 dark:bg-background-dark-card text-gray-400 dark:text-gray-500'
                 }`}>
                   <Icon className="h-4 w-4" />
                 </div>

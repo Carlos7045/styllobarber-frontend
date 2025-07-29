@@ -179,7 +179,7 @@ export function UserEditModal({ user, isOpen, onClose, onSave }: UserEditModalPr
               onClick={onClose}
               disabled={loading}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-text-primary" />
             </Button>
           </div>
         </CardHeader>

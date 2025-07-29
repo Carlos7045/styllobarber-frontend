@@ -68,7 +68,7 @@ export default function MonitoringPage() {
             <CardContent>
               <div className="text-center py-8">
                 <Shield className="h-16 w-16 text-red-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
                   Área Restrita
                 </h3>
                 <p className="text-gray-600 mb-6">

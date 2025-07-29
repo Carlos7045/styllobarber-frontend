@@ -277,7 +277,7 @@ export function AvatarUpload({
 
       {/* Error Message */}
       {state.error && (
-        <div className="text-semantic-error text-sm text-center max-w-xs">
+        <div className="text-error text-sm text-center max-w-xs">
           {state.error}
         </div>
       )}
@@ -317,7 +317,7 @@ export function AvatarUpload({
               onClick={handleRemove}
               loading={state.isUploading}
               disabled={state.isUploading}
-              className="text-semantic-error hover:text-semantic-error"
+              className="text-error hover:text-error-dark"
             >
               <Trash2 className="h-3 w-3 mr-1" />
               Remover

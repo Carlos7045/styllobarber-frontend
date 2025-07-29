@@ -102,29 +102,29 @@ const BarberMetricCard = ({
   }
 
   const colorClasses = {
-    blue: 'bg-blue-50 text-blue-600 border-blue-200',
-    green: 'bg-green-50 text-green-600 border-green-200',
-    purple: 'bg-purple-50 text-purple-600 border-purple-200',
-    orange: 'bg-orange-50 text-orange-600 border-orange-200'
+    blue: 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800',
+    green: 'bg-green-50 text-green-600 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800',
+    purple: 'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/20 dark:text-purple-400 dark:border-purple-800',
+    orange: 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800'
   }
 
   return (
-    <Card className={`p-6 ${colorClasses[color]} border-2`}>
+    <Card className={`p-6 dark:bg-background-dark-elevated dark:border-secondary-graphite-card/30 ${colorClasses[color]} border-2 hover:dark:bg-secondary-graphite-hover transition-colors`}>
       <div className="flex items-center justify-between mb-4">
         <div className="flex-1">
-          <p className="text-sm font-medium opacity-75 mb-1">
+          <p className="text-sm font-medium opacity-75 mb-1 dark:text-gray-300">
             {title}
           </p>
-          <p className="text-2xl font-bold">
+          <p className="text-2xl font-bold dark:text-white">
             {formatValue(value)}
           </p>
           {subtitle && (
-            <p className="text-sm opacity-75 mt-1">
+            <p className="text-sm opacity-75 mt-1 dark:text-gray-300">
               {subtitle}
             </p>
           )}
         </div>
-        <div className="p-3 rounded-full bg-white bg-opacity-50">
+        <div className="p-3 rounded-full bg-white bg-opacity-50 dark:bg-secondary-graphite-card dark:bg-opacity-90">
           <Icon className="h-6 w-6" />
         </div>
       </div>
@@ -135,7 +135,7 @@ const BarberMetricCard = ({
             <span>Progresso da Meta</span>
             <span>{progress}%</span>
           </div>
-          <div className="w-full bg-white bg-opacity-50 rounded-full h-2">
+          <div className="w-full bg-white bg-opacity-50 dark:bg-secondary-graphite-card dark:bg-opacity-90 rounded-full h-2">
             <div 
               className="bg-current h-2 rounded-full transition-all duration-300"
               style={{ width: `${Math.min(progress, 100)}%` }}
@@ -151,8 +151,8 @@ const BarberMetricCard = ({
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="font-medium text-gray-900 mb-2">{label}</p>
+      <div className="bg-white dark:bg-background-dark-elevated p-3 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900 dark:text-white mb-2">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             <span className="font-medium">{entry.name}:</span>{' '}
@@ -186,10 +186,10 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
         className="flex items-center justify-between"
       >
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
             Olá, {barbeiroNome || 'Barbeiro'}! 👋
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-600 dark:text-gray-300 mt-1">
             Aqui está o resumo da sua performance financeira
           </p>
         </div>
@@ -261,7 +261,7 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
       >
         <Card className="p-6">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
               Sua Performance Semanal
             </h3>
             
@@ -319,27 +319,27 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
           transition={{ duration: 0.3, delay: 0.3 }}
         >
           <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Seus Serviços Mais Realizados
             </h3>
             
             <div className="space-y-3">
               {servicosPopulares.map((servico, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-background-dark-card rounded-lg hover:dark:bg-secondary-graphite-hover transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-blue-100 rounded-full">
-                      <Award className="h-4 w-4 text-blue-600" />
+                    <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-full">
+                      <Award className="h-4 w-4 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{servico.nome}</p>
-                      <p className="text-sm text-gray-500">{servico.quantidade} realizados</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{servico.nome}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{servico.quantidade} realizados</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-green-600">
+                    <p className="font-bold text-green-600 dark:text-green-400">
                       {formatCurrency(servico.receita)}
                     </p>
-                    <p className="text-xs text-gray-500">receita total</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">receita total</p>
                   </div>
                 </div>
               ))}
@@ -355,7 +355,7 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
         >
           <Card className="p-6">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                 Próximos Agendamentos
               </h3>
               <Badge variant="outline" className="text-xs">
@@ -365,19 +365,19 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
             
             <div className="space-y-3">
               {proximosAgendamentos.map((agendamento, index) => (
-                <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-3 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-lg hover:dark:bg-background-dark-card transition-colors">
                   <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100 rounded-full">
-                      <Clock className="h-4 w-4 text-purple-600" />
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-full">
+                      <Clock className="h-4 w-4 text-purple-600 dark:text-purple-400" />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{agendamento.cliente}</p>
-                      <p className="text-sm text-gray-500">{agendamento.servico}</p>
+                      <p className="font-medium text-gray-900 dark:text-white">{agendamento.cliente}</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">{agendamento.servico}</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="font-bold text-gray-900">{agendamento.horario}</p>
-                    <p className="text-sm text-green-600">
+                    <p className="font-bold text-gray-900 dark:text-white">{agendamento.horario}</p>
+                    <p className="text-sm text-green-600 dark:text-green-400">
                       {formatCurrency(agendamento.valor)}
                     </p>
                   </div>
@@ -385,8 +385,8 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
               ))}
               
               {proximosAgendamentos.length === 0 && (
-                <div className="text-center py-6 text-gray-500">
-                  <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                <div className="text-center py-6 text-gray-500 dark:text-gray-400">
+                  <Calendar className="h-8 w-8 mx-auto mb-2 text-gray-300 dark:text-gray-600" />
                   <p>Nenhum agendamento para hoje</p>
                 </div>
               )}
@@ -401,8 +401,8 @@ export const BarberDashboard = ({ className = '' }: BarberDashboardProps) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.5 }}
       >
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
+        <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/10 dark:to-purple-900/10 border-blue-200 dark:border-secondary-graphite-card/30 dark:bg-background-dark-elevated hover:dark:bg-secondary-graphite-hover transition-colors">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
             Ações Rápidas
           </h3>
           

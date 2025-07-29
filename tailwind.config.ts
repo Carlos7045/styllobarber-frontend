@@ -1,6 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: 'class',
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -17,9 +18,11 @@ const config: Config = {
           "gold-dark": "#B8941F",
         },
         secondary: {
-          graphite: "#2F2F2F",
-          "graphite-light": "#404040",
-          "graphite-dark": "#1A1A1A",
+          graphite: "#1F1F1F",
+          "graphite-light": "#2A2A2A",
+          "graphite-dark": "#0F0F0F",
+          "graphite-card": "#252525",
+          "graphite-hover": "#2F2F2F",
           petrol: "#1B4D4D",
           "petrol-light": "#2A6B6B",
           "petrol-dark": "#0F3333",
@@ -59,14 +62,28 @@ const config: Config = {
         background: {
           primary: "#FFFFFF",
           secondary: "#F5F5F5",
-          dark: "#000000",
-          "dark-secondary": "#2F2F2F",
+          dark: "#0F0F0F",
+          "dark-secondary": "#1A1A1A",
+          "dark-card": "#1A1A1A",
+          "dark-elevated": "#252525",
         },
         text: {
           primary: "#000000",
           secondary: "#374151",
           muted: "#9CA3AF",
           inverse: "#FFFFFF",
+        },
+        // Cores semânticas para componentes
+        semantic: {
+          error: "#EF4444",
+          "error-light": "#F87171",
+          "error-dark": "#DC2626",
+          success: "#10B981",
+          "success-light": "#34D399",
+          "success-dark": "#059669",
+          warning: "#F59E0B",
+          "warning-light": "#FBBF24",
+          "warning-dark": "#D97706",
         },
         "muted-foreground": "#9CA3AF",
         border: {
@@ -115,6 +132,8 @@ const config: Config = {
         "gold-lg": "0 10px 25px -3px rgba(212, 175, 55, 0.3)",
         "dark": "0 4px 14px 0 rgba(0, 0, 0, 0.15)",
         "dark-lg": "0 10px 25px -3px rgba(0, 0, 0, 0.25)",
+        "dark-card": "0 2px 8px 0 rgba(0, 0, 0, 0.3)",
+        "dark-elevated": "0 4px 12px 0 rgba(0, 0, 0, 0.4)",
       },
       animation: {
         // Animações customizadas

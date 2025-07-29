@@ -62,11 +62,11 @@ export function CommissionReport({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-background-dark-elevated rounded-lg shadow-md p-6">
       {/* Cabeçalho */}
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
             Relatório de Comissões
           </h2>
           {barbeiroNome && (
@@ -244,9 +244,9 @@ export function CommissionReport({
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
+                  <tbody className="bg-white dark:bg-background-dark-elevated divide-y divide-gray-200 dark:divide-secondary-graphite-card/30">
                     {report.detalhes.map((detalhe, index) => (
-                      <tr key={`${detalhe.agendamentoId}-${index}`} className="hover:bg-gray-50">
+                      <tr key={`${detalhe.agendamentoId}-${index}`}>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {detalhe.agendamentoId.substring(0, 8)}...
                         </td>
@@ -309,7 +309,7 @@ export function CommissionReport({
             Nenhum relatório gerado
           </h3>
           <p className="text-gray-600 mb-4">
-            Selecione um período e clique em "Gerar Relatório" para visualizar as comissões.
+            Selecione um período e clique em &quot;Gerar Relatório&quot; para visualizar as comissões.
           </p>
           {showControls && (
             <button

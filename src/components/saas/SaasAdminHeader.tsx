@@ -16,7 +16,7 @@ export function SaasAdminHeader() {
   }
 
   return (
-    <header className="bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6 sticky top-0 z-50">
+    <header className="bg-white dark:bg-secondary-graphite-light border-b border-gray-200 dark:border-secondary-graphite-card/30 h-16 flex items-center justify-between px-6 sticky top-0 z-50">
       {/* Logo e Título */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">

@@ -6,14 +6,14 @@ import { Container } from './container'
 // Variantes do header usando CVA
 const headerVariants = cva(
   // Classes base
-  'sticky top-0 z-50 w-full border-b bg-background-primary/95 backdrop-blur supports-[backdrop-filter]:bg-background-primary/60',
+  'sticky top-0 z-50 w-full border-b bg-white dark:bg-secondary-graphite-light backdrop-blur',
   {
     variants: {
       // Variantes de estilo
       variant: {
-        default: 'border-border-default',
+        default: 'border-gray-200 dark:border-gray-700',
         transparent: 'border-transparent bg-transparent backdrop-blur-none',
-        dark: 'bg-background-dark border-border-dark text-text-inverse',
+        dark: 'border-gray-200 dark:border-gray-700',
         gold: 'bg-primary-gold border-primary-gold-dark text-primary-black',
       },
       

@@ -110,7 +110,7 @@ export function SaasOwnerDashboard() {
             <Crown className="h-6 w-6 text-purple-600" />
             StylloBarber SaaS - Dashboard do Proprietário
           </CardTitle>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 dark:text-gray-300">
             Visão completa de todos os clientes e infraestrutura
           </p>
         </CardHeader>
@@ -190,14 +190,14 @@ export function SaasOwnerDashboard() {
         <CardContent>
           <div className="space-y-3">
             {clientsHealth.map((client) => (
-              <div key={client.clientId} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={client.clientId} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-background-dark-card rounded-lg hover:dark:bg-secondary-graphite-hover transition-colors">
                 <div className="flex items-center gap-3">
                   <div className={`w-3 h-3 rounded-full ${
                     client.isHealthy ? 'bg-green-500' : 'bg-red-500'
                   }`} />
                   <div>
                     <div className="font-medium">{client.clientName}</div>
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-600 dark:text-gray-300">
                       {client.activeUsers} usuários ativos • 
                       Última atividade: {client.lastActivity.toLocaleTimeString()}
                     </div>

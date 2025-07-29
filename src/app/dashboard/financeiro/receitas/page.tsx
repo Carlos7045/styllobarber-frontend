@@ -14,10 +14,12 @@ export const metadata: Metadata = {
 export default function ReceitasPage() {
   return (
     <Container className="py-8">
-      <ReceitasReport 
-        showFilters={true}
-        autoLoad={false}
-      />
+      <div className="max-w-7xl mx-auto space-y-8">
+        <ReceitasReport 
+          showFilters={true}
+          autoLoad={false}
+        />
+      </div>
     </Container>
   )
 }

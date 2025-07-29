@@ -1,9 +1,25 @@
 // Hook para gerenciar transações rápidas do PDV
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { QuickTransactionService, QuickTransactionData, TransactionResponse } from '../services/quick-transaction-service'
-import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
+import { useState, useCallback, useEffect } from 'react'
+import { QuickTransactionService } from '../services/quick-transaction-service'
+
+interface QuickTransactionData {
+  tipo: 'ENTRADA' | 'SAIDA'
+  valor: number
+  descricao: string
+  metodoPagamento?: 'DINHEIRO' | 'PIX' | 'CARTAO_DEBITO' | 'CARTAO_CREDITO'
+  categoria: string
+  cliente?: string
+  barbeiro?: string
+  observacoes?: string
+}
+
+interface TransactionResponse {
+  success: boolean
+  transactionId?: string
+  error?: string
+}
 
 interface UseQuickTransactionsOptions {
   autoRefresh?: boolean
@@ -12,7 +28,7 @@ interface UseQuickTransactionsOptions {
 
 interface UseQuickTransactionsReturn {
   // Estado
-  historicoRecente: any[]
+  historicoRecente: QuickTransaction[]
   estatisticasDia: {
     totalEntradas: number
     totalSaidas: number
@@ -34,16 +50,10 @@ interface UseQuickTransactionsReturn {
 }
 
 export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}): UseQuickTransactionsReturn => {
-  const {
-    autoRefresh = true,
-    refreshInterval = 10000 // 10 segundos
-  } = options
-
-  // Obter filtros baseados nas permissões do barbeiro
-  const { getTransactionFilter } = useBarberFinancialFilter()
-
+  const { autoRefresh = false, refreshInterval = 30000 } = options
+  
   // Estado
-  const [historicoRecente, setHistoricoRecente] = useState<any[]>([])
+  const [historicoRecente, setHistoricoRecente] = useState<QuickTransaction[]>([])
   const [estatisticasDia, setEstatisticasDia] = useState({
     totalEntradas: 0,
     totalSaidas: 0,
@@ -52,44 +62,32 @@ export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}):
   })
   
   // Status
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [lastUpdate, setLastUpdate] = useState<Date | null>(null)
+  const [lastUpdate, setLastUpdate] = useState<Date | null>(new Date())
 
-  // Carregar histórico recente
+  // Carregar histórico de transações
   const carregarHistorico = useCallback(async () => {
     try {
-      setError(null)
-      const filtros = getTransactionFilter()
-      const historico = await QuickTransactionService.obterHistoricoRecente(20, filtros)
+      const historico = await QuickTransactionService.obterHistoricoRecente(10)
       setHistoricoRecente(historico)
     } catch (err) {
       console.error('Erro ao carregar histórico:', err)
-      // Em caso de erro, usar dados mockados
-      setHistoricoRecente([])
-      // Não definir erro para não quebrar a interface
+      setError('Erro ao carregar histórico')
     }
-  }, [getTransactionFilter])
+  }, [])
 
   // Carregar estatísticas do dia
   const carregarEstatisticas = useCallback(async () => {
     try {
-      setError(null)
-      const filtros = getTransactionFilter()
-      const stats = await QuickTransactionService.obterEstatisticasDia(filtros)
+      const stats = await QuickTransactionService.obterEstatisticasDia()
       setEstatisticasDia(stats)
     } catch (err) {
       console.error('Erro ao carregar estatísticas:', err)
-      // Em caso de erro, usar estatísticas padrão
-      setEstatisticasDia({
-        totalEntradas: 0,
-        totalSaidas: 0,
-        numeroTransacoes: 0,
-        metodoPagamentoMaisUsado: 'DINHEIRO'
-      })
+      setError('Erro ao carregar estatísticas')
     }
-  }, [getTransactionFilter])
+  }, [])
 
   // Registrar nova transação
   const registrarTransacao = useCallback(async (data: QuickTransactionData): Promise<TransactionResponse> => {
@@ -97,7 +95,7 @@ export const useQuickTransactions = (options: UseQuickTransactionsOptions = {}):
     setError(null)
     
     try {
-      // Validar dados antes de enviar
+      // Validar dados primeiro
       const validation = QuickTransactionService.validarTransacao(data)
       if (!validation.valid) {
         return {

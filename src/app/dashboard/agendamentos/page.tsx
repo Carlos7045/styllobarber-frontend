@@ -25,14 +25,22 @@ export default function AgendamentosPage() {
   return (
     <Container className="py-8">
       <div className="max-w-4xl mx-auto">
-        {/* Header personalizado para cliente */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Olá, {profile?.nome?.split(' ')[0] || 'Cliente'}! 👋
-          </h1>
-          <p className="text-text-muted">
-            Gerencie seus agendamentos e mantenha-se sempre em dia com seu visual
-          </p>
+        {/* Header Moderno */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+              <Calendar className="h-10 w-10 text-primary-black" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Olá, {profile?.nome?.split(' ')[0] || 'Cliente'}! 👋
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+                Gerencie seus agendamentos e mantenha-se sempre em dia com seu visual
+              </p>
+            </div>
+          </div>
+          <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto"></div>
         </div>
 
         {/* Ações rápidas para clientes */}

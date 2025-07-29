@@ -133,7 +133,7 @@ function ToastItem({ toast }: { toast: Toast }) {
 
   // Obter classes de estilo
   const getStyles = () => {
-    const baseStyles = "border-l-4 bg-white shadow-lg rounded-lg"
+    const baseStyles = "border-l-4 bg-white dark:bg-secondary-graphite-light shadow-lg rounded-lg"
     
     switch (toast.type) {
       case 'success':
@@ -165,11 +165,11 @@ function ToastItem({ toast }: { toast: Toast }) {
 
         {/* Conteúdo */}
         <div className="flex-1 min-w-0">
-          <h4 className="font-medium text-gray-900 text-sm">
+          <h4 className="font-medium text-gray-900 dark:text-white text-sm">
             {toast.title}
           </h4>
           {toast.description && (
-            <p className="text-sm text-gray-600 mt-1">
+            <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
               {toast.description}
             </p>
           )}
@@ -188,9 +188,10 @@ function ToastItem({ toast }: { toast: Toast }) {
         {/* Botão de fechar */}
         <button
           onClick={() => removeToast(toast.id)}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600 transition-colors"
+          className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:text-gray-300 dark:hover:text-gray-100 transition-colors"
+          aria-label="Fechar notificação"
         >
-          <X className="h-4 w-4" />
+          <X className="h-4 w-4 text-gray-400" />
         </button>
       </div>
     </div>

@@ -134,19 +134,20 @@ export function Calendar({
   const dates = getDatesForView()
 
   return (
-    <Card className={cn('w-full', className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+    <Card className={cn('w-full bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 shadow-lg', className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-6 bg-gradient-to-r from-primary-gold/5 to-primary-gold/10 dark:from-primary-gold/10 dark:to-primary-gold/20 border-b border-gray-200 dark:border-secondary-graphite-card/30">
         {/* Navegação de período */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigateDate('prev')}
+            className="bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 transition-all duration-300 shadow-sm"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           
-          <h2 className="text-lg font-semibold min-w-[200px] text-center">
+          <h2 className="text-xl font-bold min-w-[250px] text-center text-gray-900 dark:text-white">
             {getPeriodTitle()}
           </h2>
           
@@ -154,20 +155,26 @@ export function Calendar({
             variant="outline"
             size="sm"
             onClick={() => navigateDate('next')}
+            className="bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 transition-all duration-300 shadow-sm"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Seletor de visualização */}
-        <div className="flex items-center gap-1 bg-muted rounded-lg p-1">
+        <div className="flex items-center gap-1 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-secondary-graphite-card dark:to-secondary-graphite-light rounded-xl p-1 shadow-inner">
           {(['day', 'week', 'month'] as CalendarView[]).map((viewOption) => (
             <Button
               key={viewOption}
-              variant={currentView === viewOption ? 'primary' : 'ghost'}
+              variant={currentView === viewOption ? 'default' : 'ghost'}
               size="sm"
               onClick={() => handleViewChange(viewOption)}
-              className="text-xs"
+              className={cn(
+                'text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-300',
+                currentView === viewOption 
+                  ? 'bg-gradient-to-r from-primary-gold to-primary-gold-dark text-primary-black shadow-lg transform scale-105' 
+                  : 'hover:bg-white/50 dark:hover:bg-secondary-graphite-light/50 text-gray-700 dark:text-gray-300'
+              )}
             >
               {viewOption === 'day' && 'Dia'}
               {viewOption === 'week' && 'Semana'}
@@ -183,31 +190,33 @@ export function Calendar({
           <div className="flex flex-col">
             {/* Cabeçalho com dias */}
             {currentView === 'week' && (
-              <div className="grid grid-cols-8 border-b">
-                <div className="p-3 text-sm font-medium text-muted-foreground">
+              <div className="grid grid-cols-8 border-b-2 border-gray-200 dark:border-secondary-graphite-card/50 bg-gradient-to-r from-gray-50 to-gray-100 dark:from-secondary-graphite-card dark:to-secondary-graphite-light">
+                <div className="p-4 text-sm font-bold text-gray-700 dark:text-gray-300 bg-gradient-to-br from-primary-gold/10 to-primary-gold/20">
                   Horário
                 </div>
                 {dates.map((date, index) => (
                   <div
                     key={index}
                     className={cn(
-                      'p-3 text-center text-sm font-medium border-l',
-                      isDateToday(date) && 'bg-primary/10 text-primary'
+                      'p-4 text-center text-sm font-bold border-l-2 border-gray-200 dark:border-secondary-graphite-card/50 transition-all duration-300',
+                      isDateToday(date) 
+                        ? 'bg-gradient-to-br from-blue-500 to-blue-600 text-white shadow-lg' 
+                        : 'text-gray-700 dark:text-gray-300 hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20'
                     )}
                   >
-                    <div>{formatDate(date, 'EEE')}</div>
-                    <div className="text-lg">{formatDate(date, 'dd')}</div>
+                    <div className="text-xs">{formatDate(date, 'EEE')}</div>
+                    <div className="text-xl font-bold">{formatDate(date, 'dd')}</div>
                   </div>
                 ))}
               </div>
             )}
 
             {/* Grid de horários */}
-            <div className="max-h-[600px] overflow-y-auto">
+            <div className="max-h-[600px] overflow-y-auto bg-gray-50 dark:bg-secondary-graphite-card/30">
               {generateTimeSlots(dates[0], calendarConfig).map((baseSlot, timeIndex) => (
-                <div key={timeIndex} className="grid grid-cols-8 border-b border-border/50">
+                <div key={timeIndex} className="grid grid-cols-8 border-b border-gray-200 dark:border-secondary-graphite-card/50 hover:bg-gray-100 dark:hover:bg-secondary-graphite-light/30 transition-colors">
                   {/* Coluna de horário */}
-                  <div className="p-2 text-xs text-muted-foreground border-r bg-muted/30">
+                  <div className="p-3 text-sm font-semibold text-gray-600 dark:text-gray-300 border-r-2 border-gray-200 dark:border-secondary-graphite-card/50 bg-gradient-to-r from-gray-100 to-gray-200 dark:from-secondary-graphite-card dark:to-secondary-graphite-light">
                     {baseSlot.time}
                   </div>
                   
@@ -220,16 +229,17 @@ export function Calendar({
                       <div
                         key={dateIndex}
                         className={cn(
-                          'p-1 min-h-[60px] border-l cursor-pointer hover:bg-muted/50 transition-colors',
-                          slot?.available && 'hover:bg-primary/5',
-                          !slot?.available && 'bg-muted/20'
+                          'p-2 min-h-[70px] border-l-2 border-gray-200 dark:border-secondary-graphite-card/50 cursor-pointer transition-all duration-300',
+                          slot?.available 
+                            ? 'hover:bg-green-50 dark:hover:bg-green-900/20 hover:border-green-300 dark:hover:border-green-700' 
+                            : 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800/50'
                         )}
                         onClick={() => slot && onTimeSlotClick?.(slot)}
                       >
                         {slot?.appointment && (
                           <div
                             className={cn(
-                              'p-2 rounded text-xs cursor-pointer transition-all hover:scale-105',
+                              'p-2 rounded-lg text-xs cursor-pointer transition-all hover:scale-105 shadow-sm border',
                               APPOINTMENT_STATUS_COLORS[slot.appointment.status]
                             )}
                             onClick={(e) => {
@@ -237,17 +247,17 @@ export function Calendar({
                               onAppointmentClick?.(slot.appointment!)
                             }}
                           >
-                            <div className="font-medium truncate">
+                            <div className="font-bold truncate mb-1">
                               {slot.appointment.cliente?.nome}
                             </div>
-                            <div className="flex items-center gap-1 mt-1">
+                            <div className="flex items-center gap-1 mb-1">
                               <Clock className="h-3 w-3" />
-                              <span>{slot.appointment.service?.nome}</span>
+                              <span className="font-medium">{slot.appointment.service?.nome}</span>
                             </div>
                             {slot.appointment.barbeiro && (
-                              <div className="flex items-center gap-1 mt-1">
+                              <div className="flex items-center gap-1">
                                 <User className="h-3 w-3" />
-                                <span>{slot.appointment.barbeiro.nome}</span>
+                                <span className="font-medium">{slot.appointment.barbeiro.nome}</span>
                               </div>
                             )}
                           </div>
@@ -263,10 +273,10 @@ export function Calendar({
 
         {/* Visualização mensal */}
         {currentView === 'month' && (
-          <div className="grid grid-cols-7 gap-px bg-border">
+          <div className="grid grid-cols-7 gap-1 bg-gray-100 dark:bg-secondary-graphite-card p-2 rounded-lg">
             {/* Cabeçalho dos dias da semana */}
             {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-              <div key={day} className="p-3 text-center text-sm font-medium bg-muted">
+              <div key={day} className="p-4 text-center text-sm font-bold bg-gradient-to-br from-primary-gold to-primary-gold-dark text-primary-black rounded-lg shadow-sm">
                 {day}
               </div>
             ))}
@@ -279,13 +289,17 @@ export function Calendar({
                 <div
                   key={index}
                   className={cn(
-                    'min-h-[120px] p-2 bg-background cursor-pointer hover:bg-muted/50 transition-colors',
-                    isDateToday(date) && 'bg-primary/5 ring-1 ring-primary',
-                    isDatePast(date) && 'text-muted-foreground'
+                    'min-h-[120px] p-3 bg-white dark:bg-secondary-graphite-light cursor-pointer hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 transition-all duration-300 rounded-lg shadow-sm border border-gray-200 dark:border-secondary-graphite-card/50 hover:shadow-md hover:scale-105',
+                    isDateToday(date) && 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 ring-2 ring-blue-500 dark:ring-blue-400',
+                    isDatePast(date) && 'opacity-60'
                   )}
                   onClick={() => onDateSelect?.(date)}
                 >
-                  <div className="text-sm font-medium mb-1">
+                  <div className={cn(
+                    'text-sm font-bold mb-2',
+                    isDateToday(date) ? 'text-blue-700 dark:text-blue-300' : 'text-gray-900 dark:text-white',
+                    isDatePast(date) && 'text-gray-500 dark:text-gray-400'
+                  )}>
                     {formatDate(date, 'dd')}
                   </div>
                   
@@ -294,7 +308,7 @@ export function Calendar({
                       <div
                         key={appointment.id}
                         className={cn(
-                          'text-xs p-1 rounded truncate cursor-pointer',
+                          'text-xs p-2 rounded-md truncate cursor-pointer font-medium shadow-sm transition-all duration-200 hover:scale-105',
                           APPOINTMENT_STATUS_COLORS[appointment.status]
                         )}
                         onClick={(e) => {
@@ -302,12 +316,17 @@ export function Calendar({
                           onAppointmentClick?.(appointment)
                         }}
                       >
-                        {formatTime(new Date(appointment.data_agendamento))} - {appointment.cliente?.nome}
+                        <div className="font-semibold">
+                          {formatTime(new Date(appointment.data_agendamento))}
+                        </div>
+                        <div className="truncate">
+                          {appointment.cliente?.nome}
+                        </div>
                       </div>
                     ))}
                     
                     {dayAppointments.length > 3 && (
-                      <div className="text-xs text-muted-foreground">
+                      <div className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-secondary-graphite-card px-2 py-1 rounded-md">
                         +{dayAppointments.length - 3} mais
                       </div>
                     )}

@@ -58,7 +58,7 @@ export function MonitoringAccess() {
                 <Crown className="h-6 w-6 text-purple-600" />
                 Bem-vindo, Carlos! 👋
               </CardTitle>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Acesso completo como desenvolvedor e proprietário do SaaS StylloBarber
               </p>
             </CardHeader>
@@ -94,7 +94,7 @@ export function MonitoringAccess() {
                 <Shield className="h-5 w-5" />
                 Monitoramento - Administrador
               </CardTitle>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Status simplificado do sistema para administradores da barbearia
               </p>
             </CardHeader>
@@ -113,7 +113,7 @@ export function MonitoringAccess() {
                 <Code className="h-5 w-5" />
                 Monitoramento - Desenvolvedor
               </CardTitle>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-600 dark:text-gray-300">
                 Dashboard técnico completo para desenvolvimento e debugging
               </p>
             </CardHeader>
@@ -138,7 +138,7 @@ export function MonitoringAccess() {
               <h3 className="text-lg font-medium text-gray-900 mb-2">
                 Acesso Não Autorizado
               </h3>
-              <p className="text-gray-600 mb-4">
+              <p className="text-gray-600 dark:text-gray-300 mb-4">
                 Você não tem permissão para acessar o sistema de monitoramento.
               </p>
               <div className="text-sm text-gray-500">

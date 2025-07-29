@@ -80,23 +80,38 @@ export default function AgendaPage() {
     <RouteGuard requiredRoles={['admin', 'barber']}>
       <Container className="py-6">
         <Stack spacing="lg">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-heading font-bold text-text-primary mb-2">
-                Agenda
-              </h1>
-              <p className="text-text-muted">
-                Gerencie seus agendamentos e visualize a agenda do dia
-              </p>
+          {/* Header Moderno */}
+          <div className="text-center mb-8">
+            <div className="flex items-center justify-center space-x-4 mb-6">
+              <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+                <svg className="h-10 w-10 text-primary-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                  Agenda
+                </h1>
+                <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+                  Gerencie seus agendamentos e visualize a agenda do dia
+                </p>
+              </div>
             </div>
+            <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto mb-6"></div>
             
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm">
+            <div className="flex items-center justify-center gap-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-gradient-to-r hover:from-primary-gold/10 hover:to-primary-gold/20 dark:hover:bg-primary-gold/20 text-gray-700 dark:text-gray-300 font-semibold px-6 py-3 rounded-xl shadow-sm hover:shadow-md transition-all duration-300 transform hover:scale-105"
+              >
                 <Filter className="h-4 w-4 mr-2" />
                 Filtros
               </Button>
-              <Button size="sm">
+              <Button 
+                size="sm" 
+                className="bg-gradient-to-r from-primary-gold to-primary-gold-dark hover:from-primary-gold-dark hover:to-primary-gold text-primary-black font-bold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+              >
                 <Plus className="h-4 w-4 mr-2" />
                 Novo Agendamento
               </Button>

@@ -114,13 +114,13 @@ const MetricCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card className="p-6 hover:shadow-lg transition-shadow duration-200">
+      <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-primary-gold p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <p className="text-sm font-medium text-gray-600 mb-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
               {title}
             </p>
-            <p className="text-2xl font-bold text-gray-900 mb-1">
+            <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
               {formatValue(value)}
             </p>
             {previousValue !== undefined && (
@@ -133,14 +133,14 @@ const MetricCard = ({
                 <span className={`text-sm font-medium ${trendColors[calculatedTrend]}`}>
                   {Math.abs(variation).toFixed(1)}%
                 </span>
-                <span className="text-sm text-gray-500">
+                <span className="text-xs text-gray-500 dark:text-gray-400">
                   vs período anterior
                 </span>
               </div>
             )}
           </div>
-          <div className="p-3 rounded-full bg-blue-50 text-blue-500">
-            <Icon className="h-6 w-6" />
+          <div className="p-4 rounded-xl bg-primary-gold/10 shadow-lg">
+            <Icon className="h-8 w-8 text-primary-gold" />
           </div>
         </div>
       </Card>
@@ -152,8 +152,8 @@ const MetricCard = ({
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="font-medium text-gray-900 mb-2">{label}</p>
+      <div className="bg-white dark:bg-secondary-graphite-light p-3 border border-gray-200 dark:border-secondary-graphite rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900 dark:text-white mb-2">{label}</p>
         {payload.map((entry: any, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             <span className="font-medium">{entry.name}:</span>{' '}
@@ -191,30 +191,37 @@ export const FinancialDashboardSimple = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
+      {/* Header Moderno */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
-        className="flex items-center justify-between"
+        className="text-center mb-8"
       >
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Dashboard Financeiro
-          </h1>
-          <p className="text-gray-600 mt-1">
-            Visão geral das finanças da barbearia
-          </p>
+        <div className="flex items-center justify-center space-x-4 mb-6">
+          <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+            <DollarSign className="h-10 w-10 text-primary-black" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+              Dashboard Financeiro
+            </h1>
+            <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+              Visão geral das finanças da barbearia
+            </p>
+          </div>
         </div>
-
-        <div className="flex items-center space-x-3">
-          <div className="text-sm text-gray-500">
+        <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto mb-6"></div>
+        
+        <div className="flex items-center justify-center space-x-3">
+          <div className="text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-secondary-graphite-light px-3 py-1 rounded-full border">
             Última atualização: {lastRefresh.toLocaleTimeString('pt-BR')}
           </div>
           <Button
             variant="outline"
             size="sm"
             onClick={() => router.push('/dashboard/financeiro/receitas')}
-            className="flex items-center space-x-2"
+            className="border-primary-gold/30 hover:border-primary-gold/50 hover:bg-primary-gold/10 flex items-center space-x-2"
           >
             <TrendingUp className="h-4 w-4" />
             <span>Receitas</span>
@@ -241,24 +248,30 @@ export const FinancialDashboardSimple = () => {
       </motion.div>
 
       {/* Filtros */}
-      <Card className="p-4">
+      <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 shadow-sm">
         <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <Filter className="h-5 w-5 text-gray-500" />
-              <span className="font-medium text-gray-700">Filtros</span>
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-primary-gold/10 rounded-lg">
+                <Filter className="h-5 w-5 text-primary-gold" />
+              </div>
+              <span className="font-bold text-gray-900 dark:text-white">Filtros</span>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <div className="flex space-x-1">
+            <div className="flex items-center space-x-3">
+              <Calendar className="h-5 w-5 text-primary-gold" />
+              <div className="flex space-x-2">
                 {['hoje', 'semana', 'mes', 'trimestre', 'ano'].map((period) => (
                   <Button
                     key={period}
-                    variant={selectedPeriod === period ? 'primary' : 'outline'}
+                    variant={selectedPeriod === period ? 'default' : 'outline'}
                     size="sm"
                     onClick={() => setSelectedPeriod(period)}
-                    className="text-xs capitalize"
+                    className={`text-xs capitalize font-semibold px-3 py-2 rounded-lg transition-all duration-300 ${
+                      selectedPeriod === period 
+                        ? 'bg-gradient-to-r from-primary-gold to-primary-gold-dark text-primary-black shadow-lg transform scale-105' 
+                        : 'bg-white dark:bg-secondary-graphite-light border-2 border-gray-300 dark:border-secondary-graphite-card hover:border-primary-gold hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 text-gray-700 dark:text-gray-300'
+                    }`}
                   >
                     {period === 'mes' ? 'Este Mês' : period}
                   </Button>
@@ -266,12 +279,12 @@ export const FinancialDashboardSimple = () => {
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <User className="h-4 w-4 text-gray-400" />
+            <div className="flex items-center space-x-3">
+              <User className="h-5 w-5 text-primary-gold" />
               <select
                 value={selectedBarbeiro}
                 onChange={(e) => setSelectedBarbeiro(e.target.value)}
-                className="text-sm border border-gray-300 rounded-md px-3 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="text-sm border-2 border-gray-300 dark:border-secondary-graphite-card/50 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-primary-gold bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white font-semibold shadow-sm hover:shadow-md transition-all duration-300"
               >
                 <option value="">Todos os barbeiros</option>
                 {mockData.barbeiros.map((barbeiro) => (
@@ -324,56 +337,64 @@ export const FinancialDashboardSimple = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.2 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Indicadores de Performance
         </h2>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="p-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-blue-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Ticket Médio</p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Ticket Médio</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   R$ {mockData.metricas.ticketMedio.toFixed(2)}
                 </p>
               </div>
-              <DollarSign className="h-8 w-8 text-blue-500" />
+              <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl shadow-lg">
+                <DollarSign className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-green-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Atendimentos</p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Atendimentos</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {mockData.metricas.numeroAtendimentos}
                 </p>
               </div>
-              <Users className="h-8 w-8 text-green-500" />
+              <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl shadow-lg">
+                <Users className="h-8 w-8 text-green-600 dark:text-green-400" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-purple-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Taxa de Crescimento</p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Taxa de Crescimento</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {mockData.metricas.taxaCrescimento.toFixed(1)}%
                 </p>
               </div>
-              <TrendingUp className="h-8 w-8 text-purple-500" />
+              <div className="p-3 bg-purple-100 dark:bg-purple-900/30 rounded-xl shadow-lg">
+                <TrendingUp className="h-8 w-8 text-purple-600 dark:text-purple-400" />
+              </div>
             </div>
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-orange-500 hover:shadow-xl hover:scale-105 transition-all duration-300">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Margem de Lucro</p>
-                <p className="text-xl font-bold text-gray-900">
+                <p className="text-sm font-semibold text-gray-600 dark:text-gray-300 mb-2">Margem de Lucro</p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">
                   {((mockData.metricas.lucroLiquido / mockData.metricas.receitaBruta) * 100).toFixed(1)}%
                 </p>
               </div>
-              <Calculator className="h-8 w-8 text-orange-500" />
+              <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl shadow-lg">
+                <Calculator className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+              </div>
             </div>
           </Card>
         </div>
@@ -385,85 +406,97 @@ export const FinancialDashboardSimple = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.25 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Acesso Rápido aos Relatórios
         </h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           <Card 
-            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="p-5 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 hover:border-green-300 dark:hover:border-green-600"
             onClick={() => router.push('/dashboard/financeiro/receitas')}
           >
             <div className="flex items-center space-x-3">
-              <TrendingUp className="h-8 w-8 text-green-600" />
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg shadow-sm">
+                <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
+              </div>
               <div>
-                <h3 className="font-medium text-gray-900">Receitas</h3>
-                <p className="text-sm text-gray-600">Análise detalhada das receitas</p>
+                <h3 className="font-bold text-gray-900 dark:text-white">Receitas</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Análise detalhada</p>
               </div>
             </div>
           </Card>
 
           <Card 
-            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="p-5 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 hover:border-blue-300 dark:hover:border-blue-600"
             onClick={() => router.push('/dashboard/financeiro/relatorios')}
           >
             <div className="flex items-center space-x-3">
-              <FileText className="h-8 w-8 text-blue-600" />
+              <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg shadow-sm">
+                <FileText className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
               <div>
-                <h3 className="font-medium text-gray-900">Centro de Relatórios</h3>
-                <p className="text-sm text-gray-600">Todos os relatórios em um lugar</p>
+                <h3 className="font-bold text-gray-900 dark:text-white">Relatórios</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Centro completo</p>
               </div>
             </div>
           </Card>
 
           <Card 
-            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="p-5 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 hover:border-red-300 dark:hover:border-red-600"
             onClick={() => router.push('/dashboard/financeiro/despesas')}
           >
             <div className="flex items-center space-x-3">
-              <TrendingDown className="h-8 w-8 text-red-600" />
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg shadow-sm">
+                <TrendingDown className="h-6 w-6 text-red-600 dark:text-red-400" />
+              </div>
               <div>
-                <h3 className="font-medium text-gray-900">Despesas</h3>
-                <p className="text-sm text-gray-600">Controle de gastos por categoria</p>
+                <h3 className="font-bold text-gray-900 dark:text-white">Despesas</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Controle de gastos</p>
               </div>
             </div>
           </Card>
 
           <Card 
-            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="p-5 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 hover:border-purple-300 dark:hover:border-purple-600"
             onClick={() => router.push('/dashboard/financeiro/comissoes')}
           >
             <div className="flex items-center space-x-3">
-              <Users className="h-8 w-8 text-purple-600" />
+              <div className="p-2 bg-purple-100 dark:bg-purple-900/30 rounded-lg shadow-sm">
+                <Users className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+              </div>
               <div>
-                <h3 className="font-medium text-gray-900">Comissões</h3>
-                <p className="text-sm text-gray-600">Performance dos barbeiros</p>
+                <h3 className="font-bold text-gray-900 dark:text-white">Comissões</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Performance</p>
               </div>
             </div>
           </Card>
 
           <Card 
-            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+            className="p-5 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 hover:border-indigo-300 dark:hover:border-indigo-600"
             onClick={() => router.push('/dashboard/financeiro/fluxo-caixa')}
           >
             <div className="flex items-center space-x-3">
-              <DollarSign className="h-8 w-8 text-indigo-600" />
+              <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg shadow-sm">
+                <DollarSign className="h-6 w-6 text-indigo-600 dark:text-indigo-400" />
+              </div>
               <div>
-                <h3 className="font-medium text-gray-900">Fluxo de Caixa</h3>
-                <p className="text-sm text-gray-600">Controle em tempo real</p>
+                <h3 className="font-bold text-gray-900 dark:text-white">Fluxo de Caixa</h3>
+                <p className="text-xs text-gray-600 dark:text-gray-300 font-medium">Tempo real</p>
               </div>
             </div>
           </Card>
 
           <Card 
-            className="p-4 cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 border-2 border-green-200 bg-green-50"
+            className="p-5 cursor-pointer hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-2 border-green-300 dark:border-green-600 hover:border-green-400 dark:hover:border-green-500"
             onClick={() => router.push('/dashboard/financeiro/pdv')}
           >
             <div className="flex items-center space-x-3">
-              <Calculator className="h-8 w-8 text-green-600" />
+              <div className="p-2 bg-green-200 dark:bg-green-800/50 rounded-lg shadow-sm">
+                <Calculator className="h-6 w-6 text-green-700 dark:text-green-300" />
+              </div>
               <div>
-                <h3 className="font-medium text-gray-900">PDV</h3>
-                <p className="text-sm text-gray-600">Registro rápido</p>
+                <h3 className="font-bold text-green-800 dark:text-green-200">PDV</h3>
+                <p className="text-xs text-green-700 dark:text-green-300 font-medium">Registro rápido</p>
               </div>
             </div>
           </Card>
@@ -476,23 +509,27 @@ export const FinancialDashboardSimple = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3, delay: 0.3 }}
       >
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+        <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           Análise Temporal
         </h2>
         
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Gráfico de Evolução */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 shadow-lg">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+              <div className="p-2 bg-primary-gold/10 rounded-lg mr-3">
+                <TrendingUp className="h-5 w-5 text-primary-gold" />
+              </div>
               Evolução Financeira
             </h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={mockData.evolucaoTemporal}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                  <XAxis dataKey="mes" stroke="#6B7280" fontSize={12} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D1D5DB" className="dark:stroke-gray-600" />
+                  <XAxis dataKey="mes" stroke="#374151" className="dark:stroke-gray-300" fontSize={12} />
                   <YAxis 
-                    stroke="#6B7280" 
+                    stroke="#374151" 
+                    className="dark:stroke-gray-300"
                     fontSize={12}
                     tickFormatter={(value) => 
                       new Intl.NumberFormat('pt-BR', {
@@ -507,26 +544,26 @@ export const FinancialDashboardSimple = () => {
                   <Line
                     type="monotone"
                     dataKey="receitas"
-                    stroke="#22C55E"
-                    strokeWidth={3}
+                    stroke="#10B981"
+                    strokeWidth={4}
                     name="Receitas"
-                    dot={{ fill: '#22C55E', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#10B981', strokeWidth: 2, r: 6 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="despesas"
-                    stroke="#EF4444"
-                    strokeWidth={3}
+                    stroke="#F59E0B"
+                    strokeWidth={4}
                     name="Despesas"
-                    dot={{ fill: '#EF4444', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#F59E0B', strokeWidth: 2, r: 6 }}
                   />
                   <Line
                     type="monotone"
                     dataKey="lucro"
                     stroke="#3B82F6"
-                    strokeWidth={3}
+                    strokeWidth={4}
                     name="Lucro"
-                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                    dot={{ fill: '#3B82F6', strokeWidth: 2, r: 6 }}
                   />
                 </LineChart>
               </ResponsiveContainer>
@@ -534,24 +571,29 @@ export const FinancialDashboardSimple = () => {
           </Card>
 
           {/* Gráfico de Performance dos Barbeiros */}
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+          <Card className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-200 dark:border-secondary-graphite-card/50 shadow-lg">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center">
+              <div className="p-2 bg-primary-gold/10 rounded-lg mr-3">
+                <Users className="h-5 w-5 text-primary-gold" />
+              </div>
               Performance dos Barbeiros
             </h3>
             <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={mockData.performanceBarbeiros}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#D1D5DB" className="dark:stroke-gray-600" />
                   <XAxis 
                     dataKey="nome" 
-                    stroke="#6B7280"
+                    stroke="#374151"
+                    className="dark:stroke-gray-300"
                     fontSize={12}
                     angle={-45}
                     textAnchor="end"
                     height={80}
                   />
                   <YAxis 
-                    stroke="#6B7280"
+                    stroke="#374151"
+                    className="dark:stroke-gray-300"
                     fontSize={12}
                     tickFormatter={(value) => 
                       new Intl.NumberFormat('pt-BR', {
@@ -565,9 +607,9 @@ export const FinancialDashboardSimple = () => {
                   <Legend />
                   <Bar
                     dataKey="receitaGerada"
-                    fill="#3B82F6"
+                    fill="#8B5CF6"
                     name="Receita Gerada"
-                    radius={[4, 4, 0, 0]}
+                    radius={[6, 6, 0, 0]}
                   />
                 </BarChart>
               </ResponsiveContainer>
@@ -583,14 +625,14 @@ export const FinancialDashboardSimple = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.5 }}
         >
-          <Card className="p-6 border-orange-200 bg-orange-50">
+          <Card className="p-6 border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
             <div className="flex items-center space-x-3">
-              <AlertCircle className="h-6 w-6 text-orange-600" />
+              <AlertCircle className="h-6 w-6 text-orange-600 dark:text-orange-400" />
               <div>
-                <h3 className="font-semibold text-orange-900">
+                <h3 className="font-semibold text-orange-900 dark:text-orange-200">
                   Comissões Pendentes
                 </h3>
-                <p className="text-orange-700 mt-1">
+                <p className="text-orange-700 dark:text-orange-300 mt-1">
                   Há R$ {mockData.metricas.comissoesPendentes.toFixed(2)} em comissões pendentes de pagamento
                 </p>
               </div>

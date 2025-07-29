@@ -131,19 +131,20 @@ export default function RelatoriosHubPage() {
           transition={{ duration: 0.3 }}
           className="text-center"
         >
-          <div className="flex items-center justify-center space-x-3 mb-4">
-            <div className="p-3 bg-blue-100 rounded-full">
-              <BarChart3 className="h-8 w-8 text-blue-600" />
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+              <BarChart3 className="h-10 w-10 text-primary-black" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
                 Hub de Relatórios
               </h1>
-              <p className="text-gray-600 mt-1">
+              <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
                 Centro de análises e relatórios especializados da barbearia
               </p>
             </div>
           </div>
+          <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto"></div>
         </motion.div>
 
         {/* Estatísticas Rápidas */}
@@ -156,13 +157,13 @@ export default function RelatoriosHubPage() {
             {estatisticas.map((stat, index) => {
               const Icon = stat.icon
               return (
-                <Card key={index} className="p-6">
+                <Card key={index} className="p-6 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-primary-gold hover:shadow-xl hover:scale-105 transition-all duration-300">
                   <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-gray-600 mb-1">
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
                         {stat.titulo}
                       </p>
-                      <p className="text-2xl font-bold text-gray-900 mb-1">
+                      <p className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
                         {stat.valor}
                       </p>
                       <div className="flex items-center space-x-2">
@@ -180,13 +181,13 @@ export default function RelatoriosHubPage() {
                             </span>
                           </>
                         )}
-                        <span className="text-sm text-gray-500">
+                        <span className="text-sm text-gray-500 dark:text-gray-400">
                           {stat.subtitulo}
                         </span>
                       </div>
                     </div>
-                    <div className="p-3 bg-gray-50 rounded-full">
-                      <Icon className="h-6 w-6 text-gray-600" />
+                    <div className="p-4 bg-primary-gold/10 rounded-xl">
+                      <Icon className="h-8 w-8 text-primary-gold" />
                     </div>
                   </div>
                 </Card>
@@ -201,7 +202,7 @@ export default function RelatoriosHubPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
             Centros Especializados
           </h2>
           
@@ -217,50 +218,51 @@ export default function RelatoriosHubPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3, delay: 0.3 + index * 0.1 }}
                 >
-                  <Card className={`p-6 h-full transition-all duration-200 ${
+                  <Card className={`p-8 h-full transition-all duration-300 bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-t-4 ${
                     isDisponivel 
-                      ? 'hover:shadow-lg hover:scale-105 cursor-pointer' 
-                      : 'opacity-75'
+                      ? `border-t-primary-gold hover:shadow-2xl hover:scale-105 cursor-pointer hover:border-primary-gold/50` 
+                      : 'opacity-75 border-t-gray-300'
                   }`}>
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className={`p-3 ${centro.colorLight} rounded-full`}>
-                          <Icon className={`h-6 w-6 ${centro.colorText}`} />
+                    <div className="flex items-start justify-between mb-6">
+                      <div className="flex items-center space-x-4">
+                        <div className={`p-4 ${centro.colorLight} dark:bg-primary-gold/10 rounded-xl shadow-lg`}>
+                          <Icon className={`h-8 w-8 ${centro.colorText} dark:text-primary-gold`} />
                         </div>
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                             {centro.titulo}
                           </h3>
-                          <p className="text-gray-600 text-sm">
+                          <p className="text-gray-600 dark:text-gray-300 text-sm">
                             {centro.descricao}
                           </p>
                         </div>
                       </div>
                       
                       <div className="flex flex-col items-end space-y-2">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        <span className={`px-3 py-1 text-xs font-semibold rounded-full shadow-sm ${
                           isDisponivel 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
+                            ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-200 dark:border-green-800' 
+                            : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800'
                         }`}>
                           {centro.status}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
                           {centro.ultimaAtualizacao}
                         </span>
                       </div>
                     </div>
 
                     {/* Recursos */}
-                    <div className="mb-6">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2">
+                    <div className="mb-8">
+                      <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3 flex items-center">
+                        <BarChart3 className="h-4 w-4 mr-2 text-primary-gold" />
                         Recursos disponíveis:
                       </h4>
-                      <ul className="space-y-1">
+                      <ul className="space-y-2">
                         {centro.recursos.map((recurso, idx) => (
-                          <li key={idx} className="flex items-center space-x-2 text-sm text-gray-600">
-                            <div className="w-1.5 h-1.5 bg-gray-400 rounded-full" />
-                            <span>{recurso}</span>
+                          <li key={idx} className="flex items-center space-x-3 text-sm text-gray-600 dark:text-gray-300">
+                            <div className="w-2 h-2 bg-primary-gold rounded-full shadow-sm" />
+                            <span className="font-medium">{recurso}</span>
                           </li>
                         ))}
                       </ul>
@@ -271,17 +273,18 @@ export default function RelatoriosHubPage() {
                       {isDisponivel ? (
                         <Button
                           onClick={() => router.push(centro.href)}
-                          className="w-full flex items-center justify-center space-x-2"
+                          className="w-full flex items-center justify-center space-x-2 bg-primary-gold hover:bg-primary-gold-dark text-primary-black font-semibold py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                         >
                           <span>Acessar Centro</span>
-                          <ArrowRight className="h-4 w-4" />
+                          <ArrowRight className="h-5 w-5" />
                         </Button>
                       ) : (
                         <Button
                           disabled
                           variant="outline"
-                          className="w-full"
+                          className="w-full py-3 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400"
                         >
+                          <Clock className="h-4 w-4 mr-2" />
                           Em Desenvolvimento
                         </Button>
                       )}
@@ -299,17 +302,17 @@ export default function RelatoriosHubPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.4 }}
         >
-          <Card className="p-6 bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+          <Card className="p-8 bg-gradient-to-r from-primary-gold/10 via-primary-gold/5 to-transparent dark:from-primary-gold/20 dark:via-primary-gold/10 dark:to-transparent border-2 border-primary-gold/20 hover:border-primary-gold/40 transition-all duration-300 hover:shadow-2xl">
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Briefcase className="h-6 w-6 text-blue-600" />
+              <div className="flex items-center space-x-6">
+                <div className="p-4 bg-primary-gold/20 dark:bg-primary-gold/30 rounded-xl shadow-lg">
+                  <Briefcase className="h-8 w-8 text-primary-gold" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-1">
                     Dashboard Executivo
                   </h3>
-                  <p className="text-gray-600">
+                  <p className="text-gray-600 dark:text-gray-300 font-medium">
                     Visão consolidada de todos os indicadores em um só lugar
                   </p>
                 </div>
@@ -317,10 +320,9 @@ export default function RelatoriosHubPage() {
               
               <Button
                 onClick={() => router.push('/dashboard/financeiro')}
-                variant="outline"
-                className="flex items-center space-x-2"
+                className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black font-semibold px-6 py-3 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2"
               >
-                <PieChart className="h-4 w-4" />
+                <PieChart className="h-5 w-5" />
                 <span>Ver Dashboard</span>
               </Button>
             </div>

@@ -159,8 +159,8 @@ const ProjectionAlert = ({
 const CustomTooltip = ({ active, payload, label }: any) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-4 border border-gray-200 rounded-lg shadow-lg">
-        <p className="font-medium text-gray-900 mb-2">
+      <div className="bg-white dark:bg-secondary-graphite-light p-4 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900 dark:text-white mb-2">
           {formatDate(label)}
         </p>
         {payload.map((entry: any, index: number) => (

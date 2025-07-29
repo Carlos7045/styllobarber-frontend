@@ -84,8 +84,8 @@ export function UserMenu({ className }: UserMenuProps) {
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
           'flex items-center gap-3 p-2 rounded-lg transition-colors',
-          'hover:bg-background-secondary focus:outline-none focus:ring-2 focus:ring-primary-gold',
-          isOpen && 'bg-background-secondary'
+          'hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 focus:outline-none focus:ring-2 focus:ring-primary-gold',
+          isOpen && 'bg-primary-gold/10 dark:bg-primary-gold/20'
         )}
       >
         {/* Avatar */}
@@ -129,13 +129,13 @@ export function UserMenu({ className }: UserMenuProps) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-56 bg-background-primary border border-border-default rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-secondary-graphite-light border border-gray-200 dark:border-secondary-graphite-card/30 rounded-lg shadow-lg z-50">
           {/* User Info Header */}
-          <div className="px-4 py-3 border-b border-border-default">
-            <p className="text-sm font-medium text-text-primary">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-secondary-graphite-card/30">
+            <p className="text-sm font-medium text-gray-900 dark:text-white">
               {userName}
             </p>
-            <p className="text-xs text-text-muted">
+            <p className="text-xs text-gray-500 dark:text-gray-300">
               {user.email}
             </p>
             <p className="text-xs text-primary-gold font-medium mt-1">
@@ -147,28 +147,28 @@ export function UserMenu({ className }: UserMenuProps) {
           <div className="py-2">
             <button
               onClick={handleProfile}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-background-secondary transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 transition-colors"
             >
-              <User className="h-4 w-4" />
+              <User className="h-4 w-4 text-gray-500 dark:text-gray-300" />
               Meu Perfil
             </button>
 
             <button
               onClick={handleSettings}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-text-primary hover:bg-background-secondary transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-primary-gold/10 dark:hover:bg-primary-gold/20 transition-colors"
             >
-              <Settings className="h-4 w-4" />
+              <Settings className="h-4 w-4 text-gray-500 dark:text-gray-300" />
               Configurações
             </button>
           </div>
 
           {/* Logout */}
-          <div className="border-t border-border-default py-2">
+          <div className="border-t border-gray-200 dark:border-secondary-graphite py-2">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-semantic-error hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
-              <LogOut className="h-4 w-4" />
+              <LogOut className="h-4 w-4 text-red-600 dark:text-red-400" />
               Sair
             </button>
           </div>

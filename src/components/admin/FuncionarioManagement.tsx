@@ -28,6 +28,8 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
         stats
     } = useFuncionariosEspecialidades()
 
+
+
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState<string>('all')
     const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -292,7 +294,7 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
     }
 
     return (
-        <Card className={className}>
+        <Card className={`${className} bg-gradient-to-r from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite shadow-lg`}>
             <CardHeader>
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
@@ -300,7 +302,7 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                         Gestão de Funcionários
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                        <div className="text-sm text-text-secondary mr-4">
+                        <div className="text-sm text-gray-600 dark:text-gray-300 mr-4">
                             {funcionariosFiltrados.length} funcionário{funcionariosFiltrados.length !== 1 ? 's' : ''}
                         </div>
                         <Button
@@ -349,11 +351,11 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value)}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
+                            className="w-full px-3 py-2 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-md bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
                         >
-                            <option value="all">Todos os cargos</option>
-                            <option value="admin">Administradores</option>
-                            <option value="barber">Barbeiros</option>
+                            <option value="all" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Todos os cargos</option>
+                            <option value="admin" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Administradores</option>
+                            <option value="barber" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Barbeiros</option>
                         </select>
                     </div>
                     <div className="sm:w-48">
@@ -361,11 +363,11 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                             value={statusFilter}
                             onChange={(e) => setStatusFilter(e.target.value)}
                             disabled={loading}
-                            className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
+                            className="w-full px-3 py-2 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-md bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
                         >
-                            <option value="all">Todos os status</option>
-                            <option value="active">Ativos</option>
-                            <option value="inactive">Inativos</option>
+                            <option value="all" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Todos os status</option>
+                            <option value="active" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Ativos</option>
+                            <option value="inactive" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Inativos</option>
                         </select>
                     </div>
                 </div>
@@ -373,152 +375,154 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                 {/* Lista de funcionários */}
                 {loading ? (
                     <div className="flex items-center justify-center py-12">
-                        <p className="text-text-secondary">Carregando funcionários...</p>
+                        <p className="text-gray-600 dark:text-gray-300">Carregando funcionários...</p>
                     </div>
                 ) : funcionariosFiltrados.length === 0 ? (
                     <div className="flex items-center justify-center py-12">
-                        <p className="text-text-secondary">Nenhum funcionário encontrado</p>
+                        <p className="text-gray-600 dark:text-gray-300">Nenhum funcionário encontrado</p>
                     </div>
                 ) : (
                     <div className="space-y-3">
                         {funcionariosFiltrados.map((funcionario) => (
                             <div
                                 key={funcionario.id}
-                                className="flex items-center justify-between p-4 border border-border-default rounded-lg hover:bg-background-secondary transition-colors"
+                                className="p-6 rounded-xl border border-gray-200 dark:border-secondary-graphite-card/30 bg-gradient-to-r from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite hover:from-primary-gold/5 hover:to-primary-gold/10 hover:border-primary-gold/50 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
                             >
-                                <div className="flex items-center gap-4">
-                                    {/* Avatar */}
-                                    <div className="w-10 h-10 bg-primary-gold rounded-full flex items-center justify-center text-primary-black font-semibold">
-                                        {funcionario.avatar_url ? (
-                                            <img
-                                                src={funcionario.avatar_url}
-                                                alt={funcionario.nome}
-                                                className="w-full h-full rounded-full object-cover"
-                                            />
-                                        ) : (
-                                            funcionario.nome.charAt(0).toUpperCase()
-                                        )}
-                                    </div>
-
-                                    {/* Informações do funcionário */}
-                                    <div className="flex-1">
-                                        <h4 className="font-medium text-text-primary">{funcionario.nome}</h4>
-                                        <p className="text-sm text-text-secondary">{funcionario.email}</p>
-                                        {funcionario.telefone && (
-                                            <p className="text-xs text-text-secondary">{funcionario.telefone}</p>
-                                        )}
-
-                                        {/* Especialidades */}
-                                        <div className="mt-2">
-                                            {funcionario.servicos && funcionario.servicos.length > 0 ? (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {funcionario.servicos.slice(0, 3).map((servico) => (
-                                                        <span
-                                                            key={servico.id}
-                                                            className="px-2 py-1 bg-primary-gold/10 text-primary-gold text-xs rounded-full"
-                                                        >
-                                                            {servico.nome}
-                                                        </span>
-                                                    ))}
-                                                    {funcionario.servicos.length > 3 && (
-                                                        <span className="px-2 py-1 bg-neutral-light-gray text-text-secondary text-xs rounded-full">
-                                                            +{funcionario.servicos.length - 3} mais
-                                                        </span>
-                                                    )}
-                                                </div>
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-4">
+                                        {/* Avatar */}
+                                        <div className="w-10 h-10 bg-primary-gold rounded-full flex items-center justify-center text-primary-black font-semibold">
+                                            {funcionario.avatar_url ? (
+                                                <img
+                                                    src={funcionario.avatar_url}
+                                                    alt={funcionario.nome}
+                                                    className="w-full h-full rounded-full object-cover"
+                                                />
                                             ) : (
-                                                <span className="text-xs text-text-secondary italic">
-                                                    Sem especialidades - não realiza serviços
-                                                </span>
+                                                funcionario.nome.charAt(0).toUpperCase()
                                             )}
                                         </div>
+
+                                        {/* Informações do funcionário */}
+                                        <div className="flex-1">
+                                            <h4 className="font-medium text-gray-900 dark:text-white">{funcionario.nome}</h4>
+                                            <p className="text-sm text-gray-600 dark:text-gray-300">{funcionario.email}</p>
+                                            {funcionario.telefone && (
+                                                <p className="text-xs text-gray-500 dark:text-gray-400">{funcionario.telefone}</p>
+                                            )}
+
+                                            {/* Especialidades */}
+                                            <div className="mt-2">
+                                                {funcionario.servicos && funcionario.servicos.length > 0 ? (
+                                                    <div className="flex flex-wrap gap-1">
+                                                        {funcionario.servicos.slice(0, 3).map((servico) => (
+                                                            <span
+                                                                key={servico.id}
+                                                                className="px-2 py-1 bg-primary-gold/10 text-primary-gold text-xs rounded-full"
+                                                            >
+                                                                {servico.nome}
+                                                            </span>
+                                                        ))}
+                                                        {funcionario.servicos.length > 3 && (
+                                                            <span className="px-2 py-1 bg-gray-100 dark:bg-secondary-graphite-card text-gray-600 dark:text-gray-300 text-xs rounded-full">
+                                                                +{funcionario.servicos.length - 3} mais
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-gray-500 dark:text-gray-400 italic">
+                                                        Sem especialidades - não realiza serviços
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
 
-                                <div className="flex items-center gap-3">
-                                    {/* Badge do status */}
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${funcionario.ativo
-                                        ? 'bg-success/10 text-success border border-success/20'
-                                        : 'bg-error/10 text-error border border-error/20'
-                                        }`}>
-                                        {funcionario.ativo ? 'Ativo' : 'Inativo'}
-                                    </span>
+                                    <div className="flex items-center gap-3">
+                                        {/* Badge do status */}
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${funcionario.ativo
+                                            ? 'bg-success/10 text-success border border-success/20'
+                                            : 'bg-error/10 text-error border border-error/20'
+                                            }`}>
+                                            {funcionario.ativo ? 'Ativo' : 'Inativo'}
+                                        </span>
 
-                                    {/* Badge do cargo */}
-                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(funcionario.role)}`}>
-                                        {getRoleName(funcionario.role)}
-                                    </span>
+                                        {/* Badge do cargo */}
+                                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getRoleBadgeColor(funcionario.role)}`}>
+                                            {getRoleName(funcionario.role)}
+                                        </span>
 
-                                    {/* Data de criação */}
-                                    <div className="text-xs text-text-secondary hidden sm:block">
-                                        {new Date(funcionario.created_at).toLocaleDateString('pt-BR')}
-                                    </div>
+                                        {/* Data de criação */}
+                                        <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
+                                            {new Date(funcionario.created_at).toLocaleDateString('pt-BR')}
+                                        </div>
 
-                                    {/* Ações */}
-                                    <div className="flex items-center gap-1">
-                                        {/* Alterar cargo (apenas entre admin e barber) */}
-                                        <select
-                                            value={funcionario.role}
-                                            onChange={(e) => handleRoleChange(funcionario.id, e.target.value as 'admin' | 'barber')}
-                                            disabled={loading || actionLoading}
-                                            className="text-xs px-2 py-1 border border-border-default rounded bg-background-primary text-text-primary focus:outline-none focus:ring-1 focus:ring-primary-gold disabled:opacity-50"
-                                        >
-                                            <option value="barber">Barbeiro</option>
-                                            <option value="admin">Admin</option>
-                                        </select>
+                                        {/* Ações */}
+                                        <div className="flex items-center gap-1">
+                                            {/* Alterar cargo (apenas entre admin e barber) */}
+                                            <select
+                                                value={funcionario.role}
+                                                onChange={(e) => handleRoleChange(funcionario.id, e.target.value as 'admin' | 'barber')}
+                                                disabled={loading || actionLoading}
+                                                className="text-xs px-2 py-1 border border-gray-200 dark:border-secondary-graphite-card/30 rounded bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-gold disabled:opacity-50"
+                                            >
+                                                <option value="barber" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Barbeiro</option>
+                                                <option value="admin" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Admin</option>
+                                            </select>
 
-                                        {/* Botão de especialidades */}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleOpenEspecialidades(funcionario)}
-                                            disabled={loading || actionLoading}
-                                            title="Gerenciar especialidades"
-                                            className="text-primary-gold hover:text-primary-gold-dark hover:bg-primary-gold/10"
-                                        >
-                                            <Scissors className="h-4 w-4" />
-                                        </Button>
+                                            {/* Botão de especialidades */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleOpenEspecialidades(funcionario)}
+                                                disabled={loading || actionLoading}
+                                                title="Gerenciar especialidades"
+                                                className="text-primary-gold hover:text-primary-gold-dark hover:bg-primary-gold/10"
+                                            >
+                                                <Scissors className="h-4 w-4" />
+                                            </Button>
 
-                                        {/* Botão de editar */}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => {
-                                                setSelectedUser(funcionario)
-                                                setIsEditModalOpen(true)
-                                            }}
-                                            disabled={loading || actionLoading}
-                                            title="Editar funcionário"
-                                        >
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
+                                            {/* Botão de editar */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setSelectedUser(funcionario)
+                                                    setIsEditModalOpen(true)
+                                                }}
+                                                disabled={loading || actionLoading}
+                                                title="Editar funcionário"
+                                            >
+                                                <Edit className="h-4 w-4" />
+                                            </Button>
 
-                                        {/* Botão de ativar/desativar */}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleToggleFuncionarioStatus(funcionario.id, !funcionario.ativo)}
-                                            disabled={loading || actionLoading}
-                                            title={funcionario.ativo ? 'Desativar funcionário' : 'Ativar funcionário'}
-                                            className={funcionario.ativo
-                                                ? "text-warning hover:text-warning hover:bg-warning/10"
-                                                : "text-success hover:text-success hover:bg-success/10"
-                                            }
-                                        >
-                                            {funcionario.ativo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
-                                        </Button>
+                                            {/* Botão de ativar/desativar */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleToggleFuncionarioStatus(funcionario.id, !funcionario.ativo)}
+                                                disabled={loading || actionLoading}
+                                                title={funcionario.ativo ? 'Desativar funcionário' : 'Ativar funcionário'}
+                                                className={funcionario.ativo
+                                                    ? "text-warning hover:text-warning hover:bg-warning/10"
+                                                    : "text-success hover:text-success hover:bg-success/10"
+                                                }
+                                            >
+                                                {funcionario.ativo ? <UserX className="h-4 w-4" /> : <UserCheck className="h-4 w-4" />}
+                                            </Button>
 
-                                        {/* Botão de deletar */}
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleDeleteFuncionario(funcionario.id)}
-                                            disabled={loading || actionLoading}
-                                            title="Deletar funcionário"
-                                            className="text-error hover:text-error hover:bg-error/10"
-                                        >
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
+                                            {/* Botão de deletar */}
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => handleDeleteFuncionario(funcionario.id)}
+                                                disabled={loading || actionLoading}
+                                                title="Deletar funcionário"
+                                                className="text-error hover:text-error hover:bg-error/10"
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -532,13 +536,13 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                         <div className="text-2xl font-bold text-error">
                             {stats?.total_admins || 0}
                         </div>
-                        <div className="text-sm text-text-secondary">Administradores</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Administradores</div>
                     </div>
                     <div className="text-center">
                         <div className="text-2xl font-bold text-primary-gold">
                             {stats?.total_barbeiros || 0}
                         </div>
-                        <div className="text-sm text-text-secondary">Barbeiros</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-300">Barbeiros</div>
                     </div>
                 </div>
             </CardContent>

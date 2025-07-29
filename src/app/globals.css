@@ -108,6 +108,35 @@
   --border-default: var(--border-dark);
 }
 
+/* Correções específicas para tema escuro */
+.dark .text-text-primary {
+  color: #FFFFFF !important;
+}
+
+.dark .text-text-secondary {
+  color: #D1D5DB !important;
+}
+
+.dark .text-text-muted {
+  color: #9CA3AF !important;
+}
+
+/* Padronização de cards em todo o projeto */
+.card-standard {
+  @apply bg-white dark:bg-secondary-graphite-light border border-gray-200 dark:border-secondary-graphite transition-all duration-200;
+}
+
+.card-interactive {
+  @apply card-standard cursor-pointer hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl;
+}
+
+/* Hover apenas para cards específicos que precisam */
+.card-hoverable {
+  @apply hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl;
+}
+
+
+
 body {
   background: var(--background);
   color: var(--foreground);

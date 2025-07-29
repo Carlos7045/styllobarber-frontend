@@ -126,20 +126,20 @@ export function SystemStatusCard() {
 
         {/* Métricas Básicas */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 bg-white rounded-lg border">
+          <div className="p-3 bg-white dark:bg-secondary-graphite-light rounded-lg border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
             <div className="flex items-center gap-2 mb-1">
               <TrendingUp className="h-4 w-4 text-blue-500" />
-              <span className="text-sm font-medium">Disponibilidade</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Disponibilidade</span>
             </div>
             <div className="text-xl font-bold text-blue-600">
               {status.uptime}
             </div>
           </div>
 
-          <div className="p-3 bg-white rounded-lg border">
+          <div className="p-3 bg-white dark:bg-secondary-graphite-light rounded-lg border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
             <div className="flex items-center gap-2 mb-1">
               <Clock className="h-4 w-4 text-green-500" />
-              <span className="text-sm font-medium">Tempo Resposta</span>
+              <span className="text-sm font-medium text-gray-900 dark:text-white">Tempo Resposta</span>
             </div>
             <div className="text-xl font-bold text-green-600">
               {status.responseTime}ms

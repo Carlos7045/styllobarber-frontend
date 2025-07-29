@@ -5,12 +5,12 @@ import { cn } from '@/lib/utils'
 // Variantes do input usando CVA
 const inputVariants = cva(
   // Classes base
-  'flex w-full rounded-lg border bg-background-primary px-3 py-2 text-sm text-text-primary transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-neutral-dark-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
+  'flex w-full rounded-lg border bg-white dark:bg-secondary-graphite-light px-3 py-2 text-sm text-gray-900 dark:text-white transition-all duration-200 file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-gray-500 dark:placeholder:text-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-gold focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50',
   {
     variants: {
       // Variantes de estilo
       variant: {
-        default: 'border-border-default hover:border-primary-gold',
+        default: 'border-gray-200 dark:border-secondary-graphite-card/30 hover:border-primary-gold dark:hover:border-primary-gold',
         error: 'border-error text-error focus-visible:ring-error',
         success: 'border-success text-success focus-visible:ring-success',
         warning: 'border-warning text-warning focus-visible:ring-warning',
@@ -72,7 +72,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label 
             htmlFor={inputId}
-            className="block text-sm font-medium text-text-primary mb-2"
+            className="block text-sm font-medium text-text-primary dark:text-white mb-2"
           >
             {label}
             {required && (
@@ -87,7 +87,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         <div className="relative">
           {/* Ícone à esquerda */}
           {leftIcon && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary dark:text-gray-400">
               {leftIcon}
             </div>
           )}
@@ -113,7 +113,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           
           {/* Ícone à direita */}
           {rightIcon && (
-            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary">
+            <div className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary dark:text-gray-400">
               {rightIcon}
             </div>
           )}
@@ -134,7 +134,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {helperText && !error && (
           <p 
             id={`${inputId}-helper`}
-            className="mt-1 text-xs text-text-secondary"
+            className="mt-1 text-xs text-text-secondary dark:text-gray-400"
           >
             {helperText}
           </p>

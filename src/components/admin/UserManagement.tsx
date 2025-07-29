@@ -53,7 +53,7 @@ export function UserManagement({ className }: UserManagementProps) {
     return (
       <Card className={className}>
         <CardContent className="flex items-center justify-center py-12">
-          <p className="text-text-secondary">Carregando...</p>
+          <p className="text-gray-600 dark:text-gray-300">Carregando...</p>
         </CardContent>
       </Card>
     )
@@ -64,7 +64,7 @@ export function UserManagement({ className }: UserManagementProps) {
     return (
       <Card className={className}>
         <CardContent className="flex items-center justify-center py-12">
-          <p className="text-text-secondary">Acesso negado. Apenas administradores podem gerenciar usuários.</p>
+          <p className="text-gray-600 dark:text-gray-300">Acesso negado. Apenas administradores podem gerenciar usuários.</p>
         </CardContent>
       </Card>
     )
@@ -332,7 +332,7 @@ export function UserManagement({ className }: UserManagementProps) {
             Gestão de Clientes
           </CardTitle>
           <div className="flex items-center gap-2">
-            <div className="text-sm text-text-secondary mr-4">
+            <div className="text-sm text-gray-600 dark:text-gray-300 mr-4">
               {filteredUsers.length} cliente{filteredUsers.length !== 1 ? 's' : ''}
             </div>
             <Button
@@ -381,9 +381,9 @@ export function UserManagement({ className }: UserManagementProps) {
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
               disabled={loading}
-              className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-md bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
             >
-              <option value="all">Todos os clientes</option>
+              <option value="all" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Todos os clientes</option>
             </select>
           </div>
           <div className="sm:w-48">
@@ -391,11 +391,11 @@ export function UserManagement({ className }: UserManagementProps) {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
               disabled={loading}
-              className="w-full px-3 py-2 border border-border-default rounded-md bg-background-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
+              className="w-full px-3 py-2 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-md bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-gold focus:border-transparent disabled:opacity-50"
             >
-              <option value="all">Todos os status</option>
-              <option value="active">Ativos</option>
-              <option value="inactive">Inativos</option>
+              <option value="all" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Todos os status</option>
+              <option value="active" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Ativos</option>
+              <option value="inactive" className="bg-white dark:bg-secondary-graphite-light text-gray-900 dark:text-white">Inativos</option>
             </select>
           </div>
         </div>
@@ -403,18 +403,18 @@ export function UserManagement({ className }: UserManagementProps) {
         {/* Lista de usuários */}
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-text-secondary">Carregando usuários...</p>
+            <p className="text-gray-600 dark:text-gray-300">Carregando usuários...</p>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-text-secondary">Nenhum usuário encontrado</p>
+            <p className="text-gray-600 dark:text-gray-300">Nenhum usuário encontrado</p>
           </div>
         ) : (
           <div className="space-y-3">
             {filteredUsers.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between p-4 border border-border-default rounded-lg hover:bg-background-secondary transition-colors"
+                className="flex items-center justify-between p-6 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-xl bg-gradient-to-r from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite hover:from-primary-gold/5 hover:to-primary-gold/10 hover:border-primary-gold/50 shadow-md hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
               >
                 <div className="flex items-center gap-4">
                   {/* Avatar */}
@@ -432,10 +432,10 @@ export function UserManagement({ className }: UserManagementProps) {
 
                   {/* Informações do usuário */}
                   <div>
-                    <h4 className="font-medium text-text-primary">{user.nome}</h4>
-                    <p className="text-sm text-text-secondary">{user.email}</p>
+                    <h4 className="font-medium text-gray-900 dark:text-white">{user.nome}</h4>
+                    <p className="text-sm text-gray-600 dark:text-gray-300">{user.email}</p>
                     {user.telefone && (
-                      <p className="text-xs text-text-secondary">{user.telefone}</p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400">{user.telefone}</p>
                     )}
                   </div>
                 </div>
@@ -456,7 +456,7 @@ export function UserManagement({ className }: UserManagementProps) {
                   </span>
 
                   {/* Data de criação */}
-                  <div className="text-xs text-text-secondary hidden sm:block">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 hidden sm:block">
                     {new Date(user.created_at).toLocaleDateString('pt-BR')}
                   </div>
 
@@ -515,12 +515,12 @@ export function UserManagement({ className }: UserManagementProps) {
         )}
 
         {/* Estatísticas */}
-        <div className="grid grid-cols-1 gap-4 pt-6 border-t border-border-default">
+        <div className="grid grid-cols-1 gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
           <div className="text-center">
             <div className="text-2xl font-bold text-info">
               {users.length}
             </div>
-            <div className="text-sm text-text-secondary">Total de Clientes</div>
+            <div className="text-sm text-gray-600 dark:text-gray-300">Total de Clientes</div>
           </div>
         </div>
       </CardContent>

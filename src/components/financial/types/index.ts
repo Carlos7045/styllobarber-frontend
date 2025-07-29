@@ -54,7 +54,7 @@ export interface AsaasPayment {
   status: 'PENDING' | 'RECEIVED' | 'OVERDUE' | 'CANCELLED'
   invoiceUrl?: string
   pixQrCode?: string
-  webhookData?: Record<string, any>
+  webhookData?: Record<string, unknown>
   createdAt: string
   updatedAt: string
 }
@@ -190,8 +190,9 @@ export interface MovimentacaoFluxoCaixa {
   valor: number
   descricao: string
   categoria: 'OPERACIONAL' | 'INVESTIMENTO' | 'FINANCIAMENTO'
-  data: string
+  dataMovimentacao: string
   status: 'REALIZADA' | 'PROJETADA'
+  origem?: string
   transacaoId?: string
 }
 

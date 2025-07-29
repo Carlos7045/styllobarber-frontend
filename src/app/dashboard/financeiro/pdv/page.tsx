@@ -18,7 +18,7 @@ import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { QuickTransactionPDV } from '@/components/financial/components/QuickTransactionPDV'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
-import { PDVTest } from '@/components/financial/components/PDVTest'
+
 import { PDVGuard } from '@/components/auth/PermissionGuard'
 import { useQuickTransactions, useRealtimeStats } from '@/components/financial/hooks/use-quick-transactions'
 import { formatCurrency } from '@/components/financial/utils'
@@ -32,8 +32,8 @@ const RealtimeStats = () => {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
           <Card key={i} className="p-4 animate-pulse">
-            <div className="h-4 bg-gray-200 rounded mb-2"></div>
-            <div className="h-6 bg-gray-200 rounded"></div>
+            <div className="h-4 bg-gray-200 dark:bg-secondary-graphite-card rounded mb-2"></div>
+            <div className="h-6 bg-gray-200 dark:bg-secondary-graphite-card rounded"></div>
           </Card>
         ))}
       </div>
@@ -41,59 +41,69 @@ const RealtimeStats = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <Card className="p-4">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-blue-500 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Transações Hoje</p>
-            <p className="text-2xl font-bold text-blue-600">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Transações Hoje</p>
+            <p className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-1">
               {stats.transacoesHoje}
             </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Registradas</p>
           </div>
-          <Calculator className="h-8 w-8 text-blue-500" />
+          <div className="p-4 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+            <Calculator className="h-8 w-8 text-blue-600" />
+          </div>
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-green-500 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Valor Total</p>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Valor Total</p>
+            <p className="text-3xl font-bold text-green-600 dark:text-green-400 mb-1">
               {formatCurrency(stats.valorTotalHoje)}
             </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">Movimentado</p>
           </div>
-          <DollarSign className="h-8 w-8 text-green-500" />
+          <div className="p-4 bg-green-100 dark:bg-green-900/30 rounded-xl">
+            <DollarSign className="h-8 w-8 text-green-600" />
+          </div>
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-orange-500 p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Última Transação</p>
-            <p className="text-lg font-bold text-gray-900">
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Última Transação</p>
+            <p className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
               {stats.ultimaTransacao ? formatCurrency(stats.ultimaTransacao.valor) : '-'}
             </p>
             {stats.ultimaTransacao && (
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 {stats.ultimaTransacao.tempo.toLocaleTimeString('pt-BR')}
               </p>
             )}
           </div>
-          <Clock className="h-8 w-8 text-orange-500" />
+          <div className="p-4 bg-orange-100 dark:bg-orange-900/30 rounded-xl">
+            <Clock className="h-8 w-8 text-orange-600" />
+          </div>
         </div>
       </Card>
 
-      <Card className="p-4">
+      <Card className="bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 border-l-primary-gold p-6 hover:shadow-xl hover:scale-105 transition-all duration-300">
         <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-gray-600">Tendência</p>
-            <div className="flex items-center space-x-1">
-              <TrendingUp className="h-4 w-4 text-green-500" />
-              <p className="text-lg font-bold text-green-600">+12%</p>
+          <div className="flex-1">
+            <p className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">Tendência</p>
+            <div className="flex items-center space-x-2 mb-1">
+              <TrendingUp className="h-6 w-6 text-green-500 dark:text-green-400" />
+              <p className="text-3xl font-bold text-green-600 dark:text-green-400">+12%</p>
             </div>
-            <p className="text-xs text-gray-500">vs ontem</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">vs. ontem</p>
           </div>
-          <BarChart3 className="h-8 w-8 text-purple-500" />
+          <div className="p-4 bg-primary-gold/10 rounded-xl">
+            <TrendingUp className="h-8 w-8 text-primary-gold" />
+          </div>
         </div>
       </Card>
     </div>
@@ -130,38 +140,42 @@ export default function PDVPage() {
 
   return (
     <PDVGuard>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-neutral-light-gray dark:bg-background-dark">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
+        {/* Header Moderno */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
-          className="flex items-center justify-between mb-8"
+          className="text-center mb-8"
         >
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+              <Calculator className="h-10 w-10 text-primary-black" />
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                PDV - Ponto de Venda
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+                Registro rápido de entradas e saídas
+              </p>
+            </div>
+          </div>
+          <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto mb-6"></div>
+          
+          <div className="flex items-center justify-center space-x-3">
             <Button
               variant="outline"
               size="sm"
               onClick={() => router.back()}
-              className="flex items-center space-x-2"
+              className="border-primary-gold/30 hover:border-primary-gold/50 hover:bg-primary-gold/10 flex items-center space-x-2"
             >
               <ArrowLeft className="h-4 w-4" />
               <span>Voltar</span>
             </Button>
             
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                PDV - Ponto de Venda
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Registro rápido de entradas e saídas
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-sm px-3 py-1 border-primary-gold/30 text-primary-gold">
               {new Date().toLocaleDateString('pt-BR')}
             </Badge>
             
@@ -169,7 +183,7 @@ export default function PDVPage() {
               variant="outline"
               size="sm"
               onClick={() => setShowStats(!showStats)}
-              className="flex items-center space-x-2"
+              className="border-primary-gold/30 hover:border-primary-gold/50 hover:bg-primary-gold/10 flex items-center space-x-2"
             >
               <BarChart3 className="h-4 w-4" />
               <span>{showStats ? 'Ocultar' : 'Mostrar'} Stats</span>
@@ -189,36 +203,26 @@ export default function PDVPage() {
           </motion.div>
         )}
 
-        {/* Componente de Teste (temporário) */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.15 }}
-          className="mb-8"
-        >
-          <PDVTest />
-        </motion.div>
-
         {/* Layout Principal */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-          {/* PDV Principal */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Transações Recentes - Posição Destacada */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="xl:col-span-2"
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="order-1 lg:order-1"
           >
-            <QuickTransactionPDV onTransactionSaved={handleTransactionSaved} />
+            <RecentTransactions limit={10} />
           </motion.div>
 
-          {/* Transações Recentes */}
+          {/* PDV Principal */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3, delay: 0.3 }}
-            className="xl:col-span-1"
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="order-2 lg:order-2"
           >
-            <RecentTransactions limit={10} />
+            <QuickTransactionPDV onTransactionSaved={handleTransactionSaved} />
           </motion.div>
         </div>
 
@@ -229,26 +233,33 @@ export default function PDVPage() {
           transition={{ duration: 0.3, delay: 0.4 }}
           className="mt-8"
         >
-          <Card className="p-4 bg-blue-50 border-blue-200">
-            <h3 className="font-semibold text-blue-900 mb-2">
-              Atalhos de Teclado
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div className="flex items-center space-x-2">
-                <kbd className="px-2 py-1 bg-white border border-blue-300 rounded text-xs">F1</kbd>
-                <span className="text-blue-700">Nova Entrada</span>
+          <Card className="bg-gradient-to-br from-primary-gold/5 to-primary-gold/10 dark:from-secondary-graphite-card dark:to-secondary-graphite border-primary-gold/20 dark:border-secondary-graphite-card/30 p-6 shadow-lg">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2 bg-primary-gold/10 rounded-lg">
+                <svg className="h-5 w-5 text-primary-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
               </div>
-              <div className="flex items-center space-x-2">
-                <kbd className="px-2 py-1 bg-white border border-blue-300 rounded text-xs">F2</kbd>
-                <span className="text-blue-700">Nova Saída</span>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-primary-gold">
+                Atalhos de Teclado
+              </h3>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-secondary-graphite/50 rounded-lg">
+                <kbd className="px-3 py-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-300 dark:border-secondary-graphite-card/50 rounded-lg text-sm font-bold text-gray-900 dark:text-white shadow-sm">F1</kbd>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">Nova Entrada</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <kbd className="px-2 py-1 bg-white border border-blue-300 rounded text-xs">F3</kbd>
-                <span className="text-blue-700">Calculadora</span>
+              <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-secondary-graphite/50 rounded-lg">
+                <kbd className="px-3 py-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-300 dark:border-secondary-graphite-card/50 rounded-lg text-sm font-bold text-gray-900 dark:text-white shadow-sm">F2</kbd>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">Nova Saída</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <kbd className="px-2 py-1 bg-white border border-blue-300 rounded text-xs">ESC</kbd>
-                <span className="text-blue-700">Limpar</span>
+              <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-secondary-graphite/50 rounded-lg">
+                <kbd className="px-3 py-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-300 dark:border-secondary-graphite-card/50 rounded-lg text-sm font-bold text-gray-900 dark:text-white shadow-sm">F3</kbd>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">Calculadora</span>
+              </div>
+              <div className="flex items-center space-x-3 p-3 bg-white/50 dark:bg-secondary-graphite/50 rounded-lg">
+                <kbd className="px-3 py-2 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-secondary-graphite-light dark:to-secondary-graphite border border-gray-300 dark:border-secondary-graphite-card/50 rounded-lg text-sm font-bold text-gray-900 dark:text-white shadow-sm">ESC</kbd>
+                <span className="text-gray-700 dark:text-gray-300 font-medium">Limpar</span>
               </div>
             </div>
           </Card>

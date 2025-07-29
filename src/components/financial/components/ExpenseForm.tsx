@@ -154,9 +154,9 @@ export function ExpenseForm({ expense, onSave, onCancel, loading = false }: Expe
   const recurrencePreview = getRecurrencePreview()
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-secondary-graphite-light rounded-lg shadow-md p-6 border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           {expense ? 'Editar Despesa' : 'Nova Despesa'}
         </h2>
       </div>

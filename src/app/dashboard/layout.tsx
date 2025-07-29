@@ -81,7 +81,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
   })
 
   return (
-    <div className={cn('flex h-screen bg-background-secondary', isDarkMode && 'dark')}>
+    <div className="flex h-screen bg-background-secondary dark:bg-background-dark">
       {/* Debug components removidos - sistema funcionando perfeitamente! */}
       
       {/* Sidebar */}
@@ -100,12 +100,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         isCollapsed ? 'lg:ml-16' : 'lg:ml-64'
       )}>
         {/* Header */}
-        <Header variant={isDarkMode ? 'dark' : 'default'} container={false}>
+        <Header variant={isDarkMode ? 'dark' : 'default'} container={false} className="bg-white dark:bg-background-dark border-b border-gray-200 dark:border-secondary-graphite-card/30">
           <Container>
             <HeaderContent>
               <div className="flex items-center gap-4">
                 {/* Breadcrumbs ou título da página serão adicionados aqui */}
-                <h1 className="text-lg font-semibold text-text-primary">
+                <h1 className="text-lg font-semibold text-gray-900 dark:text-white">
                   Dashboard
                 </h1>
               </div>
@@ -119,7 +119,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         </Header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto bg-background-secondary dark:bg-background-dark">
           <Suspense fallback={
             <div className="p-6">
               <div className="space-y-4">

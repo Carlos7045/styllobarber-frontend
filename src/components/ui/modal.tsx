@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 // Variantes do modal usando CVA
 const modalVariants = cva(
   // Classes base
-  'fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background-primary p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg',
+  'fixed left-[50%] top-[50%] z-50 grid w-full translate-x-[-50%] translate-y-[-50%] gap-4 border border-gray-200 dark:border-secondary-graphite-card/30 bg-white dark:bg-secondary-graphite-light p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg',
   {
     variants: {
       size: {
@@ -68,7 +68,7 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
             onEscapeKeyDown={closeOnEscape ? undefined : (e) => e.preventDefault()}
           >
             {/* Título obrigatório para acessibilidade */}
-            <Dialog.Title className={title ? "text-lg font-semibold leading-none tracking-tight text-text-primary" : "sr-only"}>
+            <Dialog.Title className={title ? "text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white" : "sr-only"}>
               {title || "Modal"}
             </Dialog.Title>
             
@@ -77,7 +77,7 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
               <div className="flex items-center justify-between">
                 <div className="flex flex-col space-y-1.5">
                   {description && (
-                    <Dialog.Description className="text-sm text-text-secondary">
+                    <Dialog.Description className="text-sm text-gray-600 dark:text-gray-300">
                       {description}
                     </Dialog.Description>
                   )}
@@ -86,7 +86,7 @@ const Modal = React.forwardRef<HTMLDivElement, ModalProps>(
                 {showCloseButton && (
                   <Dialog.Close asChild>
                     <button
-                      className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary-gold focus:ring-offset-2 disabled:pointer-events-none"
+                      className="rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-primary-gold focus:ring-offset-2 disabled:pointer-events-none text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-white"
                       onClick={onClose}
                       aria-label="Fechar modal"
                     >
@@ -127,7 +127,7 @@ const ModalTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h2
     ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight text-text-primary', className)}
+    className={cn('text-lg font-semibold leading-none tracking-tight text-gray-900 dark:text-white', className)}
     {...props}
   />
 ))
@@ -139,7 +139,7 @@ const ModalDescription = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <p
     ref={ref}
-    className={cn('text-sm text-text-secondary', className)}
+    className={cn('text-sm text-gray-600 dark:text-gray-300', className)}
     {...props}
   />
 ))

@@ -48,8 +48,8 @@ interface TooltipProps {
 const CustomTooltip = ({ active, payload, label }: TooltipProps) => {
   if (active && payload && payload.length) {
     return (
-      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
-        <p className="font-medium text-gray-900 mb-2">{label}</p>
+      <div className="bg-white dark:bg-secondary-graphite-light p-3 border border-gray-200 dark:border-secondary-graphite-card/30 rounded-lg shadow-lg">
+        <p className="font-medium text-gray-900 dark:text-white mb-2">{label}</p>
         {payload.map((entry, index: number) => (
           <p key={index} className="text-sm" style={{ color: entry.color }}>
             <span className="font-medium">{entry.name}:</span>{' '}

@@ -47,7 +47,7 @@ export function ProfileSync() {
             )}
 
             {/* Status do auto-sync */}
-            <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${autoSyncEnabled ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+            <div className={`flex items-center gap-1 text-xs px-2 py-1 rounded ${autoSyncEnabled ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400' : 'bg-gray-100 dark:bg-secondary-graphite-card text-gray-600 dark:text-gray-300'
               }`}>
               <Settings className="h-3 w-3" />
               Auto: {autoSyncEnabled ? 'ON' : 'OFF'}

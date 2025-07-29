@@ -121,7 +121,7 @@ export function CommissionConfig({
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
+    <div className="bg-white dark:bg-secondary-graphite-light rounded-lg shadow-md p-6 border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
       {/* Cabeçalho */}
       <div className="flex justify-between items-center mb-6">
         <div>
@@ -175,14 +175,14 @@ export function CommissionConfig({
         ) : configs.length === 0 ? (
           <div className="text-center py-8 text-gray-500">
             <p>Nenhuma configuração de comissão encontrada.</p>
-            <p className="text-sm mt-1">Clique em "Nova Configuração" para começar.</p>
+            <p className="text-sm mt-1">Clique em &quot;Nova Configuração&quot; para começar.</p>
           </div>
         ) : (
           <div className="space-y-3">
             {configs.map((config) => (
               <div
                 key={`${config.barbeiro_id}-${config.servico_id || 'geral'}`}
-                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50"
+                className="border border-gray-200 dark:border-secondary-graphite-card/30 rounded-lg p-4"
               >
                 <div className="flex justify-between items-start">
                   <div className="flex-1">

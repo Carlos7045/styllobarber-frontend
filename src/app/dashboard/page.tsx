@@ -123,10 +123,10 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
       } catch (error) {
         console.error('Erro ao buscar dados do dashboard:', error)
         // Em caso de erro, usar dados mockados
-        setDashboardData(prev => ({ 
-          ...prev, 
+        setDashboardData(prev => ({
+          ...prev,
           receitaHoje: 450.00, // Valor mockado para demonstração
-          loading: false 
+          loading: false
         }))
       }
     }
@@ -186,41 +186,61 @@ function AdminBarberDashboard({ userRole, profile }: { userRole: string, profile
   return (
     <Container className="py-6">
       <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold text-text-primary mb-2">
-            Dashboard {userRole === 'admin' ? 'Administrativo' : 'do Barbeiro'}
-          </h1>
-          <p className="text-text-secondary">
-            Bem-vindo, {profile?.nome || 'Usuário'}! Visão geral das atividades de hoje.
-          </p>
+        {/* Header Moderno */}
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center space-x-4 mb-6">
+            <div className="p-4 bg-gradient-to-br from-primary-gold to-primary-gold-dark rounded-2xl shadow-xl">
+              <svg className="h-10 w-10 text-primary-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
+                Dashboard {userRole === 'admin' ? 'Administrativo' : 'do Barbeiro'}
+              </h1>
+              <p className="text-lg text-gray-600 dark:text-gray-300 font-medium">
+                Bem-vindo, {profile?.nome || 'Usuário'}! Visão geral das atividades de hoje.
+              </p>
+            </div>
+          </div>
+          <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto"></div>
         </div>
 
         {/* Métricas principais */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {metrics.map((metric, index) => (
-            <div
-              key={index}
-              className="bg-background-secondary p-6 rounded-lg border border-border-default hover:border-primary-gold/50 transition-colors"
-            >
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-2xl">{metric.icon}</span>
-                <span className={`text-sm ${metric.color}`}>
-                  {metric.change}
-                </span>
+          {metrics.map((metric, index) => {
+            const borderColors = ['border-l-amber-500', 'border-l-blue-500', 'border-l-green-500', 'border-l-purple-500']
+            const iconBgColors = ['bg-amber-100 dark:bg-amber-900/30', 'bg-blue-100 dark:bg-blue-900/30', 'bg-green-100 dark:bg-green-900/30', 'bg-purple-100 dark:bg-purple-900/30']
+            const iconColors = ['text-amber-600', 'text-blue-600', 'text-green-600', 'text-purple-600']
+            
+            return (
+              <div
+                key={index}
+                className={`bg-gradient-to-br from-white to-gray-50 dark:from-secondary-graphite-light dark:to-secondary-graphite border-l-4 ${borderColors[index]} rounded-lg p-6 hover:shadow-xl hover:scale-105 transition-all duration-300`}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium text-gray-600 dark:text-gray-300 mb-2">
+                      {metric.title}
+                    </div>
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+                      {dashboardData.loading ? (
+                        <div className="h-8 bg-gray-200 dark:bg-secondary-graphite animate-pulse rounded" />
+                      ) : (
+                        metric.value
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">
+                      {metric.change}
+                    </div>
+                  </div>
+                  <div className={`p-4 ${iconBgColors[index]} rounded-xl`}>
+                    <span className={`text-2xl ${iconColors[index]}`}>{metric.icon}</span>
+                  </div>
+                </div>
               </div>
-              <h3 className="text-text-secondary text-sm font-medium mb-1">
-                {metric.title}
-              </h3>
-              <div className="text-2xl font-bold text-text-primary">
-                {dashboardData.loading ? (
-                  <div className="h-8 bg-neutral-light-gray animate-pulse rounded" />
-                ) : (
-                  metric.value
-                )}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
         {/* Conteúdo específico por role */}
@@ -277,37 +297,37 @@ function AdminSpecificContent() {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
-        <h3 className="text-xl font-bold text-text-primary mb-4">
+      <div className="bg-white dark:bg-secondary-graphite-light p-6 rounded-lg border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           🏪 Gestão da Barbearia
         </h3>
         <div className="space-y-3">
           <a
             href="/dashboard/funcionarios"
-            className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
+            className="block w-full text-left p-3 bg-gray-100 dark:bg-secondary-graphite rounded-lg transition-colors text-gray-900 dark:text-white"
           >
             👨‍💼 Gerenciar Funcionários
           </a>
           <a
             href="/dashboard/servicos"
-            className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
+            className="block w-full text-left p-3 bg-gray-100 dark:bg-secondary-graphite rounded-lg transition-colors text-gray-900 dark:text-white"
           >
             ⚙️ Configurar Serviços
           </a>
           <a
             href="/dashboard/relatorios"
-            className="block w-full text-left p-3 bg-neutral-light-gray hover:bg-neutral-medium-gray rounded-lg transition-colors text-text-primary hover:text-text-primary"
+            className="block w-full text-left p-3 bg-gray-100 dark:bg-secondary-graphite rounded-lg transition-colors text-gray-900 dark:text-white"
           >
             📊 Relatórios Financeiros
           </a>
         </div>
       </div>
 
-      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
-        <h3 className="text-xl font-bold text-text-primary mb-4">
+      <div className="bg-white dark:bg-secondary-graphite-light p-6 rounded-lg border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           📈 Análises
         </h3>
-        <div className="space-y-3 text-text-secondary">
+        <div className="space-y-3 text-gray-600 dark:text-gray-300">
           <div className="flex justify-between">
             <span>Faturamento Mensal:</span>
             <span className="text-green-400 font-bold">
@@ -365,31 +385,31 @@ function BarberSpecificContent({ profile }: { profile: any }) {
           .order('data_agendamento', { ascending: true })
 
         // Se não há dados reais, usar dados mockados para demonstração
-        const agendaFinal = agendamentosHoje && agendamentosHoje.length > 0 
-          ? agendamentosHoje 
+        const agendaFinal = agendamentosHoje && agendamentosHoje.length > 0
+          ? agendamentosHoje
           : [
-              {
-                id: 'mock-1',
-                cliente: { nome: 'João Silva' },
-                service: { nome: 'Corte + Barba' },
-                data_agendamento: `${hoje}T14:00:00`,
-                status: 'confirmado'
-              },
-              {
-                id: 'mock-2',
-                cliente: { nome: 'Pedro Santos' },
-                service: { nome: 'Corte Simples' },
-                data_agendamento: `${hoje}T15:30:00`,
-                status: 'confirmado'
-              },
-              {
-                id: 'mock-3',
-                cliente: { nome: 'Carlos Lima' },
-                service: { nome: 'Barba Completa' },
-                data_agendamento: `${hoje}T16:00:00`,
-                status: 'pendente'
-              }
-            ]
+            {
+              id: 'mock-1',
+              cliente: { nome: 'João Silva' },
+              service: { nome: 'Corte + Barba' },
+              data_agendamento: `${hoje}T14:00:00`,
+              status: 'confirmado'
+            },
+            {
+              id: 'mock-2',
+              cliente: { nome: 'Pedro Santos' },
+              service: { nome: 'Corte Simples' },
+              data_agendamento: `${hoje}T15:30:00`,
+              status: 'confirmado'
+            },
+            {
+              id: 'mock-3',
+              cliente: { nome: 'Carlos Lima' },
+              service: { nome: 'Barba Completa' },
+              data_agendamento: `${hoje}T16:00:00`,
+              status: 'pendente'
+            }
+          ]
 
         setAgendaHoje(agendaFinal)
 
@@ -466,20 +486,20 @@ function BarberSpecificContent({ profile }: { profile: any }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
-        <h3 className="text-xl font-bold text-text-primary mb-4">
+      <div className="bg-white dark:bg-secondary-graphite-light p-6 rounded-lg border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           ✂️ Minha Agenda Hoje
         </h3>
         <div className="space-y-3">
           {agendaHoje.length === 0 ? (
-            <p className="text-text-secondary text-center py-4">
+            <p className="text-gray-600 dark:text-gray-300 text-center py-4">
               Nenhum agendamento para hoje
             </p>
           ) : (
             agendaHoje.slice(0, 5).map((agendamento) => (
-              <div key={agendamento.id} className="p-3 bg-neutral-light-gray rounded-lg">
+              <div key={agendamento.id} className="p-3 bg-gray-100 dark:bg-secondary-graphite rounded-lg">
                 <div className="flex justify-between items-center">
-                  <span className="text-text-primary">{agendamento.cliente?.nome || 'Cliente'}</span>
+                  <span className="text-gray-900 dark:text-white">{agendamento.cliente?.nome || 'Cliente'}</span>
                   <span className="text-amber-400">
                     {new Date(agendamento.data_agendamento).toLocaleTimeString('pt-BR', {
                       hour: '2-digit',
@@ -487,12 +507,12 @@ function BarberSpecificContent({ profile }: { profile: any }) {
                     })}
                   </span>
                 </div>
-                <span className="text-text-secondary text-sm">
+                <span className="text-gray-600 dark:text-gray-300 text-sm">
                   {agendamento.service?.nome || 'Serviço'}
                 </span>
                 <span className={`text-xs px-2 py-1 rounded-full ml-2 ${agendamento.status === 'confirmado'
-                    ? 'bg-green-100 text-green-800'
-                    : 'bg-yellow-100 text-yellow-800'
+                  ? 'bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200'
+                  : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200'
                   }`}>
                   {agendamento.status}
                 </span>
@@ -500,18 +520,18 @@ function BarberSpecificContent({ profile }: { profile: any }) {
             ))
           )}
           {agendaHoje.length > 5 && (
-            <p className="text-text-secondary text-center text-sm">
+            <p className="text-gray-600 dark:text-gray-300 text-center text-sm">
               +{agendaHoje.length - 5} agendamentos...
             </p>
           )}
         </div>
       </div>
 
-      <div className="bg-background-secondary p-6 rounded-lg border border-border-default">
-        <h3 className="text-xl font-bold text-text-primary mb-4">
+      <div className="bg-white dark:bg-secondary-graphite-light p-6 rounded-lg border border-gray-200 dark:border-secondary-graphite hover:border-primary-gold/50 hover:shadow-lg dark:hover:shadow-xl transition-all duration-200">
+        <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
           💰 Meus Ganhos
         </h3>
-        <div className="space-y-3 text-text-secondary">
+        <div className="space-y-3 text-gray-600 dark:text-gray-300">
           <div className="flex justify-between">
             <span>Hoje:</span>
             <span className="text-green-400 font-bold">

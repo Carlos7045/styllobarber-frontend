@@ -1,7 +1,6 @@
 // Serviço para gerenciar transações rápidas do PDV
 import { supabase } from '@/lib/supabase'
 import { AgendamentoService } from './agendamento-service'
-import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
 
 export interface QuickTransactionData {
   tipo: 'ENTRADA' | 'SAIDA'
@@ -265,7 +264,7 @@ export class QuickTransactionService {
       }, {} as Record<string, number>)
 
       const metodoPagamentoMaisUsado = Object.entries(metodosPagamento)
-        .sort(([,a], [,b]) => b - a)[0]?.[0] || 'DINHEIRO'
+        .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || 'DINHEIRO'
 
       return {
         totalEntradas,
@@ -416,6 +415,7 @@ export class QuickTransactionService {
         data_transacao: new Date(agora.getTime() - 30 * 60 * 1000).toISOString(), // 30 min atrás
         status: 'CONFIRMADA',
         observacoes: null,
+        cliente_nome: 'Carlos Silva',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
         funcionarios: { nome: 'João Silva' }
       },
@@ -428,6 +428,7 @@ export class QuickTransactionService {
         data_transacao: new Date(agora.getTime() - 60 * 60 * 1000).toISOString(), // 1h atrás
         status: 'CONFIRMADA',
         observacoes: null,
+        cliente_nome: 'Roberto Santos',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
         funcionarios: { nome: 'Pedro Santos' }
       },
@@ -452,6 +453,7 @@ export class QuickTransactionService {
         data_transacao: new Date(agora.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3h atrás
         status: 'CONFIRMADA',
         observacoes: null,
+        cliente_nome: 'André Costa',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
         funcionarios: { nome: 'Carlos Oliveira' }
       },
@@ -466,6 +468,45 @@ export class QuickTransactionService {
         observacoes: null,
         categorias_financeiras: { nome: 'Limpeza', cor: '#10B981' },
         funcionarios: null
+      },
+      {
+        id: '6',
+        tipo: 'RECEITA',
+        valor: 55.00,
+        descricao: 'Corte + Barba + Sobrancelha',
+        metodo_pagamento: 'CARTAO_CREDITO',
+        data_transacao: new Date(agora.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5h atrás
+        status: 'CONFIRMADA',
+        observacoes: 'Agendamento #ag1 - Cliente preferencial - desconto aplicado',
+        cliente_nome: 'Fernando Lima',
+        categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
+        funcionarios: { nome: 'João Silva' }
+      },
+      {
+        id: '7',
+        tipo: 'RECEITA',
+        valor: 50.00,
+        descricao: 'Teste PDV',
+        metodo_pagamento: 'DINHEIRO',
+        data_transacao: new Date(agora.getTime() - 6 * 60 * 60 * 1000).toISOString(), // 6h atrás
+        status: 'CONFIRMADA',
+        observacoes: null,
+        cliente_nome: 'Marcos Pereira',
+        categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
+        funcionarios: { nome: 'Pedro Santos' }
+      },
+      {
+        id: '8',
+        tipo: 'RECEITA',
+        valor: 15.00,
+        descricao: 'Sobrancelha',
+        metodo_pagamento: 'DINHEIRO',
+        data_transacao: new Date(agora.getTime() - 7 * 60 * 60 * 1000).toISOString(), // 7h atrás
+        status: 'CONFIRMADA',
+        observacoes: null,
+        cliente_nome: 'Lucas Almeida',
+        categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
+        funcionarios: { nome: 'Carlos Oliveira' }
       }
     ]
   }

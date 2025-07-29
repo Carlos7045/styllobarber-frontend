@@ -70,7 +70,7 @@ export function ConfirmDialog({
               onClick={onCancel}
               disabled={loading}
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4 text-text-primary" />
             </Button>
           </div>
         </CardHeader>
