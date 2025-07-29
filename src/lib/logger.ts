@@ -1,54 +1,65 @@
 /**
- * Sistema de logging estruturado para autenticação
- * Implementa diferentes níveis de log e formatação consistente
+ * Sistema de logging estruturado
+ * Fornece logging consistente com diferentes níveis e contextos
  */
 
+// Níveis de log
 export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
   ERROR = 3,
-  CRITICAL = 4
+  CRITICAL = 4,
 }
 
+// Interface para entrada de log
 export interface LogEntry {
-  timestamp: string
+  id: string
+  timestamp: Date
   level: LogLevel
-  category: string
   message: string
-  context?: any
+  context?: Record<string, any>
   userId?: string
   sessionId?: string
+  component?: string
+  action?: string
+  duration?: number
   error?: Error
-  metadata?: Record<string, any>
+  tags?: string[]
 }
 
+// Interface para configuração do logger
 export interface LoggerConfig {
   level: LogLevel
   enableConsole: boolean
   enableStorage: boolean
   maxStorageEntries: number
   enableRemoteLogging: boolean
+  remoteEndpoint?: string
+  enablePerformanceLogging: boolean
+  sensitiveFields: string[]
 }
 
-/**
- * Classe principal do sistema de logging
- */
+// Configuração padrão
+const DEFAULT_CONFIG: LoggerConfig = {
+  level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO,
+  enableConsole: true,
+  enableStorage: true,
+  maxStorageEntries: 1000,
+  enableRemoteLogging: false,
+  enablePerformanceLogging: true,
+  sensitiveFields: ['password', 'token', 'key', 'secret', 'auth', 'credit_card'],
+}
+
+// Classe principal do Logger
 export class Logger {
   private static instance: Logger
   private config: LoggerConfig
-  private logStorage: LogEntry[] = []
-  private listeners: ((entry: LogEntry) => void)[] = []
+  private logEntries: LogEntry[] = []
+  private performanceMarks = new Map<string, number>()
 
   private constructor(config?: Partial<LoggerConfig>) {
-    this.config = {
-      level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.INFO,
-      enableConsole: true,
-      enableStorage: true,
-      maxStorageEntries: 1000,
-      enableRemoteLogging: false,
-      ...config
-    }
+    this.config = { ...DEFAULT_CONFIG, ...config }
   }
 
   public static getInstance(config?: Partial<LoggerConfig>): Logger {
@@ -59,317 +70,419 @@ export class Logger {
   }
 
   /**
-   * Método principal de logging
+   * Log de debug
    */
-  private log(level: LogLevel, category: string, message: string, context?: any, error?: Error): void {
+  public debug(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.DEBUG, message, context)
+  }
+
+  /**
+   * Log de informação
+   */
+  public info(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.INFO, message, context)
+  }
+
+  /**
+   * Log de aviso
+   */
+  public warn(message: string, context?: Record<string, any>): void {
+    this.log(LogLevel.WARN, message, context)
+  }
+
+  /**
+   * Log de erro
+   */
+  public error(message: string, error?: Error, context?: Record<string, any>): void {
+    this.log(LogLevel.ERROR, message, { ...context, error })
+  }
+
+  /**
+   * Log crítico
+   */
+  public critical(message: string, error?: Error, context?: Record<string, any>): void {
+    this.log(LogLevel.CRITICAL, message, { ...context, error })
+  }
+
+  /**
+   * Log principal
+   */
+  private log(level: LogLevel, message: string, context?: Record<string, any>): void {
     // Verificar se deve logar baseado no nível
-    if (level < this.config.level) {
-      return
-    }
+    if (level < this.config.level) return
 
+    // Criar entrada de log
     const entry: LogEntry = {
-      timestamp: new Date().toISOString(),
+      id: this.generateLogId(),
+      timestamp: new Date(),
       level,
-      category,
-      message,
-      context,
-      error,
-      metadata: {
-        userAgent: typeof window !== 'undefined' ? window.navigator.userAgent : 'server',
-        url: typeof window !== 'undefined' ? window.location.href : 'server'
-      }
+      message: this.sanitizeMessage(message),
+      context: this.sanitizeContext(context),
+      userId: this.getCurrentUserId(),
+      sessionId: this.getSessionId(),
+      component: context?.component,
+      action: context?.action,
+      duration: context?.duration,
+      error: context?.error,
+      tags: context?.tags,
     }
 
-    // Adicionar informações de sessão se disponível
-    if (typeof window !== 'undefined' && (window as any).__auth_session_id) {
-      entry.sessionId = (window as any).__auth_session_id
+    // Armazenar se habilitado
+    if (this.config.enableStorage) {
+      this.storeLogEntry(entry)
     }
 
-    // Console logging
+    // Log no console se habilitado
     if (this.config.enableConsole) {
       this.logToConsole(entry)
     }
 
-    // Storage logging
-    if (this.config.enableStorage) {
-      this.logToStorage(entry)
-    }
-
-    // Notificar listeners
-    this.notifyListeners(entry)
-
-    // Remote logging (se habilitado)
-    if (this.config.enableRemoteLogging) {
-      this.logToRemote(entry)
+    // Enviar para servidor remoto se habilitado
+    if (this.config.enableRemoteLogging && this.config.remoteEndpoint) {
+      this.sendToRemote(entry)
     }
   }
 
   /**
-   * Logging para console com formatação
+   * Inicia medição de performance
    */
-  private logToConsole(entry: LogEntry): void {
-    const emoji = this.getLevelEmoji(entry.level)
-    const levelName = LogLevel[entry.level]
-    const timestamp = new Date(entry.timestamp).toLocaleTimeString()
-    
-    const prefix = `${emoji} [${timestamp}] ${levelName} [${entry.category}]:`
-    
-    switch (entry.level) {
-      case LogLevel.DEBUG:
-        console.debug(prefix, entry.message, entry.context)
-        break
-      case LogLevel.INFO:
-        console.info(prefix, entry.message, entry.context)
-        break
-      case LogLevel.WARN:
-        console.warn(prefix, entry.message, entry.context)
-        break
-      case LogLevel.ERROR:
-      case LogLevel.CRITICAL:
-        console.error(prefix, entry.message, entry.context, entry.error)
-        break
+  public startPerformance(operationId: string): void {
+    if (!this.config.enablePerformanceLogging) return
+
+    this.performanceMarks.set(operationId, performance.now())
+    this.debug(`Performance tracking started: ${operationId}`)
+  }
+
+  /**
+   * Finaliza medição de performance
+   */
+  public endPerformance(operationId: string, context?: Record<string, any>): number | null {
+    if (!this.config.enablePerformanceLogging) return null
+
+    const startTime = this.performanceMarks.get(operationId)
+    if (!startTime) {
+      this.warn(`Performance mark not found: ${operationId}`)
+      return null
     }
+
+    const duration = performance.now() - startTime
+    this.performanceMarks.delete(operationId)
+
+    // Log da performance
+    this.info(`Performance: ${operationId}`, {
+      ...context,
+      duration: Math.round(duration),
+      operationId,
+    })
+
+    return duration
   }
 
   /**
-   * Logging para storage local
+   * Log de ação do usuário
    */
-  private logToStorage(entry: LogEntry): void {
-    this.logStorage.push(entry)
-    
-    // Limitar tamanho do storage
-    if (this.logStorage.length > this.config.maxStorageEntries) {
-      this.logStorage = this.logStorage.slice(-this.config.maxStorageEntries)
-    }
-  }
-
-  /**
-   * Logging remoto (placeholder para implementação futura)
-   */
-  private logToRemote(entry: LogEntry): void {
-    // TODO: Implementar envio para serviço de logging remoto
-    // Por exemplo: Sentry, LogRocket, etc.
-  }
-
-  /**
-   * Notificar listeners
-   */
-  private notifyListeners(entry: LogEntry): void {
-    this.listeners.forEach(listener => {
-      try {
-        listener(entry)
-      } catch (error) {
-        console.error('Erro em listener de log:', error)
-      }
+  public logUserAction(action: string, component: string, context?: Record<string, any>): void {
+    this.info(`User action: ${action}`, {
+      ...context,
+      component,
+      action,
+      tags: ['user-action'],
     })
   }
 
   /**
-   * Obter emoji para nível de log
+   * Log de erro de API
    */
-  private getLevelEmoji(level: LogLevel): string {
-    switch (level) {
-      case LogLevel.DEBUG: return '🐛'
-      case LogLevel.INFO: return 'ℹ️'
-      case LogLevel.WARN: return '⚠️'
-      case LogLevel.ERROR: return '❌'
-      case LogLevel.CRITICAL: return '🚨'
-      default: return '📝'
+  public logApiError(
+    endpoint: string,
+    method: string,
+    status: number,
+    error: Error,
+    context?: Record<string, any>
+  ): void {
+    this.error(`API Error: ${method} ${endpoint} (${status})`, error, {
+      ...context,
+      endpoint,
+      method,
+      status,
+      tags: ['api-error'],
+    })
+  }
+
+  /**
+   * Log de sucesso de API
+   */
+  public logApiSuccess(
+    endpoint: string,
+    method: string,
+    status: number,
+    duration?: number,
+    context?: Record<string, any>
+  ): void {
+    this.info(`API Success: ${method} ${endpoint} (${status})`, {
+      ...context,
+      endpoint,
+      method,
+      status,
+      duration,
+      tags: ['api-success'],
+    })
+  }
+
+  /**
+   * Log de navegação
+   */
+  public logNavigation(from: string, to: string, context?: Record<string, any>): void {
+    this.info(`Navigation: ${from} → ${to}`, {
+      ...context,
+      from,
+      to,
+      tags: ['navigation'],
+    })
+  }
+
+  /**
+   * Armazenar entrada de log
+   */
+  private storeLogEntry(entry: LogEntry): void {
+    this.logEntries.unshift(entry)
+
+    // Manter apenas as últimas N entradas
+    if (this.logEntries.length > this.config.maxStorageEntries) {
+      this.logEntries = this.logEntries.slice(0, this.config.maxStorageEntries)
     }
   }
 
-  // Métodos públicos de logging
-  public debug(category: string, message: string, context?: any): void {
-    this.log(LogLevel.DEBUG, category, message, context)
-  }
+  /**
+   * Log no console com formatação
+   */
+  private logToConsole(entry: LogEntry): void {
+    const timestamp = entry.timestamp.toISOString()
+    const levelName = LogLevel[entry.level]
+    const prefix = `[${timestamp}] ${levelName}:`
 
-  public info(category: string, message: string, context?: any): void {
-    this.log(LogLevel.INFO, category, message, context)
-  }
+    // Preparar dados para log
+    const logData = {
+      message: entry.message,
+      ...(entry.context && Object.keys(entry.context).length > 0 && { context: entry.context }),
+      ...(entry.component && { component: entry.component }),
+      ...(entry.action && { action: entry.action }),
+      ...(entry.duration && { duration: `${entry.duration}ms` }),
+      ...(entry.tags && { tags: entry.tags }),
+    }
 
-  public warn(category: string, message: string, context?: any): void {
-    this.log(LogLevel.WARN, category, message, context)
-  }
-
-  public error(category: string, message: string, context?: any, error?: Error): void {
-    this.log(LogLevel.ERROR, category, message, context, error)
-  }
-
-  public critical(category: string, message: string, context?: any, error?: Error): void {
-    this.log(LogLevel.CRITICAL, category, message, context, error)
-  }
-
-  // Métodos de gerenciamento
-  public addListener(listener: (entry: LogEntry) => void): void {
-    this.listeners.push(listener)
-  }
-
-  public removeListener(listener: (entry: LogEntry) => void): void {
-    const index = this.listeners.indexOf(listener)
-    if (index > -1) {
-      this.listeners.splice(index, 1)
+    // Log baseado no nível
+    switch (entry.level) {
+      case LogLevel.DEBUG:
+        console.debug(prefix, logData)
+        break
+      case LogLevel.INFO:
+        console.info(prefix, logData)
+        break
+      case LogLevel.WARN:
+        console.warn(prefix, logData)
+        break
+      case LogLevel.ERROR:
+        console.error(prefix, logData, entry.error)
+        break
+      case LogLevel.CRITICAL:
+        console.error(`🚨 ${prefix}`, logData, entry.error)
+        break
     }
   }
 
-  public getLogs(filter?: {
-    level?: LogLevel
-    category?: string
-    since?: Date
-    limit?: number
-  }): LogEntry[] {
-    let logs = [...this.logStorage]
+  /**
+   * Enviar para servidor remoto
+   */
+  private async sendToRemote(entry: LogEntry): Promise<void> {
+    if (!this.config.remoteEndpoint) return
 
-    if (filter) {
-      if (filter.level !== undefined) {
-        logs = logs.filter(log => log.level >= filter.level!)
-      }
+    try {
+      await fetch(this.config.remoteEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...entry,
+          error: entry.error
+            ? {
+                name: entry.error.name,
+                message: entry.error.message,
+                stack: entry.error.stack,
+              }
+            : undefined,
+        }),
+      })
+    } catch (error) {
+      // Não logar erro de logging para evitar loop infinito
+      console.warn('Failed to send log to remote endpoint:', error)
+    }
+  }
 
-      if (filter.category) {
-        logs = logs.filter(log => log.category === filter.category)
-      }
+  /**
+   * Sanitizar mensagem
+   */
+  private sanitizeMessage(message: string): string {
+    let sanitized = message
 
-      if (filter.since) {
-        logs = logs.filter(log => new Date(log.timestamp) >= filter.since!)
-      }
+    this.config.sensitiveFields.forEach((field) => {
+      const regex = new RegExp(`${field}[=:]\\s*\\S+`, 'gi')
+      sanitized = sanitized.replace(regex, `${field}=***`)
+    })
 
-      if (filter.limit) {
-        logs = logs.slice(-filter.limit)
+    return sanitized
+  }
+
+  /**
+   * Sanitizar contexto
+   */
+  private sanitizeContext(context?: Record<string, any>): Record<string, any> | undefined {
+    if (!context) return undefined
+
+    const sanitized = { ...context }
+
+    this.config.sensitiveFields.forEach((field) => {
+      if (field in sanitized) {
+        sanitized[field] = '***'
       }
+    })
+
+    // Sanitizar objetos aninhados
+    Object.keys(sanitized).forEach((key) => {
+      if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+        sanitized[key] = this.sanitizeContext(sanitized[key])
+      }
+    })
+
+    return sanitized
+  }
+
+  /**
+   * Gerar ID único para log
+   */
+  private generateLogId(): string {
+    return `log_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`
+  }
+
+  /**
+   * Obter ID do usuário atual
+   */
+  private getCurrentUserId(): string | undefined {
+    // Implementar lógica para obter ID do usuário
+    // Por exemplo, do localStorage ou contexto de autenticação
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('userId') || undefined
+    }
+    return undefined
+  }
+
+  /**
+   * Obter ID da sessão
+   */
+  private getSessionId(): string | undefined {
+    // Implementar lógica para obter ID da sessão
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('sessionId') || undefined
+    }
+    return undefined
+  }
+
+  /**
+   * Métodos públicos para análise
+   */
+  public getLogs(level?: LogLevel, limit?: number): LogEntry[] {
+    let logs = this.logEntries
+
+    if (level !== undefined) {
+      logs = logs.filter((entry) => entry.level >= level)
+    }
+
+    if (limit) {
+      logs = logs.slice(0, limit)
     }
 
     return logs
   }
 
-  public clearLogs(): void {
-    this.logStorage = []
+  public getLogsByComponent(component: string, limit?: number): LogEntry[] {
+    const logs = this.logEntries.filter((entry) => entry.component === component)
+    return limit ? logs.slice(0, limit) : logs
   }
 
-  public exportLogs(): string {
-    return JSON.stringify(this.logStorage, null, 2)
+  public getLogsByTag(tag: string, limit?: number): LogEntry[] {
+    const logs = this.logEntries.filter((entry) => entry.tags?.includes(tag))
+    return limit ? logs.slice(0, limit) : logs
   }
 
-  public getStats(): {
-    totalLogs: number
-    logsByLevel: Record<string, number>
-    logsByCategory: Record<string, number>
-    oldestLog?: string
-    newestLog?: string
-  } {
+  public getErrorLogs(limit?: number): LogEntry[] {
+    return this.getLogs(LogLevel.ERROR, limit)
+  }
+
+  public getLogStats(): Record<string, number> {
     const stats = {
-      totalLogs: this.logStorage.length,
-      logsByLevel: {} as Record<string, number>,
-      logsByCategory: {} as Record<string, number>,
-      oldestLog: undefined as string | undefined,
-      newestLog: undefined as string | undefined
+      [LogLevel.DEBUG]: 0,
+      [LogLevel.INFO]: 0,
+      [LogLevel.WARN]: 0,
+      [LogLevel.ERROR]: 0,
+      [LogLevel.CRITICAL]: 0,
     }
 
-    if (this.logStorage.length > 0) {
-      stats.oldestLog = this.logStorage[0].timestamp
-      stats.newestLog = this.logStorage[this.logStorage.length - 1].timestamp
-    }
-
-    this.logStorage.forEach(log => {
-      const levelName = LogLevel[log.level]
-      stats.logsByLevel[levelName] = (stats.logsByLevel[levelName] || 0) + 1
-      stats.logsByCategory[log.category] = (stats.logsByCategory[log.category] || 0) + 1
+    this.logEntries.forEach((entry) => {
+      stats[entry.level]++
     })
 
     return stats
+  }
+
+  public clearLogs(): void {
+    this.logEntries = []
+  }
+
+  public exportLogs(): string {
+    return JSON.stringify(this.logEntries, null, 2)
   }
 }
 
 // Instância singleton
 export const logger = Logger.getInstance()
 
-// Logger específico para autenticação
-export class AuthLogger {
-  private static instance: AuthLogger
-  private logger: Logger
+// Funções de conveniência
+export const debug = (message: string, context?: Record<string, any>) =>
+  logger.debug(message, context)
 
-  private constructor() {
-    this.logger = Logger.getInstance()
-  }
+export const info = (message: string, context?: Record<string, any>) =>
+  logger.info(message, context)
 
-  public static getInstance(): AuthLogger {
-    if (!AuthLogger.instance) {
-      AuthLogger.instance = new AuthLogger()
-    }
-    return AuthLogger.instance
-  }
+export const warn = (message: string, context?: Record<string, any>) =>
+  logger.warn(message, context)
 
-  // Métodos específicos para autenticação
-  public sessionStart(userId: string, sessionId: string): void {
-    this.logger.info('AUTH_SESSION', 'Sessão iniciada', {
-      userId,
-      sessionId,
-      timestamp: new Date().toISOString()
-    })
-  }
+export const error = (message: string, err?: Error, context?: Record<string, any>) =>
+  logger.error(message, err, context)
 
-  public sessionEnd(userId: string, sessionId: string, reason: string): void {
-    this.logger.info('AUTH_SESSION', 'Sessão finalizada', {
-      userId,
-      sessionId,
-      reason,
-      timestamp: new Date().toISOString()
-    })
-  }
+export const critical = (message: string, err?: Error, context?: Record<string, any>) =>
+  logger.critical(message, err, context)
 
-  public sessionValidation(userId: string, isValid: boolean, details?: any): void {
-    this.logger.debug('AUTH_VALIDATION', 'Validação de sessão', {
-      userId,
-      isValid,
-      details,
-      timestamp: new Date().toISOString()
-    })
-  }
+export const startPerformance = (operationId: string) => logger.startPerformance(operationId)
 
-  public profileSync(userId: string, success: boolean, details?: any): void {
-    const level = success ? 'info' : 'warn'
-    this.logger[level]('AUTH_PROFILE', 'Sincronização de perfil', {
-      userId,
-      success,
-      details,
-      timestamp: new Date().toISOString()
-    })
-  }
+export const endPerformance = (operationId: string, context?: Record<string, any>) =>
+  logger.endPerformance(operationId, context)
 
-  public errorRecovery(userId: string, errorType: string, strategy: string, success: boolean): void {
-    this.logger.info('AUTH_RECOVERY', 'Tentativa de recovery', {
-      userId,
-      errorType,
-      strategy,
-      success,
-      timestamp: new Date().toISOString()
-    })
-  }
+export const logUserAction = (action: string, component: string, context?: Record<string, any>) =>
+  logger.logUserAction(action, component, context)
 
-  public circuitBreakerStateChange(oldState: string, newState: string, reason: string): void {
-    this.logger.warn('AUTH_CIRCUIT', 'Mudança de estado do circuit breaker', {
-      oldState,
-      newState,
-      reason,
-      timestamp: new Date().toISOString()
-    })
-  }
+export const logApiError = (
+  endpoint: string,
+  method: string,
+  status: number,
+  err: Error,
+  context?: Record<string, any>
+) => logger.logApiError(endpoint, method, status, err, context)
 
-  public performanceMetric(operation: string, duration: number, success: boolean): void {
-    this.logger.debug('AUTH_PERFORMANCE', 'Métrica de performance', {
-      operation,
-      duration,
-      success,
-      timestamp: new Date().toISOString()
-    })
-  }
-
-  public securityEvent(eventType: string, userId?: string, details?: any): void {
-    this.logger.critical('AUTH_SECURITY', `Evento de segurança: ${eventType}`, {
-      userId,
-      details,
-      timestamp: new Date().toISOString()
-    })
-  }
-}
-
-// Instância singleton do AuthLogger
-export const authLogger = AuthLogger.getInstance()
+export const logApiSuccess = (
+  endpoint: string,
+  method: string,
+  status: number,
+  duration?: number,
+  context?: Record<string, any>
+) => logger.logApiSuccess(endpoint, method, status, duration, context)
