@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react'
  * Hook para debounce de funções
  */
 export function useDebounce(callback: () => void, delay: number, deps: any[]) {
-  const timeoutRef = useRef<NodeJS.Timeout>()
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   useEffect(() => {
     // Limpar timeout anterior

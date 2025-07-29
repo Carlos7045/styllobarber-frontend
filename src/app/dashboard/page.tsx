@@ -24,7 +24,7 @@ export default function DashboardRedirect() {
         hasPermission: typeof hasPermission,
         permissions,
         isAdmin: hasRole('admin'),
-        canManageUsers: hasPermission('manage_users')
+        canManageUsers: hasPermission('manage_users'),
       })
     }
   }, [profile, hasRole, hasPermission, permissions])
@@ -84,43 +84,90 @@ function AdminBarberDashboard({
   userRole: string
   profile: Record<string, unknown>
 }) {
-  // Usar hook de dados reais
+  // Usar hook de dados reais - diferente para admin e barbeiro
   const dashboardData = useDashboardData()
+  const barberData = useBarberDashboardData(profile?.id as string)
 
-  const metrics = [
-    {
-      title: 'Agendamentos Hoje',
-      value: dashboardData.loading ? '...' : dashboardData.agendamentosHoje.toString(),
-      change: 'Agendamentos confirmados',
-      icon: '📅',
-      color: 'text-amber-500',
-      error: dashboardData.error,
-    },
-    {
-      title: 'Clientes Ativos',
-      value: dashboardData.loading ? '...' : dashboardData.clientesAtivos.toString(),
-      change: 'Base de clientes',
-      icon: '👥',
-      color: 'text-blue-500',
-      error: dashboardData.error,
-    },
-    {
-      title: 'Receita Hoje',
-      value: dashboardData.loading ? '...' : formatarMoeda(dashboardData.receitaHoje),
-      change: 'Serviços concluídos',
-      icon: '💰',
-      color: 'text-green-500',
-      error: dashboardData.error,
-    },
-    {
-      title: 'Taxa de Ocupação',
-      value: dashboardData.loading ? '...' : `${Math.round(dashboardData.taxaOcupacao)}%`,
-      change: 'Capacidade utilizada',
-      icon: '📊',
-      color: 'text-purple-500',
-      error: dashboardData.error,
-    },
-  ]
+  // Debug: verificar dados
+  console.log('AdminBarberDashboard - userRole:', userRole)
+  console.log('AdminBarberDashboard - profile.id:', profile?.id)
+  console.log('AdminBarberDashboard - barberData:', barberData)
+
+  // Selecionar dados baseado no papel do usuário
+  const isBarber = userRole === 'barber'
+  const currentData = isBarber ? barberData : dashboardData
+
+  const metrics = isBarber
+    ? [
+        // Métricas específicas do barbeiro
+        {
+          title: 'Agendamentos Hoje',
+          value: barberData.loading ? '...' : barberData.agendaHoje.length.toString(),
+          change: 'Seus agendamentos',
+          icon: '📅',
+          color: 'text-amber-500',
+          error: barberData.error,
+        },
+        {
+          title: 'Clientes Ativos',
+          value: barberData.loading ? '...' : '0', // Será implementado no hook
+          change: 'Seus clientes',
+          icon: '👥',
+          color: 'text-blue-500',
+          error: barberData.error,
+        },
+        {
+          title: 'Receita Hoje',
+          value: barberData.loading ? '...' : formatarMoeda(barberData.ganhos.hoje),
+          change: 'Seus serviços',
+          icon: '💰',
+          color: 'text-green-500',
+          error: barberData.error,
+        },
+        {
+          title: 'Receita Semana',
+          value: barberData.loading ? '...' : formatarMoeda(barberData.ganhos.semana),
+          change: 'Esta semana',
+          icon: '📊',
+          color: 'text-purple-500',
+          error: barberData.error,
+        },
+      ]
+    : [
+        // Métricas para admin (dados gerais da barbearia)
+        {
+          title: 'Agendamentos Hoje',
+          value: dashboardData.loading ? '...' : dashboardData.agendamentosHoje.toString(),
+          change: 'Agendamentos confirmados',
+          icon: '📅',
+          color: 'text-amber-500',
+          error: dashboardData.error,
+        },
+        {
+          title: 'Clientes Ativos',
+          value: dashboardData.loading ? '...' : dashboardData.clientesAtivos.toString(),
+          change: 'Base de clientes',
+          icon: '👥',
+          color: 'text-blue-500',
+          error: dashboardData.error,
+        },
+        {
+          title: 'Receita Hoje',
+          value: dashboardData.loading ? '...' : formatarMoeda(dashboardData.receitaHoje),
+          change: 'Serviços concluídos',
+          icon: '💰',
+          color: 'text-green-500',
+          error: dashboardData.error,
+        },
+        {
+          title: 'Taxa de Ocupação',
+          value: dashboardData.loading ? '...' : `${Math.round(dashboardData.taxaOcupacao)}%`,
+          change: 'Capacidade utilizada',
+          icon: '📊',
+          color: 'text-purple-500',
+          error: dashboardData.error,
+        },
+      ]
 
   return (
     <Container className="py-6">
@@ -219,7 +266,7 @@ function AdminBarberDashboard({
 // Conteúdo específico para Admin
 function AdminSpecificContent() {
   const dashboardData = useDashboardData()
-  
+
   // Calcular faturamento mensal baseado nos dados do dashboard
   const faturamentoMensal = dashboardData.receitaHoje * 30 // Estimativa baseada na receita diária
 
@@ -279,7 +326,7 @@ function AdminSpecificContent() {
             </span>
           </div>
           {dashboardData.error && (
-            <div className="text-xs text-orange-500 mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+            <div className="mt-2 rounded bg-orange-50 p-2 text-xs text-orange-500 dark:bg-orange-900/20">
               ⚠️ {dashboardData.error}
             </div>
           )}
@@ -347,7 +394,7 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
             </p>
           )}
           {barberData.error && (
-            <div className="text-xs text-orange-500 mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+            <div className="mt-2 rounded bg-orange-50 p-2 text-xs text-orange-500 dark:bg-orange-900/20">
               ⚠️ {barberData.error}
             </div>
           )}
@@ -376,7 +423,7 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
             </span>
           </div>
           {barberData.error && (
-            <div className="text-xs text-orange-500 mt-2 p-2 bg-orange-50 dark:bg-orange-900/20 rounded">
+            <div className="mt-2 rounded bg-orange-50 p-2 text-xs text-orange-500 dark:bg-orange-900/20">
               ⚠️ {barberData.error}
             </div>
           )}

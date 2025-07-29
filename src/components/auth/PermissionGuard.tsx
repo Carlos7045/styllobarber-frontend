@@ -12,28 +12,28 @@ import { Shield, AlertTriangle, Lock } from 'lucide-react'
 
 interface PermissionGuardProps {
   children: React.ReactNode
-  
+
   // Permissões necessárias (qualquer uma)
   requiredPermissions?: string[]
-  
+
   // Roles necessários (qualquer um)
   requiredRoles?: ('admin' | 'barber' | 'client' | 'saas_owner')[]
-  
+
   // Se deve exigir TODAS as permissões (ao invés de qualquer uma)
   requireAllPermissions?: boolean
-  
+
   // Se deve exigir TODOS os roles (ao invés de qualquer um)
   requireAllRoles?: boolean
-  
+
   // Componente customizado para quando não tem acesso
   fallback?: React.ReactNode
-  
+
   // Se deve mostrar loading enquanto verifica
   showLoading?: boolean
-  
+
   // Tipo de proteção
   type?: 'page' | 'component' | 'feature'
-  
+
   // Mensagem customizada de acesso negado
   accessDeniedMessage?: string
 }
@@ -47,16 +47,10 @@ export function PermissionGuard({
   fallback,
   showLoading = true,
   type = 'component',
-  accessDeniedMessage
+  accessDeniedMessage,
 }: PermissionGuardProps) {
-  const { 
-    hasPermission, 
-    hasRole, 
-    hasAnyPermission, 
-    hasAllPermissions,
-    isAuthenticated,
-    userRole 
-  } = usePermissions()
+  const { hasPermission, hasRole, hasAnyPermission, hasAllPermissions, isAuthenticated, userRole } =
+    usePermissions()
 
   // Se não está autenticado, não mostrar nada (deixar o RouteGuard lidar com isso)
   if (!isAuthenticated) {
@@ -66,7 +60,7 @@ export function PermissionGuard({
   // Verificar permissões
   let hasRequiredPermissions = true
   if (requiredPermissions.length > 0) {
-    hasRequiredPermissions = requireAllPermissions 
+    hasRequiredPermissions = requireAllPermissions
       ? hasAllPermissions(requiredPermissions)
       : hasAnyPermission(requiredPermissions)
   }
@@ -75,8 +69,8 @@ export function PermissionGuard({
   let hasRequiredRoles = true
   if (requiredRoles.length > 0) {
     hasRequiredRoles = requireAllRoles
-      ? requiredRoles.every(role => hasRole(role))
-      : requiredRoles.some(role => hasRole(role))
+      ? requiredRoles.every((role) => hasRole(role))
+      : requiredRoles.some((role) => hasRole(role))
   }
 
   // Se tem acesso, mostrar conteúdo
@@ -90,7 +84,7 @@ export function PermissionGuard({
   }
 
   return (
-    <AccessDeniedState 
+    <AccessDeniedState
       type={type}
       userRole={userRole}
       requiredPermissions={requiredPermissions}
@@ -104,9 +98,9 @@ export function PermissionGuard({
 function LoadingState({ type }: { type: string }) {
   if (type === 'page') {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-gold mx-auto mb-4"></div>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-gold"></div>
           <p className="text-gray-600 dark:text-gray-300">Verificando permissões...</p>
         </div>
       </div>
@@ -115,18 +109,18 @@ function LoadingState({ type }: { type: string }) {
 
   return (
     <div className="flex items-center justify-center p-4">
-      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-gold"></div>
+      <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary-gold"></div>
     </div>
   )
 }
 
 // Componente de acesso negado
-function AccessDeniedState({ 
-  type, 
-  userRole, 
-  requiredPermissions, 
-  requiredRoles, 
-  customMessage 
+function AccessDeniedState({
+  type,
+  userRole,
+  requiredPermissions,
+  requiredRoles,
+  customMessage,
 }: {
   type: string
   userRole: string | null
@@ -137,7 +131,7 @@ function AccessDeniedState({
   const getIcon = () => {
     switch (type) {
       case 'page':
-        return <Lock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+        return <Lock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
       case 'feature':
         return <Shield className="h-8 w-8 text-gray-400" />
       default:
@@ -157,15 +151,15 @@ function AccessDeniedState({
 
   const getDetails = () => {
     const details = []
-    
+
     if (requiredRoles.length > 0) {
       details.push(`Roles necessários: ${requiredRoles.join(', ')}`)
     }
-    
+
     if (requiredPermissions.length > 0) {
       details.push(`Permissões necessárias: ${requiredPermissions.join(', ')}`)
     }
-    
+
     if (userRole) {
       details.push(`Seu role atual: ${userRole}`)
     }
@@ -175,22 +169,22 @@ function AccessDeniedState({
 
   if (type === 'page') {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-background-dark">
-        <Card className="max-w-md mx-auto">
-          <CardContent className="text-center p-8">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-background-dark">
+        <Card className="mx-auto max-w-md">
+          <CardContent className="p-8 text-center">
             {getIcon()}
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            <h2 className="mb-2 text-xl font-semibold text-gray-900 dark:text-white">
               Acesso Negado
             </h2>
-            <p className="text-gray-600 dark:text-gray-300 mb-4">
-              {getMessage()}
-            </p>
-            
+            <p className="mb-4 text-gray-600 dark:text-gray-300">{getMessage()}</p>
+
             {process.env.NODE_ENV === 'development' && (
-              <div className="text-left bg-gray-100 dark:bg-gray-800 p-3 rounded text-xs">
-                <p className="font-semibold mb-1">Debug Info:</p>
+              <div className="rounded bg-gray-100 p-3 text-left text-xs dark:bg-gray-800">
+                <p className="mb-1 font-semibold">Debug Info:</p>
                 {getDetails().map((detail, index) => (
-                  <p key={index} className="text-gray-600 dark:text-gray-400">{detail}</p>
+                  <p key={index} className="text-gray-600 dark:text-gray-400">
+                    {detail}
+                  </p>
                 ))}
               </div>
             )}
@@ -201,7 +195,7 @@ function AccessDeniedState({
   }
 
   return (
-    <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-900/20">
+    <Card className="border-orange-200 bg-orange-50 dark:border-orange-800 dark:bg-orange-900/20">
       <CardContent className="p-4">
         <div className="flex items-center space-x-3">
           {getIcon()}
@@ -210,8 +204,9 @@ function AccessDeniedState({
               {getMessage()}
             </p>
             {process.env.NODE_ENV === 'development' && (
-              <p className="text-xs text-orange-700 dark:text-orange-300 mt-1">
-                Role: {userRole} | Requer: {requiredRoles.join(', ') || requiredPermissions.join(', ')}
+              <p className="mt-1 text-xs text-orange-700 dark:text-orange-300">
+                Role: {userRole} | Requer:{' '}
+                {requiredRoles.join(', ') || requiredPermissions.join(', ')}
               </p>
             )}
           </div>
@@ -228,11 +223,10 @@ export function usePermissionGuard(
 ) {
   const { hasAnyPermission, hasRole, isAuthenticated } = usePermissions()
 
-  const hasRequiredPermissions = requiredPermissions.length === 0 || 
-    hasAnyPermission(requiredPermissions)
+  const hasRequiredPermissions =
+    requiredPermissions.length === 0 || hasAnyPermission(requiredPermissions)
 
-  const hasRequiredRoles = requiredRoles.length === 0 || 
-    requiredRoles.some(role => hasRole(role))
+  const hasRequiredRoles = requiredRoles.length === 0 || requiredRoles.some((role) => hasRole(role))
 
   const hasAccess = isAuthenticated && hasRequiredPermissions && hasRequiredRoles
 
@@ -240,12 +234,18 @@ export function usePermissionGuard(
     hasAccess,
     hasRequiredPermissions,
     hasRequiredRoles,
-    isAuthenticated
+    isAuthenticated,
   }
 }
 
 // Componentes específicos para casos comuns
-export function AdminOnly({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+export function AdminOnly({
+  children,
+  fallback,
+}: {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}) {
   return (
     <PermissionGuard requiredRoles={['admin', 'saas_owner']} fallback={fallback}>
       {children}
@@ -253,7 +253,13 @@ export function AdminOnly({ children, fallback }: { children: React.ReactNode, f
   )
 }
 
-export function BarberOnly({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+export function BarberOnly({
+  children,
+  fallback,
+}: {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}) {
   return (
     <PermissionGuard requiredRoles={['barber']} fallback={fallback}>
       {children}
@@ -261,7 +267,13 @@ export function BarberOnly({ children, fallback }: { children: React.ReactNode, 
   )
 }
 
-export function AdminOrBarber({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+export function AdminOrBarber({
+  children,
+  fallback,
+}: {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}) {
   return (
     <PermissionGuard requiredRoles={['admin', 'barber', 'saas_owner']} fallback={fallback}>
       {children}
@@ -269,7 +281,13 @@ export function AdminOrBarber({ children, fallback }: { children: React.ReactNod
   )
 }
 
-export function ClientOnly({ children, fallback }: { children: React.ReactNode, fallback?: React.ReactNode }) {
+export function ClientOnly({
+  children,
+  fallback,
+}: {
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}) {
   return (
     <PermissionGuard requiredRoles={['client']} fallback={fallback}>
       {children}
@@ -280,7 +298,7 @@ export function ClientOnly({ children, fallback }: { children: React.ReactNode, 
 // Guard específico para PDV
 export function PDVGuard({ children }: { children: React.ReactNode }) {
   return (
-    <PermissionGuard 
+    <PermissionGuard
       requiredPermissions={['manage_transactions', 'manage_financial']}
       type="page"
       accessDeniedMessage="Acesso ao PDV restrito a administradores e usuários com permissão financeira."

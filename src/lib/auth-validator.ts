@@ -59,19 +59,19 @@ class AuthValidator {
     this.testUsers.set('client', {
       email: 'teste.direto@example.com',
       password: 'TesteDireto123!',
-      role: 'client'
+      role: 'client',
     })
 
     this.testUsers.set('admin', {
       email: 'salgadocarloshenrique@gmail.com',
       password: 'SuaSenhaAqui123!', // Você precisará usar a senha real
-      role: 'admin'
+      role: 'admin',
     })
 
     this.testUsers.set('saas_owner', {
       email: 'chpsalgado@hotmail.com',
       password: 'SuaSenhaAqui123!', // Você precisará usar a senha real
-      role: 'saas_owner'
+      role: 'saas_owner',
     })
 
     // Nota: Para testes reais, você deve criar usuários específicos para teste
@@ -83,7 +83,7 @@ class AuthValidator {
    */
   private async runTest(testFn: () => Promise<ValidationResult>): Promise<ValidationResult> {
     const startTime = Date.now()
-    
+
     try {
       const result = await testFn()
       result.duration = Date.now() - startTime
@@ -95,7 +95,7 @@ class AuthValidator {
         message: `Erro inesperado no teste: ${error instanceof Error ? error.message : error}`,
         details: error,
         timestamp: Date.now(),
-        duration: Date.now() - startTime
+        duration: Date.now() - startTime,
       }
     }
   }
@@ -112,14 +112,14 @@ class AuthValidator {
 
         const { data, error } = await supabase.auth.signInWithPassword({
           email: userData.email,
-          password: userData.password
+          password: userData.password,
         })
 
         if (error) {
           results.push({
             role,
             success: false,
-            error: error.message
+            error: error.message,
           })
           continue
         }
@@ -128,7 +128,7 @@ class AuthValidator {
           results.push({
             role,
             success: false,
-            error: 'Usuário não retornado'
+            error: 'Usuário não retornado',
           })
           continue
         }
@@ -144,7 +144,7 @@ class AuthValidator {
           results.push({
             role,
             success: false,
-            error: 'Perfil não encontrado'
+            error: 'Perfil não encontrado',
           })
           continue
         }
@@ -154,7 +154,7 @@ class AuthValidator {
           results.push({
             role,
             success: false,
-            error: `Role incorreto: esperado ${role}, obtido ${profile.role}`
+            error: `Role incorreto: esperado ${role}, obtido ${profile.role}`,
           })
           continue
         }
@@ -163,28 +163,27 @@ class AuthValidator {
           role,
           success: true,
           userId: data.user.id,
-          profileRole: profile.role
+          profileRole: profile.role,
         })
 
         // Fazer logout
         await supabase.auth.signOut()
-
       } catch (error) {
         results.push({
           role,
           success: false,
-          error: error instanceof Error ? error.message : 'Erro desconhecido'
+          error: error instanceof Error ? error.message : 'Erro desconhecido',
         })
       }
     }
 
-    const successCount = results.filter(r => r.success).length
+    const successCount = results.filter((r) => r.success).length
     const totalCount = results.length
 
     return {
       success: successCount === totalCount,
       message: `Login testado para ${successCount}/${totalCount} roles`,
-      details: results
+      details: results,
     } as ValidationResult
   }
 
@@ -198,20 +197,20 @@ class AuthValidator {
       // Fazer login
       const { data: loginData, error: loginError } = await supabase.auth.signInWithPassword({
         email: testUser.email,
-        password: testUser.password
+        password: testUser.password,
       })
 
       if (loginError || !loginData.user) {
         return {
           success: false,
-          message: 'Falha no login inicial'
+          message: 'Falha no login inicial',
         } as ValidationResult
       }
 
       const userId = loginData.user.id
 
       // Aguardar um pouco
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       // Verificar se a sessão ainda está ativa
       const { data: sessionData } = await supabase.auth.getSession()
@@ -219,7 +218,7 @@ class AuthValidator {
       if (!sessionData.session || sessionData.session.user.id !== userId) {
         return {
           success: false,
-          message: 'Sessão não persistiu'
+          message: 'Sessão não persistiu',
         } as ValidationResult
       }
 
@@ -228,13 +227,12 @@ class AuthValidator {
 
       return {
         success: true,
-        message: 'Sessão persistiu corretamente'
+        message: 'Sessão persistiu corretamente',
       } as ValidationResult
-
     } catch (error) {
       return {
         success: false,
-        message: `Erro no teste de persistência: ${error instanceof Error ? error.message : error}`
+        message: `Erro no teste de persistência: ${error instanceof Error ? error.message : error}`,
       } as ValidationResult
     }
   }
@@ -247,7 +245,7 @@ class AuthValidator {
       client: '/dashboard',
       barber: '/dashboard',
       admin: '/dashboard',
-      saas_owner: '/saas-admin'
+      saas_owner: '/saas-admin',
     }
 
     const results: any[] = []
@@ -256,14 +254,14 @@ class AuthValidator {
       try {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: userData.email,
-          password: userData.password
+          password: userData.password,
         })
 
         if (error || !data.user) {
           results.push({
             role,
             success: false,
-            error: 'Falha no login'
+            error: 'Falha no login',
           })
           continue
         }
@@ -276,31 +274,30 @@ class AuthValidator {
           .single()
 
         const expectedRedirect = expectedRedirects[role as keyof typeof expectedRedirects]
-        
+
         results.push({
           role,
           success: true,
           expectedRedirect,
-          profileRole: profile?.role
+          profileRole: profile?.role,
         })
 
         await supabase.auth.signOut()
-
       } catch (error) {
         results.push({
           role,
           success: false,
-          error: error instanceof Error ? error.message : 'Erro desconhecido'
+          error: error instanceof Error ? error.message : 'Erro desconhecido',
         })
       }
     }
 
-    const successCount = results.filter(r => r.success).length
+    const successCount = results.filter((r) => r.success).length
 
     return {
       success: successCount === results.length,
       message: `Redirecionamentos testados para ${successCount}/${results.length} roles`,
-      details: results
+      details: results,
     } as ValidationResult
   }
 
@@ -312,25 +309,24 @@ class AuthValidator {
       const testUser = this.testUsers.get('client')!
 
       const { error } = await supabase.auth.resetPasswordForEmail(testUser.email, {
-        redirectTo: `${window.location.origin}/auth/reset-password`
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       })
 
       if (error) {
         return {
           success: false,
-          message: `Erro na recuperação de senha: ${error.message}`
+          message: `Erro na recuperação de senha: ${error.message}`,
         } as ValidationResult
       }
 
       return {
         success: true,
-        message: 'Email de recuperação enviado com sucesso'
+        message: 'Email de recuperação enviado com sucesso',
       } as ValidationResult
-
     } catch (error) {
       return {
         success: false,
-        message: `Erro no teste de recuperação: ${error instanceof Error ? error.message : error}`
+        message: `Erro no teste de recuperação: ${error instanceof Error ? error.message : error}`,
       } as ValidationResult
     }
   }
@@ -342,7 +338,8 @@ class AuthValidator {
     const protectedRoutes = [
       { path: '/dashboard', requiredRoles: ['admin', 'barber', 'client'] },
       { path: '/saas-admin', requiredRoles: ['saas_owner'] },
-      { path: '/dashboard/usuarios', requiredRoles: ['admin'] }
+      { path: '/dashboard/usuarios', requiredRoles: ['admin'] },
+      { path: '/dashboard/clientes', requiredRoles: ['admin', 'barber'] },
     ]
 
     const results: any[] = []
@@ -352,28 +349,28 @@ class AuthValidator {
       try {
         // Simular verificação de proteção de rota
         const isProtected = route.requiredRoles.length > 0
-        
+
         results.push({
           path: route.path,
           isProtected,
           requiredRoles: route.requiredRoles,
-          success: isProtected
+          success: isProtected,
         })
       } catch (error) {
         results.push({
           path: route.path,
           success: false,
-          error: error instanceof Error ? error.message : 'Erro desconhecido'
+          error: error instanceof Error ? error.message : 'Erro desconhecido',
         })
       }
     }
 
-    const successCount = results.filter(r => r.success).length
+    const successCount = results.filter((r) => r.success).length
 
     return {
       success: successCount === results.length,
       message: `Proteção testada para ${successCount}/${results.length} rotas`,
-      details: results
+      details: results,
     } as ValidationResult
   }
 
@@ -387,55 +384,57 @@ class AuthValidator {
         description: 'Testar login para todos os tipos de usuário',
         test: () => this.testLoginAllRoles(),
         priority: 'high',
-        category: 'auth'
+        category: 'auth',
       },
       {
         name: 'session-persistence',
         description: 'Verificar persistência de sessão',
         test: () => this.testSessionPersistence(),
         priority: 'high',
-        category: 'auth'
+        category: 'auth',
       },
       {
         name: 'role-based-redirects',
         description: 'Validar redirecionamentos baseados em role',
         test: () => this.testRoleBasedRedirects(),
         priority: 'high',
-        category: 'auth'
+        category: 'auth',
       },
       {
         name: 'password-recovery',
         description: 'Testar recuperação de senha',
         test: () => this.testPasswordRecovery(),
         priority: 'medium',
-        category: 'auth'
+        category: 'auth',
       },
       {
         name: 'route-protection',
         description: 'Verificar proteção de rotas',
         test: () => this.testRouteProtection(),
         priority: 'high',
-        category: 'security'
-      }
+        category: 'security',
+      },
     ]
   }
 
   /**
    * Executar todos os testes
    */
-  async runAllTests(options: {
-    categories?: string[]
-    priorities?: string[]
-    skipOnError?: boolean
-  } = {}): Promise<ValidationReport> {
+  async runAllTests(
+    options: {
+      categories?: string[]
+      priorities?: string[]
+      skipOnError?: boolean
+    } = {}
+  ): Promise<ValidationReport> {
     console.log('🧪 Iniciando validação completa de fluxos de autenticação...')
-    
+
     const startTime = Date.now()
     const tests = this.getFlowTests()
     const results: ValidationResult[] = []
-    
+
     // Filtrar testes baseado nas opções
-    const filteredTests = tests.filter(test => {
+    const filteredTests = tests.filter((test) => {
       if (options.categories && !options.categories.includes(test.category)) {
         return false
       }
@@ -449,7 +448,7 @@ class AuthValidator {
 
     for (const test of filteredTests) {
       console.log(`🔄 Executando: ${test.name} - ${test.description}`)
-      
+
       const result = await this.runTest(test.test)
       result.message = `[${test.name}] ${result.message}`
       results.push(result)
@@ -466,15 +465,15 @@ class AuthValidator {
     }
 
     const duration = Date.now() - startTime
-    const passed = results.filter(r => r.success).length
-    const failed = results.filter(r => !r.success).length
+    const passed = results.filter((r) => r.success).length
+    const failed = results.filter((r) => !r.success).length
 
     // Calcular estatísticas por categoria
     const summary = {
-      authFlows: results.filter(r => r.message.includes('auth')).length,
-      profileTests: results.filter(r => r.message.includes('profile')).length,
-      permissionTests: results.filter(r => r.message.includes('permission')).length,
-      securityTests: results.filter(r => r.message.includes('security')).length
+      authFlows: results.filter((r) => r.message.includes('auth')).length,
+      profileTests: results.filter((r) => r.message.includes('profile')).length,
+      permissionTests: results.filter((r) => r.message.includes('permission')).length,
+      securityTests: results.filter((r) => r.message.includes('security')).length,
     }
 
     const report: ValidationReport = {
@@ -484,7 +483,7 @@ class AuthValidator {
       skipped: filteredTests.length - results.length,
       duration,
       results,
-      summary
+      summary,
     }
 
     console.log('📊 Relatório de Validação:')
@@ -503,14 +502,14 @@ class AuthValidator {
    */
   async runSpecificTest(testName: string): Promise<ValidationResult> {
     const tests = this.getFlowTests()
-    const test = tests.find(t => t.name === testName)
+    const test = tests.find((t) => t.name === testName)
 
     if (!test) {
       return {
         success: false,
         message: `Teste não encontrado: ${testName}`,
         timestamp: Date.now(),
-        duration: 0
+        duration: 0,
       }
     }
 

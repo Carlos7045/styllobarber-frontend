@@ -42,9 +42,9 @@ export class QuickTransactionService {
       if (tableError) {
         console.log('Tabela não existe, simulando registro:', data)
         // Simular sucesso para desenvolvimento
-        return { 
-          success: true, 
-          transactionId: `mock_${Date.now()}` 
+        return {
+          success: true,
+          transactionId: `mock_${Date.now()}`,
         }
       }
 
@@ -56,7 +56,7 @@ export class QuickTransactionService {
         metodo_pagamento: data.metodoPagamento || 'DINHEIRO',
         status: 'CONFIRMADA',
         data_transacao: new Date().toISOString(),
-        observacoes: data.observacoes?.trim() || null
+        observacoes: data.observacoes?.trim() || null,
       }
 
       // Buscar ou criar categoria
@@ -76,7 +76,7 @@ export class QuickTransactionService {
             .insert({
               nome: data.categoria,
               tipo: data.tipo === 'ENTRADA' ? 'RECEITA' : 'DESPESA',
-              cor: this.getRandomColor()
+              cor: this.getRandomColor(),
             })
             .select('id')
             .single()
@@ -113,7 +113,7 @@ export class QuickTransactionService {
         .insert({
           ...transactionData,
           categoria_id: categoriaId,
-          barbeiro_id: barbeiroId
+          barbeiro_id: barbeiroId,
         })
         .select('id')
         .single()
@@ -132,45 +132,39 @@ export class QuickTransactionService {
       if (data.agendamentoId && data.agendamentoId !== '0' && data.tipo === 'ENTRADA') {
         await this.marcarAgendamentoComoPago(data.agendamentoId, transacao.id)
       }
-      // Se NÃO há agendamento mas há cliente e barbeiro, criar agendamento retroativo
-      else if (!data.agendamentoId && data.cliente && data.cliente.trim() && 
-               data.barbeiro && data.barbeiro.trim() && barbeiroId && 
-               data.tipo === 'ENTRADA') {
-        console.log(`🎯 Condições atendidas para agendamento retroativo:`)
-        console.log(`   - Cliente: ${data.cliente}`)
-        console.log(`   - Barbeiro: ${data.barbeiro} (ID: ${barbeiroId})`)
-        console.log(`   - Valor: R$ ${data.valor}`)
-        
-        await this.criarAgendamentoRetroativo(data, barbeiroId, transacao.id)
-      }
 
       // Registrar no fluxo de caixa
-      await this.registrarMovimentacaoFluxoCaixa(transacao.id, data.tipo, data.valor, data.descricao)
+      await this.registrarMovimentacaoFluxoCaixa(
+        transacao.id,
+        data.tipo,
+        data.valor,
+        data.descricao
+      )
 
-      return { 
-        success: true, 
-        transactionId: transacao.id 
+      return {
+        success: true,
+        transactionId: transacao.id,
       }
-
     } catch (error) {
       console.error('Erro no serviço de transação rápida:', error)
-      return { 
-        success: false, 
-        error: 'Erro interno do sistema' 
+      return {
+        success: false,
+        error: 'Erro interno do sistema',
       }
     }
   }
 
   // Obter histórico de transações recentes
   static async obterHistoricoRecente(
-    limite = 10, 
+    limite = 10,
     filtros: { barbeiro_id?: string } = {}
   ): Promise<any[]> {
     try {
       // Primeiro, tentar buscar com joins
       let query = supabase
         .from('transacoes_financeiras')
-        .select(`
+        .select(
+          `
           id,
           tipo,
           valor,
@@ -181,7 +175,8 @@ export class QuickTransactionService {
           observacoes,
           categoria_id,
           barbeiro_id
-        `)
+        `
+        )
         .order('data_transacao', { ascending: false })
         .limit(limite)
 
@@ -205,19 +200,22 @@ export class QuickTransactionService {
       }
 
       // Processar dados para incluir informações adicionais
-      const transacoesProcessadas = data.map(transacao => ({
+      const transacoesProcessadas = data.map((transacao) => ({
         ...transacao,
-        categorias_financeiras: transacao.categoria_id ? { 
-          nome: this.mapearNomeCategoria(transacao.tipo), 
-          cor: '#6B7280' 
-        } : null,
-        funcionarios: transacao.barbeiro_id ? { 
-          nome: 'Barbeiro' 
-        } : null
+        categorias_financeiras: transacao.categoria_id
+          ? {
+              nome: this.mapearNomeCategoria(transacao.tipo),
+              cor: '#6B7280',
+            }
+          : null,
+        funcionarios: transacao.barbeiro_id
+          ? {
+              nome: 'Barbeiro',
+            }
+          : null,
       }))
 
       return transacoesProcessadas
-
     } catch (error) {
       console.error('Erro ao obter histórico recente:', error)
       return this.obterHistoricoMockado()
@@ -225,9 +223,7 @@ export class QuickTransactionService {
   }
 
   // Obter estatísticas do dia
-  static async obterEstatisticasDia(
-    filtros: { barbeiro_id?: string } = {}
-  ): Promise<{
+  static async obterEstatisticasDia(filtros: { barbeiro_id?: string } = {}): Promise<{
     totalEntradas: number
     totalSaidas: number
     numeroTransacoes: number
@@ -262,37 +258,42 @@ export class QuickTransactionService {
           totalEntradas: 0,
           totalSaidas: 0,
           numeroTransacoes: 0,
-          metodoPagamentoMaisUsado: 'DINHEIRO'
+          metodoPagamentoMaisUsado: 'DINHEIRO',
         }
       }
 
       const totalEntradas = data
-        .filter(t => t.tipo === 'RECEITA')
+        .filter((t) => t.tipo === 'RECEITA')
         .reduce((sum, t) => sum + (t.valor || 0), 0)
 
       const totalSaidas = data
-        .filter(t => t.tipo === 'DESPESA')
+        .filter((t) => t.tipo === 'DESPESA')
         .reduce((sum, t) => sum + (t.valor || 0), 0)
 
       // Contar métodos de pagamento
-      const metodosPagamento = data.reduce((acc, t) => {
-        if (t.tipo === 'RECEITA') { // Só contar métodos de pagamento para receitas
-          const metodo = t.metodo_pagamento || 'DINHEIRO'
-          acc[metodo] = (acc[metodo] || 0) + 1
-        }
-        return acc
-      }, {} as Record<string, number>)
+      const metodosPagamento = data.reduce(
+        (acc, t) => {
+          if (t.tipo === 'RECEITA') {
+            // Só contar métodos de pagamento para receitas
+            const metodo = t.metodo_pagamento || 'DINHEIRO'
+            acc[metodo] = (acc[metodo] || 0) + 1
+          }
+          return acc
+        },
+        {} as Record<string, number>
+      )
 
-      const metodoPagamentoMaisUsado = Object.entries(metodosPagamento)
-        .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || 'DINHEIRO'
+      const metodoPagamentoMaisUsado =
+        Object.entries(metodosPagamento).sort(
+          ([, a], [, b]) => (b as number) - (a as number)
+        )[0]?.[0] || 'DINHEIRO'
 
       return {
         totalEntradas,
         totalSaidas,
         numeroTransacoes: data.length,
-        metodoPagamentoMaisUsado
+        metodoPagamentoMaisUsado,
       }
-
     } catch (error) {
       console.error('Erro ao obter estatísticas do dia:', error)
       return this.obterEstatisticasMockadas()
@@ -301,10 +302,10 @@ export class QuickTransactionService {
 
   private static obterEstatisticasMockadas() {
     return {
-      totalEntradas: 450.00,
-      totalSaidas: 200.00,
+      totalEntradas: 450.0,
+      totalSaidas: 200.0,
       numeroTransacoes: 8,
-      metodoPagamentoMaisUsado: 'DINHEIRO'
+      metodoPagamentoMaisUsado: 'DINHEIRO',
     }
   }
 
@@ -330,7 +331,7 @@ export class QuickTransactionService {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
     }
   }
 
@@ -339,9 +340,9 @@ export class QuickTransactionService {
     try {
       const { error } = await supabase
         .from('transacoes_financeiras')
-        .update({ 
+        .update({
           status: 'CANCELADA',
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', transactionId)
 
@@ -350,7 +351,6 @@ export class QuickTransactionService {
       }
 
       return { success: true }
-
     } catch (error) {
       console.error('Erro ao cancelar transação:', error)
       return { success: false, error: 'Erro interno do sistema' }
@@ -373,66 +373,74 @@ export class QuickTransactionService {
         const percentualPadrao = 40 // 40%
         const valorComissao = (valor * percentualPadrao) / 100
 
-        await this.registrarComissao(transacaoId, barbeiroId, valor, percentualPadrao, valorComissao)
+        await this.registrarComissao(
+          transacaoId,
+          barbeiroId,
+          valor,
+          percentualPadrao,
+          valorComissao
+        )
       } else {
         const valorComissao = (valor * config.percentual) / 100
-        await this.registrarComissao(transacaoId, barbeiroId, valor, config.percentual, valorComissao)
+        await this.registrarComissao(
+          transacaoId,
+          barbeiroId,
+          valor,
+          config.percentual,
+          valorComissao
+        )
       }
-
     } catch (error) {
       console.error('Erro ao calcular comissão:', error)
     }
   }
 
   private static async registrarComissao(
-    transacaoId: string, 
-    barbeiroId: string, 
-    valorServico: number, 
-    percentual: number, 
+    transacaoId: string,
+    barbeiroId: string,
+    valorServico: number,
+    percentual: number,
     valorComissao: number
   ) {
     try {
-      await supabase
-        .from('transacoes_financeiras')
-        .insert({
-          tipo: 'COMISSAO',
-          valor: valorComissao,
-          descricao: `Comissão ${percentual}% - Transação ${transacaoId.slice(-8)}`,
-          barbeiro_id: barbeiroId,
-          status: 'CONFIRMADA',
-          data_transacao: new Date().toISOString(),
-          observacoes: `Comissão calculada automaticamente. Valor do serviço: R$ ${valorServico.toFixed(2)}`
-        })
-
+      await supabase.from('transacoes_financeiras').insert({
+        tipo: 'COMISSAO',
+        valor: valorComissao,
+        descricao: `Comissão ${percentual}% - Transação ${transacaoId.slice(-8)}`,
+        barbeiro_id: barbeiroId,
+        status: 'CONFIRMADA',
+        data_transacao: new Date().toISOString(),
+        observacoes: `Comissão calculada automaticamente. Valor do serviço: R$ ${valorServico.toFixed(2)}`,
+      })
     } catch (error) {
       console.error('Erro ao registrar comissão:', error)
     }
   }
 
   private static async registrarMovimentacaoFluxoCaixa(
-    transacaoId: string, 
-    tipo: string, 
-    valor: number, 
+    transacaoId: string,
+    tipo: string,
+    valor: number,
     descricao: string
   ) {
     try {
       // Registrar na tabela de movimentações do fluxo de caixa
-      const { error } = await supabase
-        .from('movimentacoes_fluxo_caixa')
-        .insert({
-          tipo: tipo === 'ENTRADA' ? 'ENTRADA' : 'SAIDA',
-          valor: valor,
-          descricao: descricao,
-          categoria: 'OPERACIONAL', // Transações do PDV são sempre operacionais
-          data: new Date().toISOString().split('T')[0], // Data sem hora
-          status: 'REALIZADA',
-          transacao_id: transacaoId
-        })
+      const { error } = await supabase.from('movimentacoes_fluxo_caixa').insert({
+        tipo: tipo === 'ENTRADA' ? 'ENTRADA' : 'SAIDA',
+        valor: valor,
+        descricao: descricao,
+        categoria: 'OPERACIONAL', // Transações do PDV são sempre operacionais
+        data: new Date().toISOString().split('T')[0], // Data sem hora
+        status: 'REALIZADA',
+        transacao_id: transacaoId,
+      })
 
       if (error) {
         console.error('Erro ao registrar movimentação no fluxo de caixa:', error)
       } else {
-        console.log(`Movimentação registrada no fluxo de caixa: ${tipo} - R$ ${valor.toFixed(2)} - ${descricao}`)
+        console.log(
+          `Movimentação registrada no fluxo de caixa: ${tipo} - R$ ${valor.toFixed(2)} - ${descricao}`
+        )
       }
     } catch (error) {
       console.error('Erro ao registrar movimentação no fluxo de caixa:', error)
@@ -441,8 +449,14 @@ export class QuickTransactionService {
 
   private static getRandomColor(): string {
     const colors = [
-      '#EF4444', '#F59E0B', '#10B981', '#3B82F6', 
-      '#8B5CF6', '#EC4899', '#6B7280', '#14B8A6'
+      '#EF4444',
+      '#F59E0B',
+      '#10B981',
+      '#3B82F6',
+      '#8B5CF6',
+      '#EC4899',
+      '#6B7280',
+      '#14B8A6',
     ]
     return colors[Math.floor(Math.random() * colors.length)]
   }
@@ -453,7 +467,7 @@ export class QuickTransactionService {
       {
         id: '1',
         tipo: 'RECEITA',
-        valor: 45.00,
+        valor: 45.0,
         descricao: 'Corte + Barba',
         metodo_pagamento: 'DINHEIRO',
         data_transacao: new Date(agora.getTime() - 30 * 60 * 1000).toISOString(), // 30 min atrás
@@ -461,12 +475,12 @@ export class QuickTransactionService {
         observacoes: null,
         cliente_nome: 'Carlos Silva',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
-        funcionarios: { nome: 'João Silva' }
+        funcionarios: { nome: 'João Silva' },
       },
       {
         id: '2',
         tipo: 'RECEITA',
-        valor: 25.00,
+        valor: 25.0,
         descricao: 'Corte Simples',
         metodo_pagamento: 'PIX',
         data_transacao: new Date(agora.getTime() - 60 * 60 * 1000).toISOString(), // 1h atrás
@@ -474,24 +488,24 @@ export class QuickTransactionService {
         observacoes: null,
         cliente_nome: 'Roberto Santos',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
-        funcionarios: { nome: 'Pedro Santos' }
+        funcionarios: { nome: 'Pedro Santos' },
       },
       {
         id: '3',
         tipo: 'DESPESA',
-        valor: 120.00,
+        valor: 120.0,
         descricao: 'Compra de produtos',
         metodo_pagamento: null,
         data_transacao: new Date(agora.getTime() - 2 * 60 * 60 * 1000).toISOString(), // 2h atrás
         status: 'CONFIRMADA',
         observacoes: 'Shampoo e condicionador',
         categorias_financeiras: { nome: 'Produtos', cor: '#EF4444' },
-        funcionarios: null
+        funcionarios: null,
       },
       {
         id: '4',
         tipo: 'RECEITA',
-        valor: 20.00,
+        valor: 20.0,
         descricao: 'Barba',
         metodo_pagamento: 'CARTAO_DEBITO',
         data_transacao: new Date(agora.getTime() - 3 * 60 * 60 * 1000).toISOString(), // 3h atrás
@@ -499,24 +513,24 @@ export class QuickTransactionService {
         observacoes: null,
         cliente_nome: 'André Costa',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
-        funcionarios: { nome: 'Carlos Oliveira' }
+        funcionarios: { nome: 'Carlos Oliveira' },
       },
       {
         id: '5',
         tipo: 'DESPESA',
-        valor: 80.00,
+        valor: 80.0,
         descricao: 'Material de limpeza',
         metodo_pagamento: null,
         data_transacao: new Date(agora.getTime() - 4 * 60 * 60 * 1000).toISOString(), // 4h atrás
         status: 'CONFIRMADA',
         observacoes: null,
         categorias_financeiras: { nome: 'Limpeza', cor: '#10B981' },
-        funcionarios: null
+        funcionarios: null,
       },
       {
         id: '6',
         tipo: 'RECEITA',
-        valor: 55.00,
+        valor: 55.0,
         descricao: 'Corte + Barba + Sobrancelha',
         metodo_pagamento: 'CARTAO_CREDITO',
         data_transacao: new Date(agora.getTime() - 5 * 60 * 60 * 1000).toISOString(), // 5h atrás
@@ -524,12 +538,12 @@ export class QuickTransactionService {
         observacoes: 'Agendamento #ag1 - Cliente preferencial - desconto aplicado',
         cliente_nome: 'Fernando Lima',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
-        funcionarios: { nome: 'João Silva' }
+        funcionarios: { nome: 'João Silva' },
       },
       {
         id: '7',
         tipo: 'RECEITA',
-        valor: 50.00,
+        valor: 50.0,
         descricao: 'Teste PDV',
         metodo_pagamento: 'DINHEIRO',
         data_transacao: new Date(agora.getTime() - 6 * 60 * 60 * 1000).toISOString(), // 6h atrás
@@ -537,12 +551,12 @@ export class QuickTransactionService {
         observacoes: null,
         cliente_nome: 'Marcos Pereira',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
-        funcionarios: { nome: 'Pedro Santos' }
+        funcionarios: { nome: 'Pedro Santos' },
       },
       {
         id: '8',
         tipo: 'RECEITA',
-        valor: 15.00,
+        valor: 15.0,
         descricao: 'Sobrancelha',
         metodo_pagamento: 'DINHEIRO',
         data_transacao: new Date(agora.getTime() - 7 * 60 * 60 * 1000).toISOString(), // 7h atrás
@@ -550,8 +564,8 @@ export class QuickTransactionService {
         observacoes: null,
         cliente_nome: 'Lucas Almeida',
         categorias_financeiras: { nome: 'Serviços', cor: '#22C55E' },
-        funcionarios: { nome: 'Carlos Oliveira' }
-      }
+        funcionarios: { nome: 'Carlos Oliveira' },
+      },
     ]
   }
 
@@ -579,7 +593,10 @@ export class QuickTransactionService {
         .single()
 
       if (checkError || !agendamento) {
-        console.warn(`Agendamento ${agendamentoId} não encontrado na tabela appointments:`, checkError)
+        console.warn(
+          `Agendamento ${agendamentoId} não encontrado na tabela appointments:`,
+          checkError
+        )
         // Não é um erro crítico, apenas log para debug
         return true
       }
@@ -589,7 +606,7 @@ export class QuickTransactionService {
         .from('appointments')
         .update({
           observacoes: `Pago via PDV - Transação: ${transacaoId}`,
-          updated_at: new Date().toISOString()
+          updated_at: new Date().toISOString(),
         })
         .eq('id', agendamentoId)
 
@@ -608,12 +625,14 @@ export class QuickTransactionService {
 
   // Criar agendamento retroativo para clientes atendidos sem agendamento prévio
   private static async criarAgendamentoRetroativo(
-    data: QuickTransactionData, 
-    barbeiroId: string, 
+    data: QuickTransactionData,
+    barbeiroId: string,
     transacaoId: string
   ) {
     try {
-      console.log(`🔄 Criando agendamento retroativo para cliente: ${data.cliente} com barbeiro: ${data.barbeiro}`)
+      console.log(
+        `🔄 Criando agendamento retroativo para cliente: ${data.cliente} com barbeiro: ${data.barbeiro}`
+      )
 
       // Buscar cliente pelo nome
       const { data: cliente, error: clienteError } = await supabase
@@ -625,7 +644,9 @@ export class QuickTransactionService {
         .single()
 
       if (clienteError || !cliente) {
-        console.warn(`⚠️ Cliente "${data.cliente}" não encontrado para criar agendamento retroativo`)
+        console.warn(
+          `⚠️ Cliente "${data.cliente}" não encontrado para criar agendamento retroativo`
+        )
         return false
       }
 
@@ -646,7 +667,7 @@ export class QuickTransactionService {
       // Determinar serviço baseado na descrição ou usar o primeiro serviço ativo
       let servicoId = null
       let servicoNome = 'Serviço Geral'
-      
+
       const { data: servicos, error: servicosError } = await supabase
         .from('services')
         .select('id, nome, preco')
@@ -656,12 +677,14 @@ export class QuickTransactionService {
       if (!servicosError && servicos && servicos.length > 0) {
         // Tentar encontrar serviço pela descrição (busca mais inteligente)
         const descricaoLower = data.descricao.toLowerCase()
-        const servicoEncontrado = servicos.find(s => {
+        const servicoEncontrado = servicos.find((s) => {
           const nomeServico = s.nome.toLowerCase()
-          return descricaoLower.includes(nomeServico) || 
-                 nomeServico.includes(descricaoLower.split(' ')[0]) // Primeira palavra
+          return (
+            descricaoLower.includes(nomeServico) ||
+            nomeServico.includes(descricaoLower.split(' ')[0])
+          ) // Primeira palavra
         })
-        
+
         if (servicoEncontrado) {
           servicoId = servicoEncontrado.id
           servicoNome = servicoEncontrado.nome
@@ -685,8 +708,10 @@ export class QuickTransactionService {
         `✂️ Barbeiro: ${barbeiro.nome}`,
         `💵 Valor: R$ ${data.valor.toFixed(2)}`,
         `📝 Método: ${data.metodoPagamento || 'DINHEIRO'}`,
-        data.observacoes ? `📋 Obs: ${data.observacoes}` : null
-      ].filter(Boolean).join(' | ')
+        data.observacoes ? `📋 Obs: ${data.observacoes}` : null,
+      ]
+        .filter(Boolean)
+        .join(' | ')
 
       const { data: novoAgendamento, error: agendamentoError } = await supabase
         .from('appointments')
@@ -697,7 +722,7 @@ export class QuickTransactionService {
           data_agendamento: agora.toISOString(),
           status: 'concluido', // Já foi concluído
           preco_final: data.valor,
-          observacoes: observacoesCompletas
+          observacoes: observacoesCompletas,
         })
         .select('id')
         .single()
@@ -713,13 +738,14 @@ export class QuickTransactionService {
       console.log(`   ✂️ Barbeiro: ${barbeiro.nome} (${barbeiroId})`)
       console.log(`   🛍️ Serviço: ${servicoNome} (${servicoId})`)
       console.log(`   💰 Valor: R$ ${data.valor.toFixed(2)}`)
-      
+
       // Atualizar a transação com o ID do agendamento criado
       const { error: updateError } = await supabase
         .from('transacoes_financeiras')
         .update({
           agendamento_id: novoAgendamento.id,
-          observacoes: `${data.observacoes || ''} | Agendamento retroativo: ${novoAgendamento.id}`.trim()
+          observacoes:
+            `${data.observacoes || ''} | Agendamento retroativo: ${novoAgendamento.id}`.trim(),
         })
         .eq('id', transacaoId)
 
@@ -730,7 +756,6 @@ export class QuickTransactionService {
       }
 
       return true
-
     } catch (error) {
       console.error('❌ Erro inesperado ao criar agendamento retroativo:', error)
       return false
@@ -742,7 +767,8 @@ export class QuickTransactionService {
     try {
       const { data, error } = await supabase
         .from('transacoes_financeiras')
-        .select(`
+        .select(
+          `
           id,
           tipo,
           valor,
@@ -751,7 +777,8 @@ export class QuickTransactionService {
           data_transacao,
           categorias_financeiras (nome),
           funcionarios (nome)
-        `)
+        `
+        )
         .gte('data_transacao', dataInicio)
         .lte('data_transacao', dataFim)
         .eq('status', 'CONFIRMADA')
@@ -763,7 +790,6 @@ export class QuickTransactionService {
       }
 
       return data || []
-
     } catch (error) {
       console.error('Erro ao obter relatório PDV:', error)
       return []

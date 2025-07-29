@@ -245,7 +245,12 @@ export function useBarberDashboardData(barberId: string) {
   })
 
   useEffect(() => {
-    if (!barberId) return
+    if (!barberId) {
+      console.warn('useBarberDashboardData: barberId não fornecido')
+      return
+    }
+
+    console.log('useBarberDashboardData: Buscando dados para barbeiro:', barberId)
 
     const fetchBarberData = async () => {
       try {
@@ -325,13 +330,23 @@ export function useBarberDashboardData(barberId: string) {
           )
         }
 
+        const ganhosCalculados = {
+          hoje: calcularGanhos(ganhosHoje.data || []),
+          semana: calcularGanhos(ganhosSemana.data || []),
+          mes: calcularGanhos(ganhosMes.data || []),
+        }
+
+        console.log(
+          'useBarberDashboardData: Ganhos calculados para barbeiro',
+          barberId,
+          ':',
+          ganhosCalculados
+        )
+        console.log('useBarberDashboardData: Agendamentos hoje:', agendaHoje?.length || 0)
+
         setData({
           agendaHoje: agendaHoje || [],
-          ganhos: {
-            hoje: calcularGanhos(ganhosHoje.data || []),
-            semana: calcularGanhos(ganhosSemana.data || []),
-            mes: calcularGanhos(ganhosMes.data || []),
-          },
+          ganhos: ganhosCalculados,
           loading: false,
           error: null,
         })

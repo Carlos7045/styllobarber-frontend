@@ -4,15 +4,15 @@ import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { 
-  Calendar, 
-  Users, 
-  Scissors, 
-  UserCheck, 
-  DollarSign, 
-  BarChart3, 
-  Settings, 
-  Menu, 
+import {
+  Calendar,
+  Users,
+  Scissors,
+  UserCheck,
+  DollarSign,
+  BarChart3,
+  Settings,
+  Menu,
   X,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +20,7 @@ import {
   Moon,
   Home,
   User,
-  Activity
+  Activity,
 } from 'lucide-react'
 
 import { cn } from '@/lib/utils'
@@ -85,8 +85,8 @@ const navigationItems: Record<string, NavItem[]> = {
       badge: '3',
     },
     {
-      id: 'clientes',
-      label: 'Clientes',
+      id: 'usuarios',
+      label: 'Usuários',
       href: '/dashboard/usuarios',
       icon: Users,
     },
@@ -144,7 +144,7 @@ const navigationItems: Record<string, NavItem[]> = {
     {
       id: 'meus-clientes',
       label: 'Meus Clientes',
-      href: '/dashboard/usuarios',
+      href: '/dashboard/clientes',
       icon: Users,
     },
     {
@@ -215,28 +215,29 @@ export function Sidebar({
   const pathname = usePathname()
   const { user, profile } = useAuth()
   const [isMobileOpen, setIsMobileOpen] = React.useState(false)
-  
+
   // Verificar permissões de monitoramento
   const { isSaasOwner, isDeveloper } = useMonitoringPermissions(userRole, profile)
 
   // Obter itens de navegação baseado no role
-  let navItems = [...(navigationItems[userRole] || navigationItems.admin)]
-  
+  const navItems = [...(navigationItems[userRole] || navigationItems.admin)]
+
   // Adicionar item de monitoramento APENAS para SaaS Owner ou Developer
   // Verificar se realmente tem permissão (não apenas role)
   if ((isSaasOwner() || isDeveloper()) && profile) {
     // Verificação adicional de segurança
-    const hasMonitoringAccess = profile.nome?.includes('Carlos Henrique') || 
-                               profile.email === 'carlos@styllobarber.com' ||
-                               profile.email === 'carlos7045@gmail.com' ||
-                               profile.role === 'saas_owner' ||
-                               (process.env.NODE_ENV === 'development' && profile.nome?.includes('Carlos'))
-    
+    const hasMonitoringAccess =
+      profile.nome?.includes('Carlos Henrique') ||
+      profile.email === 'carlos@styllobarber.com' ||
+      profile.email === 'carlos7045@gmail.com' ||
+      profile.role === 'saas_owner' ||
+      (process.env.NODE_ENV === 'development' && profile.nome?.includes('Carlos'))
+
     if (hasMonitoringAccess) {
       // Encontrar posição antes de "Configurações"
-      const configIndex = navItems.findIndex(item => item.id === 'configuracoes')
+      const configIndex = navItems.findIndex((item) => item.id === 'configuracoes')
       const insertIndex = configIndex !== -1 ? configIndex : navItems.length
-      
+
       // Determinar badge baseado no tipo de usuário
       let badge = undefined
       if (isSaasOwner()) {
@@ -244,7 +245,7 @@ export function Sidebar({
       } else if (isDeveloper()) {
         badge = '🔧' // Wrench emoji para Developer
       }
-      
+
       // Inserir item de monitoramento
       navItems.splice(insertIndex, 0, {
         id: 'monitoring',
@@ -255,7 +256,7 @@ export function Sidebar({
       })
     }
   }
-  
+
   // Adicionar item de debug em desenvolvimento
   if (process.env.NODE_ENV === 'development') {
     navItems.push({
@@ -280,7 +281,7 @@ export function Sidebar({
       {/* Overlay para mobile */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-30 lg:hidden"
+          className="fixed inset-0 z-30 bg-black/50 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -288,10 +289,10 @@ export function Sidebar({
       {/* Sidebar */}
       <aside
         className={cn(
-          sidebarVariants({ 
-            variant, 
-            size: isCollapsed ? 'collapsed' : 'expanded', 
-            position 
+          sidebarVariants({
+            variant,
+            size: isCollapsed ? 'collapsed' : 'expanded',
+            position,
           }),
           // Responsividade mobile
           'lg:translate-x-0',
@@ -301,23 +302,18 @@ export function Sidebar({
         {...props}
       >
         {/* Header do Sidebar */}
-        <div className="flex items-center justify-between p-4 border-b border-border-default">
+        <div className="border-border-default flex items-center justify-between border-b p-4">
           {!isCollapsed && (
             <Link
               href="/dashboard"
-              className="font-display text-xl font-bold text-primary-gold hover:text-primary-gold-dark transition-colors"
+              className="font-display text-xl font-bold text-primary-gold transition-colors hover:text-primary-gold-dark"
             >
               STYLLOBARBER
             </Link>
           )}
-          
+
           {/* Botão de toggle (desktop) */}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onToggleCollapse}
-            className="hidden lg:flex"
-          >
+          <Button variant="ghost" size="icon" onClick={onToggleCollapse} className="hidden lg:flex">
             {isCollapsed ? (
               <ChevronRight className="h-4 w-4" />
             ) : (
@@ -337,7 +333,7 @@ export function Sidebar({
         </div>
 
         {/* Navegação */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-thin">
+        <nav className="scrollbar-thin flex-1 space-y-2 overflow-y-auto p-4">
           {navItems.map((item) => (
             <SidebarNavItem
               key={item.id}
@@ -350,7 +346,7 @@ export function Sidebar({
         </nav>
 
         {/* Footer do Sidebar */}
-        <div className="p-4 border-t border-border-default space-y-2">
+        <div className="border-border-default space-y-2 border-t p-4">
           {/* Toggle tema */}
           <Button
             variant="ghost"
@@ -358,15 +354,9 @@ export function Sidebar({
             onClick={onToggleTheme}
             className="w-full justify-start"
           >
-            {isDarkMode ? (
-              <Sun className="h-4 w-4" />
-            ) : (
-              <Moon className="h-4 w-4" />
-            )}
+            {isDarkMode ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             {!isCollapsed && (
-              <span className="ml-2">
-                {isDarkMode ? 'Modo Claro' : 'Modo Escuro'}
-              </span>
+              <span className="ml-2">{isDarkMode ? 'Modo Claro' : 'Modo Escuro'}</span>
             )}
           </Button>
 
@@ -390,7 +380,7 @@ export function Sidebar({
         variant="ghost"
         size="icon"
         onClick={() => setIsMobileOpen(true)}
-        className="fixed top-4 left-4 z-50 lg:hidden"
+        className="fixed left-4 top-4 z-50 lg:hidden"
       >
         <Menu className="h-6 w-6" />
       </Button>
@@ -414,7 +404,7 @@ function SidebarNavItem({ item, isActive, isCollapsed, onClick }: SidebarNavItem
       href={item.href}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-200 hover:bg-primary-gold/10 hover:text-primary-gold',
+        'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200 hover:bg-primary-gold/10 hover:text-primary-gold',
         isActive
           ? 'bg-primary-gold text-primary-black shadow-sm'
           : 'text-text-secondary hover:text-text-primary',
@@ -422,12 +412,12 @@ function SidebarNavItem({ item, isActive, isCollapsed, onClick }: SidebarNavItem
       )}
     >
       <Icon className="h-5 w-5 flex-shrink-0" />
-      
+
       {!isCollapsed && (
         <>
           <span className="flex-1">{item.label}</span>
           {item.badge && (
-            <span className="bg-primary-gold text-primary-black text-xs px-2 py-0.5 rounded-full font-semibold">
+            <span className="rounded-full bg-primary-gold px-2 py-0.5 text-xs font-semibold text-primary-black">
               {item.badge}
             </span>
           )}
@@ -446,15 +436,15 @@ export function useSidebar() {
   React.useEffect(() => {
     const savedCollapsed = localStorage.getItem('sidebar-collapsed')
     const savedDarkMode = localStorage.getItem('dark-mode')
-    
+
     if (savedCollapsed) {
       setIsCollapsed(JSON.parse(savedCollapsed))
     }
-    
+
     if (savedDarkMode) {
       const darkMode = JSON.parse(savedDarkMode)
       setIsDarkMode(darkMode)
-      
+
       // Aplicar classe dark no documento na inicialização
       if (darkMode) {
         document.documentElement.classList.add('dark')
@@ -465,7 +455,7 @@ export function useSidebar() {
   }, [])
 
   const toggleCollapse = React.useCallback(() => {
-    setIsCollapsed(prev => {
+    setIsCollapsed((prev) => {
       const newValue = !prev
       localStorage.setItem('sidebar-collapsed', JSON.stringify(newValue))
       return newValue
@@ -473,17 +463,17 @@ export function useSidebar() {
   }, [])
 
   const toggleTheme = React.useCallback(() => {
-    setIsDarkMode(prev => {
+    setIsDarkMode((prev) => {
       const newValue = !prev
       localStorage.setItem('dark-mode', JSON.stringify(newValue))
-      
+
       // Aplicar classe dark no documento
       if (newValue) {
         document.documentElement.classList.add('dark')
       } else {
         document.documentElement.classList.remove('dark')
       }
-      
+
       return newValue
     })
   }, [])
