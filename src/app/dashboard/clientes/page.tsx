@@ -335,29 +335,31 @@ export default function ClientesPage() {
                               </span>
                               <span className="flex items-center gap-1 text-xs text-primary-gold">
                                 <Star className="h-3 w-3" />
-                                {cliente.pontosFidelidade || 0} pontos
+                                {(cliente as any).pontosFidelidade || 0} pontos
                               </span>
                               {isBarber && (
                                 <span className="text-xs font-medium text-green-600 dark:text-green-400">
                                   R${' '}
                                   {(
-                                    cliente.valorTotalGasto ||
-                                    cliente.valor_total_gasto ||
+                                    (cliente as any).valorTotalGasto ||
+                                    (cliente as any).valor_total_gasto ||
                                     0
                                   ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}{' '}
                                   gerados
                                 </span>
                               )}
                             </div>
-                            {cliente.servicoFavorito && (
+                            {(cliente as any).servicoFavorito && (
                               <p className="mt-1 text-xs text-blue-600 dark:text-blue-400">
-                                Serviço favorito: {cliente.servicoFavorito}
+                                Serviço favorito: {(cliente as any).servicoFavorito}
                               </p>
                             )}
-                            {isBarber && cliente.proximoAgendamento && (
+                            {isBarber && (cliente as any).proximoAgendamento && (
                               <p className="mt-1 text-xs text-purple-600 dark:text-purple-400">
                                 Próximo agendamento:{' '}
-                                {new Date(cliente.proximoAgendamento).toLocaleDateString('pt-BR')}
+                                {new Date((cliente as any).proximoAgendamento).toLocaleDateString(
+                                  'pt-BR'
+                                )}
                               </p>
                             )}
                           </div>
@@ -369,15 +371,21 @@ export default function ClientesPage() {
                               Último agendamento
                             </div>
                             <div className="font-medium text-gray-900 dark:text-white">
-                              {cliente.ultimoAgendamento
-                                ? new Date(cliente.ultimoAgendamento).toLocaleDateString('pt-BR')
+                              {(cliente as any).ultimoAgendamento ||
+                              (cliente as any).ultimo_agendamento
+                                ? new Date(
+                                    (cliente as any).ultimoAgendamento ||
+                                      (cliente as any).ultimo_agendamento
+                                  ).toLocaleDateString('pt-BR')
                                 : 'Nunca'}
                             </div>
-                            {isBarber && cliente.frequenciaMedia && cliente.frequenciaMedia > 0 && (
-                              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                Frequência: {cliente.frequenciaMedia} dias
-                              </div>
-                            )}
+                            {isBarber &&
+                              (cliente as any).frequenciaMedia &&
+                              (cliente as any).frequenciaMedia > 0 && (
+                                <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                                  Frequência: {(cliente as any).frequenciaMedia} dias
+                                </div>
+                              )}
                           </div>
 
                           <div className="flex items-center gap-2">

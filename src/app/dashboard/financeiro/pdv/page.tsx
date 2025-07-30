@@ -117,15 +117,15 @@ export default function PDVPage() {
   const { registrarTransacao } = useQuickTransactions()
   // const { estatisticasDia } = useQuickTransactions() // Não utilizado no momento
 
-  const handleTransactionSaved = async (transaction: Record<string, unknown>) => {
+  const handleTransactionSaved = async (transaction: any) => {
     try {
-      const result = await registrarTransacao(transaction)
+      const result = await registrarTransacao(transaction as any)
       if (result.success) {
         // Feedback visual de sucesso
         const notification = document.createElement('div')
         notification.className =
           'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50'
-        notification.textContent = `${transaction.tipo === 'ENTRADA' ? 'Entrada' : 'Saída'} registrada: ${formatCurrency(transaction.valor)}`
+        notification.textContent = `${(transaction as any).tipo === 'ENTRADA' ? 'Entrada' : 'Saída'} registrada: ${formatCurrency((transaction as any).valor)}`
         document.body.appendChild(notification)
 
         setTimeout(() => {
