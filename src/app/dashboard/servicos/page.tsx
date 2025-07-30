@@ -9,8 +9,26 @@ import { useAuth } from '@/hooks/use-auth'
 import { usePermissions, PERMISSIONS } from '@/hooks/use-permissions'
 import { useAdminServicos, type ServicoAdmin } from '@/hooks/use-admin-servicos'
 import { useServices } from '@/hooks/use-services'
-import { Scissors, Plus, Edit, Trash2, Calendar, BarChart3 } from 'lucide-react'
+import {
+  Scissors,
+  Plus,
+  Edit,
+  Trash2,
+  Calendar,
+  BarChart3,
+  History,
+  GripVertical,
+  Filter,
+  Eye,
+  EyeOff,
+} from 'lucide-react'
 import { formatarMoeda } from '@/lib/utils'
+import {
+  ServicoAnalyticsCard,
+  HistoricoPrecoModal,
+  ServicoCategoriaManager,
+} from '@/components/admin'
+import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
 
 /**
  * Página de serviços - versão adaptativa para clientes e administradores
@@ -23,6 +41,13 @@ export default function ServicosPage() {
   const [selectedServiceId, setSelectedServiceId] = useState<string>()
   const [isServicoFormOpen, setIsServicoFormOpen] = useState(false)
   const [selectedServico, setSelectedServico] = useState<ServicoAdmin | null>(null)
+
+  // Estados para novas funcionalidades administrativas
+  const [isHistoricoOpen, setIsHistoricoOpen] = useState(false)
+  const [selectedServicoId, setSelectedServicoId] = useState<string>('')
+  const [isCategoriaManagerOpen, setIsCategoriaManagerOpen] = useState(false)
+  const [showInactive, setShowInactive] = useState(false)
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('')
 
   // Usar hook apropriado baseado nas permissões
   const isAdmin = canManageServices
@@ -46,6 +71,49 @@ export default function ServicosPage() {
   const handleAgendar = (serviceId: string) => {
     setSelectedServiceId(serviceId)
     setIsAgendamentoOpen(true)
+  }
+
+  // Filtrar serviços para administradores
+  const servicosFiltrados = isAdmin
+    ? servicos.filter((servico) => {
+        const matchCategoria = !filtroCategoria || servico.categoria === filtroCategoria
+        const matchStatus = showInactive || servico.ativo
+        return matchCategoria && matchStatus
+      })
+    : servicos.filter((s) => s.ativo)
+
+  // Obter categorias únicas
+  const categorias = Array.from(new Set(servicos.map((s) => s.categoria).filter(Boolean)))
+
+  // Novos handlers para funcionalidades administrativas
+  const handleVerHistorico = (servicoId: string) => {
+    setSelectedServicoId(servicoId)
+    setIsHistoricoOpen(true)
+  }
+
+  const handleDragEnd = async (result: any) => {
+    if (!result.destination || !isAdmin) return
+
+    const items = Array.from(servicosFiltrados)
+    const [reorderedItem] = items.splice(result.source.index, 1)
+    items.splice(result.destination.index, 0, reorderedItem)
+
+    // Atualizar ordem no banco
+    const servicosOrdenados = items.map((servico, index) => ({
+      id: servico.id,
+      ordem: index + 1,
+    }))
+
+    try {
+      const result = await (servicosAdmin as any).updateOrdem?.(servicosOrdenados)
+      if (result?.success) {
+        refetch()
+      } else {
+        alert('Erro ao atualizar ordem')
+      }
+    } catch (error) {
+      alert('Erro inesperado ao atualizar ordem')
+    }
   }
 
   const handleAgendamentoSuccess = (appointment: Record<string, unknown>) => {
@@ -116,109 +184,33 @@ export default function ServicosPage() {
     <Container className="py-8">
       <div className="mx-auto max-w-6xl">
         {/* Header Moderno */}
-        <div className="mb-8 text-center">
-          <div className="mb-6 flex items-center justify-center space-x-4">
-            <div className="rounded-2xl bg-gradient-to-br from-primary-gold to-primary-gold-dark p-4 shadow-xl">
-              <Scissors className="h-10 w-10 text-primary-black" />
-            </div>
-            <div>
-              <h1 className="mb-2 text-4xl font-bold text-gray-900 dark:text-white">Serviços</h1>
-              <p className="text-lg font-medium text-gray-600 dark:text-gray-300">
-                {isAdmin
-                  ? 'Gerencie os serviços oferecidos pela barbearia'
-                  : 'Nossos serviços premium'}
-              </p>
-            </div>
-          </div>
-          <div className="mx-auto h-1 w-24 rounded-full bg-gradient-to-r from-primary-gold to-primary-gold-dark"></div>
-        </div>
-
-        {/* Cards de estatísticas - apenas para admins */}
-        {isAdmin && (
-          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
-            <Card className="border-l-4 border-l-primary-gold bg-gradient-to-br from-white to-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-xl dark:from-secondary-graphite-light dark:to-secondary-graphite">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Total de Serviços
-                </CardTitle>
-                <div className="rounded-lg bg-primary-gold/10 p-2">
-                  <Scissors className="h-5 w-5 text-primary-gold" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-primary-gold">{servicos.length}</div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Serviços cadastrados</p>
-              </CardContent>
-            </Card>
-
-            <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-xl dark:from-secondary-graphite-light dark:to-secondary-graphite">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Serviços Ativos
-                </CardTitle>
-                <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
-                  <Scissors className="h-5 w-5 text-green-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-green-600">
-                  {servicos.filter((s) => s.ativo).length}
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  {servicos.length > 0
-                    ? Math.round((servicos.filter((s) => s.ativo).length / servicos.length) * 100)
-                    : 0}
-                  % do total
+        <div className="mb-8">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="rounded-2xl bg-gradient-to-br from-primary-gold to-primary-gold-dark p-4 shadow-xl">
+                <Scissors className="h-10 w-10 text-primary-black" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold text-gray-900 dark:text-white">Serviços</h1>
+                <p className="text-lg font-medium text-gray-600 dark:text-gray-300">
+                  {isAdmin
+                    ? 'Gerencie os serviços oferecidos pela barbearia'
+                    : 'Nossos serviços premium'}
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-white to-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-xl dark:from-secondary-graphite-light dark:to-secondary-graphite">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Preço Médio
-                </CardTitle>
-                <div className="rounded-lg bg-blue-100 p-2 dark:bg-blue-900/30">
-                  <Scissors className="h-5 w-5 text-blue-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-blue-600">
-                  {servicos.length > 0
-                    ? formatarMoeda(servicos.reduce((sum, s) => sum + s.preco, 0) / servicos.length)
-                    : 'R$ 0,00'}
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Média de preços</p>
-              </CardContent>
-            </Card>
+            {isAdmin && (
+              <div className="flex items-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCategoriaManagerOpen(true)}
+                  className="border-primary-gold text-primary-gold hover:bg-primary-gold/10"
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  Categorias
+                </Button>
 
-            <Card className="border-l-4 border-l-purple-500 bg-gradient-to-br from-white to-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-xl dark:from-secondary-graphite-light dark:to-secondary-graphite">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                  Receita do Mês
-                </CardTitle>
-                <div className="rounded-lg bg-purple-100 p-2 dark:bg-purple-900/30">
-                  <BarChart3 className="h-5 w-5 text-purple-600" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-purple-600">
-                  {formatarMoeda(
-                    servicos.reduce((sum, s) => sum + ((s as ServicoAdmin).receita_mes || 0), 0)
-                  )}
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400">Receita dos serviços</p>
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Lista de serviços */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>{isAdmin ? 'Gerenciar Serviços' : 'Nossos Serviços'}</CardTitle>
-              {isAdmin && (
                 <Button
                   onClick={handleNovoServico}
                   className="bg-primary-gold text-primary-black hover:bg-primary-gold-dark"
@@ -226,6 +218,82 @@ export default function ServicosPage() {
                   <Plus className="mr-2 h-4 w-4" />
                   Novo Serviço
                 </Button>
+              </div>
+            )}
+          </div>
+
+          <div className="mx-auto h-1 w-24 rounded-full bg-gradient-to-r from-primary-gold to-primary-gold-dark"></div>
+        </div>
+
+        {/* Analytics Cards - apenas para admins */}
+        {isAdmin && <ServicoAnalyticsCard servicos={servicos as ServicoAdmin[]} />}
+
+        {/* Filtros - apenas para admins */}
+        {isAdmin && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Filter className="h-5 w-5" />
+                Filtros
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <label className="text-sm font-medium">Categoria:</label>
+                  <select
+                    value={filtroCategoria}
+                    onChange={(e) => setFiltroCategoria(e.target.value)}
+                    className="border-border-default rounded-lg border bg-background-primary px-3 py-1 text-text-primary"
+                  >
+                    <option value="">Todas</option>
+                    {categorias.map((categoria) => (
+                      <option key={categoria} value={categoria}>
+                        {categoria}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="showInactive"
+                    checked={showInactive}
+                    onChange={(e) => setShowInactive(e.target.checked)}
+                    className="border-border-default h-4 w-4 rounded bg-background-primary text-primary-gold accent-primary-gold focus:ring-2 focus:ring-primary-gold"
+                  />
+                  <label htmlFor="showInactive" className="text-sm font-medium">
+                    Mostrar serviços inativos
+                  </label>
+                </div>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setFiltroCategoria('')
+                    setShowInactive(false)
+                  }}
+                >
+                  Limpar Filtros
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Lista de serviços */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle>
+                {isAdmin ? `Gerenciar Serviços (${servicosFiltrados.length})` : 'Nossos Serviços'}
+              </CardTitle>
+              {!isAdmin && (
+                <div className="text-sm text-text-secondary">
+                  {servicos.length} serviços disponíveis
+                </div>
               )}
             </div>
           </CardHeader>
@@ -239,7 +307,7 @@ export default function ServicosPage() {
                   />
                 ))}
               </div>
-            ) : servicos.length === 0 ? (
+            ) : servicosFiltrados.length === 0 ? (
               <div className="py-12 text-center">
                 <Scissors className="mx-auto mb-4 h-12 w-12 text-text-secondary" />
                 <h3 className="mb-2 text-lg font-medium text-text-primary">
@@ -247,100 +315,245 @@ export default function ServicosPage() {
                 </h3>
                 <p className="text-text-secondary">
                   {isAdmin
-                    ? 'Comece criando seu primeiro serviço'
+                    ? servicos.length === 0
+                      ? 'Comece criando seu primeiro serviço'
+                      : 'Ajuste os filtros para ver mais serviços'
                     : 'Serviços serão exibidos aqui quando disponíveis'}
                 </p>
               </div>
             ) : (
               <>
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {servicos
-                    .filter((s) => s.ativo)
-                    .map((servico) => (
-                      <Card
-                        key={servico.id}
-                        className="border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-xl dark:border-secondary-graphite-card/50 dark:from-secondary-graphite-light dark:to-secondary-graphite dark:hover:bg-secondary-graphite-hover"
-                      >
-                        <CardContent className="p-6">
-                          <div className="mb-4 flex items-center gap-3">
-                            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-gold to-primary-gold-dark shadow-md">
-                              <Scissors className="h-6 w-6 text-primary-black" />
+                {/* Lista com Drag and Drop para admins */}
+                {isAdmin ? (
+                  <DragDropContext onDragEnd={handleDragEnd}>
+                    <Droppable droppableId="servicos">
+                      {(provided) => (
+                        <div
+                          {...provided.droppableProps}
+                          ref={provided.innerRef}
+                          className="space-y-4"
+                        >
+                          {servicosFiltrados.map((servico, index) => (
+                            <Draggable key={servico.id} draggableId={servico.id} index={index}>
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  className={`rounded-lg border border-gray-200 bg-white p-4 transition-all duration-200 dark:border-secondary-graphite-card/50 dark:bg-secondary-graphite-light ${snapshot.isDragging ? 'scale-105 shadow-xl' : 'hover:shadow-md'} ${!servico.ativo ? 'opacity-60' : ''} `}
+                                >
+                                  <div className="flex items-center gap-4">
+                                    {/* Drag Handle */}
+                                    <div
+                                      {...provided.dragHandleProps}
+                                      className="cursor-grab text-text-secondary hover:text-text-primary active:cursor-grabbing"
+                                    >
+                                      <GripVertical className="h-5 w-5" />
+                                    </div>
+
+                                    {/* Ícone do Serviço */}
+                                    <div
+                                      className={`flex h-12 w-12 items-center justify-center rounded-full shadow-md ${
+                                        servico.ativo
+                                          ? 'bg-gradient-to-br from-primary-gold to-primary-gold-dark'
+                                          : 'bg-gray-300 dark:bg-gray-600'
+                                      } `}
+                                    >
+                                      <Scissors
+                                        className={`h-6 w-6 ${servico.ativo ? 'text-primary-black' : 'text-gray-500'}`}
+                                      />
+                                    </div>
+
+                                    {/* Informações do Serviço */}
+                                    <div className="flex-1">
+                                      <div className="mb-1 flex items-center gap-2">
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                          {servico.nome}
+                                        </h3>
+                                        {servico.categoria && (
+                                          <span className="rounded-full bg-primary-gold/20 px-2 py-1 text-xs text-primary-gold">
+                                            {servico.categoria}
+                                          </span>
+                                        )}
+                                        {!servico.ativo && (
+                                          <span className="rounded-full bg-red-100 px-2 py-1 text-xs text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                            Inativo
+                                          </span>
+                                        )}
+                                      </div>
+
+                                      <div className="flex items-center gap-4 text-sm text-gray-600 dark:text-gray-300">
+                                        <span className="font-semibold text-primary-gold">
+                                          {formatarMoeda(servico.preco)}
+                                        </span>
+                                        <span>{servico.duracao_minutos} min</span>
+                                        <span>
+                                          {(servico as ServicoAdmin).total_agendamentos || 0}{' '}
+                                          agendamentos
+                                        </span>
+                                        <span className="text-green-600 dark:text-green-400">
+                                          {formatarMoeda(
+                                            (servico as ServicoAdmin).receita_mes || 0
+                                          )}
+                                          /mês
+                                        </span>
+                                      </div>
+                                    </div>
+
+                                    {/* Ações Administrativas */}
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleVerHistorico(servico.id)}
+                                        title="Ver histórico de preços"
+                                      >
+                                        <History className="h-4 w-4" />
+                                      </Button>
+
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => handleEditarServico(servico)}
+                                        title="Editar serviço"
+                                      >
+                                        <Edit className="h-4 w-4" />
+                                      </Button>
+
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleToggleStatus(servico.id, !servico.ativo)
+                                        }
+                                        title={
+                                          servico.ativo ? 'Desativar serviço' : 'Ativar serviço'
+                                        }
+                                        className={
+                                          servico.ativo
+                                            ? 'text-warning hover:text-warning'
+                                            : 'text-success hover:text-success'
+                                        }
+                                      >
+                                        {servico.ativo ? (
+                                          <EyeOff className="h-4 w-4" />
+                                        ) : (
+                                          <Eye className="h-4 w-4" />
+                                        )}
+                                      </Button>
+
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleDeleteServico(servico.id, servico.nome)
+                                        }
+                                        title="Excluir permanentemente"
+                                        className="text-error hover:text-error"
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </Draggable>
+                          ))}
+                          {provided.placeholder}
+                        </div>
+                      )}
+                    </Droppable>
+                  </DragDropContext>
+                ) : (
+                  /* Grid para clientes */
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {servicos
+                      .filter((s) => s.ativo)
+                      .map((servico) => (
+                        <Card
+                          key={servico.id}
+                          className="border border-gray-200 bg-gradient-to-br from-white to-gray-50 shadow-sm transition-all duration-300 hover:scale-105 hover:shadow-xl dark:border-secondary-graphite-card/50 dark:from-secondary-graphite-light dark:to-secondary-graphite dark:hover:bg-secondary-graphite-hover"
+                        >
+                          <CardContent className="p-6">
+                            <div className="mb-4 flex items-center gap-3">
+                              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary-gold to-primary-gold-dark shadow-md">
+                                <Scissors className="h-6 w-6 text-primary-black" />
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                                  {servico.nome}
+                                </h3>
+                                <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                                  {servico.duracao_minutos} minutos
+                                </p>
+                              </div>
+                              {isAdmin && (
+                                <div className="flex items-center gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleEditarServico(servico)}
+                                    title="Editar serviço"
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleToggleStatus(servico.id, false)}
+                                    title="Desativar serviço"
+                                    className="text-warning hover:text-warning"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
                             </div>
-                            <div className="flex-1">
-                              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
-                                {servico.nome}
-                              </h3>
-                              <p className="text-sm font-medium text-gray-600 dark:text-gray-300">
-                                {servico.duracao_minutos} minutos
-                              </p>
-                            </div>
+
+                            <p className="mb-4 text-sm font-medium text-gray-600 dark:text-gray-300">
+                              {servico.descricao || 'Sem descrição'}
+                            </p>
+
+                            {/* Estatísticas para admin - Melhorado */}
                             {isAdmin && (
-                              <div className="flex items-center gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleEditarServico(servico)}
-                                  title="Editar serviço"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => handleToggleStatus(servico.id, false)}
-                                  title="Desativar serviço"
-                                  className="text-warning hover:text-warning"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                              <div className="mb-4 grid grid-cols-2 gap-4 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-4 shadow-sm dark:border-secondary-graphite-card/50 dark:from-secondary-graphite-card dark:to-secondary-graphite-light">
+                                <div className="text-center">
+                                  <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                                    {(servico as ServicoAdmin).total_agendamentos || 0}
+                                  </div>
+                                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    Agendamentos
+                                  </div>
+                                </div>
+                                <div className="text-center">
+                                  <div className="text-lg font-bold text-green-600 dark:text-green-400">
+                                    {formatarMoeda((servico as ServicoAdmin).receita_mes || 0)}
+                                  </div>
+                                  <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                                    Receita/Mês
+                                  </div>
+                                </div>
                               </div>
                             )}
-                          </div>
 
-                          <p className="mb-4 text-sm font-medium text-gray-600 dark:text-gray-300">
-                            {servico.descricao || 'Sem descrição'}
-                          </p>
-
-                          {/* Estatísticas para admin - Melhorado */}
-                          {isAdmin && (
-                            <div className="mb-4 grid grid-cols-2 gap-4 rounded-xl border border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100 p-4 shadow-sm dark:border-secondary-graphite-card/50 dark:from-secondary-graphite-card dark:to-secondary-graphite-light">
-                              <div className="text-center">
-                                <div className="text-lg font-bold text-blue-600 dark:text-blue-400">
-                                  {(servico as ServicoAdmin).total_agendamentos || 0}
-                                </div>
-                                <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                  Agendamentos
-                                </div>
+                            <div className="flex items-center justify-between">
+                              <div className="bg-gradient-to-r from-primary-gold to-primary-gold-dark bg-clip-text text-3xl font-bold text-transparent">
+                                {formatarMoeda(servico.preco)}
                               </div>
-                              <div className="text-center">
-                                <div className="text-lg font-bold text-green-600 dark:text-green-400">
-                                  {formatarMoeda((servico as ServicoAdmin).receita_mes || 0)}
-                                </div>
-                                <div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                                  Receita/Mês
-                                </div>
-                              </div>
+                              {!isAdmin && (
+                                <Button
+                                  onClick={() => handleAgendar(servico.id)}
+                                  className="bg-gradient-to-r from-primary-gold to-primary-gold-dark font-semibold text-primary-black shadow-lg transition-all duration-300 hover:from-primary-gold-dark hover:to-primary-gold hover:shadow-xl"
+                                >
+                                  <Calendar className="mr-2 h-4 w-4" />
+                                  Agendar
+                                </Button>
+                              )}
                             </div>
-                          )}
-
-                          <div className="flex items-center justify-between">
-                            <div className="bg-gradient-to-r from-primary-gold to-primary-gold-dark bg-clip-text text-3xl font-bold text-transparent">
-                              {formatarMoeda(servico.preco)}
-                            </div>
-                            {!isAdmin && (
-                              <Button
-                                onClick={() => handleAgendar(servico.id)}
-                                className="bg-gradient-to-r from-primary-gold to-primary-gold-dark font-semibold text-primary-black shadow-lg transition-all duration-300 hover:from-primary-gold-dark hover:to-primary-gold hover:shadow-xl"
-                              >
-                                <Calendar className="mr-2 h-4 w-4" />
-                                Agendar
-                              </Button>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                  </div>
+                )}
 
                 {/* Serviços inativos */}
                 {servicos.some((s) => !s.ativo) && (
@@ -431,6 +644,23 @@ export default function ServicosPage() {
             servico={selectedServico}
             onSuccess={handleServicoFormSuccess}
           />
+        )}
+
+        {/* Novos Modais Administrativos */}
+        {isAdmin && (
+          <>
+            <HistoricoPrecoModal
+              isOpen={isHistoricoOpen}
+              onClose={() => setIsHistoricoOpen(false)}
+              servicoId={selectedServicoId}
+            />
+
+            <ServicoCategoriaManager
+              isOpen={isCategoriaManagerOpen}
+              onClose={() => setIsCategoriaManagerOpen(false)}
+              onSuccess={refetch}
+            />
+          </>
         )}
       </div>
     </Container>

@@ -9,7 +9,7 @@ import { useAuth } from '@/hooks/use-auth'
 
 export interface HorarioFuncionamento {
   id: string
-  dia_semana: number // 0-6 (domingo-sábado)
+  dia_semana: number | null // 0-6 (domingo-sábado)
   horario_inicio: string
   horario_fim: string
   intervalo_inicio?: string
@@ -81,22 +81,32 @@ interface UseAdminHorariosReturn {
   bloqueiosHorario: BloqueioHorario[]
   loading: boolean
   error: string | null
-  
+
   // Horários de funcionamento
-  createHorarioFuncionamento: (data: CreateHorarioFuncionamentoData) => Promise<{ success: boolean; error?: string }>
-  updateHorarioFuncionamento: (id: string, data: UpdateHorarioFuncionamentoData) => Promise<{ success: boolean; error?: string }>
+  createHorarioFuncionamento: (
+    data: CreateHorarioFuncionamentoData
+  ) => Promise<{ success: boolean; error?: string }>
+  updateHorarioFuncionamento: (
+    id: string,
+    data: UpdateHorarioFuncionamentoData
+  ) => Promise<{ success: boolean; error?: string }>
   deleteHorarioFuncionamento: (id: string) => Promise<{ success: boolean; error?: string }>
-  
+
   // Bloqueios de horário
-  createBloqueioHorario: (data: CreateBloqueioHorarioData) => Promise<{ success: boolean; error?: string }>
-  updateBloqueioHorario: (id: string, data: UpdateBloqueioHorarioData) => Promise<{ success: boolean; error?: string }>
+  createBloqueioHorario: (
+    data: CreateBloqueioHorarioData
+  ) => Promise<{ success: boolean; error?: string }>
+  updateBloqueioHorario: (
+    id: string,
+    data: UpdateBloqueioHorarioData
+  ) => Promise<{ success: boolean; error?: string }>
   deleteBloqueioHorario: (id: string) => Promise<{ success: boolean; error?: string }>
-  
+
   // Utilitários
   getHorarioByDiaSemana: (diaSemana: number) => HorarioFuncionamento | undefined
   getBloqueiosAtivos: () => BloqueioHorario[]
   isHorarioDisponivel: (data: string, horario: string, funcionarioId?: string) => Promise<boolean>
-  
+
   refetch: () => Promise<void>
 }
 
@@ -134,14 +144,16 @@ export function useAdminHorarios(): UseAdminHorariosReturn {
     try {
       const { data, error: fetchError } = await supabase
         .from('bloqueios_horario')
-        .select(`
+        .select(
+          `
           *,
           funcionario:funcionarios(
             id,
             profile:profiles(nome)
           ),
           created_by_profile:profiles!bloqueios_horario_created_by_fkey(nome)
-        `)
+        `
+        )
         .order('data_inicio', { ascending: true })
 
       if (fetchError) {
@@ -167,10 +179,7 @@ export function useAdminHorarios(): UseAdminHorariosReturn {
       setLoading(true)
       setError(null)
 
-      await Promise.all([
-        fetchHorariosFuncionamento(),
-        fetchBloqueiosHorario()
-      ])
+      await Promise.all([fetchHorariosFuncionamento(), fetchBloqueiosHorario()])
     } catch (err) {
       console.error('Erro ao buscar dados de horários:', err)
       setError(err instanceof Error ? err.message : 'Erro ao buscar dados de horários')
@@ -180,293 +189,343 @@ export function useAdminHorarios(): UseAdminHorariosReturn {
   }, [hasPermission, fetchHorariosFuncionamento, fetchBloqueiosHorario])
 
   // Função para criar horário de funcionamento
-  const createHorarioFuncionamento = useCallback(async (data: CreateHorarioFuncionamentoData) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      const { data: newHorario, error: createError } = await supabase
-        .from('horarios_funcionamento')
-        .insert([{
-          ...data,
-          ativo: data.ativo ?? true
-        }])
-        .select()
-        .single()
-
-      if (createError) {
-        throw createError
+  const createHorarioFuncionamento = useCallback(
+    async (data: CreateHorarioFuncionamentoData) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
 
-      setHorariosFuncionamento(prev => [...prev, newHorario].sort((a, b) => a.dia_semana - b.dia_semana))
+      try {
+        const { data: newHorario, error: createError } = await supabase
+          .from('horarios_funcionamento')
+          .insert([
+            {
+              ...data,
+              ativo: data.ativo ?? true,
+            },
+          ])
+          .select()
+          .single()
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao criar horário de funcionamento:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao criar horário de funcionamento'
+        if (createError) {
+          throw createError
+        }
+
+        setHorariosFuncionamento((prev) =>
+          [...prev, newHorario].sort((a, b) => (a.dia_semana || 0) - (b.dia_semana || 0))
+        )
+
+        return { success: true }
+      } catch (err) {
+        console.error('Erro ao criar horário de funcionamento:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao criar horário de funcionamento',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para atualizar horário de funcionamento
-  const updateHorarioFuncionamento = useCallback(async (id: string, data: UpdateHorarioFuncionamentoData) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      const { error: updateError } = await supabase
-        .from('horarios_funcionamento')
-        .update(data)
-        .eq('id', id)
-
-      if (updateError) {
-        throw updateError
+  const updateHorarioFuncionamento = useCallback(
+    async (id: string, data: UpdateHorarioFuncionamentoData) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
 
-      setHorariosFuncionamento(prev =>
-        prev.map(horario =>
+      // Atualização otimista - atualizar o estado local imediatamente
+      const previousState = horariosFuncionamento
+      setHorariosFuncionamento((prev) =>
+        prev.map((horario) =>
           horario.id === id
             ? { ...horario, ...data, updated_at: new Date().toISOString() }
             : horario
         )
       )
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao atualizar horário de funcionamento:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao atualizar horário de funcionamento'
+      try {
+        const { data: updatedData, error: updateError } = await supabase
+          .from('horarios_funcionamento')
+          .update(data)
+          .eq('id', id)
+          .select()
+          .single()
+
+        if (updateError) {
+          // Reverter o estado em caso de erro
+          setHorariosFuncionamento(previousState)
+          throw updateError
+        }
+
+        // Sincronizar com os dados reais do banco
+        setHorariosFuncionamento((prev) =>
+          prev.map((horario) => (horario.id === id ? updatedData : horario))
+        )
+
+        return { success: true }
+      } catch (err) {
+        console.error('Erro ao atualizar horário de funcionamento:', err)
+        // Estado já foi revertido acima
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao atualizar horário de funcionamento',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission, horariosFuncionamento]
+  )
 
   // Função para deletar horário de funcionamento
-  const deleteHorarioFuncionamento = useCallback(async (id: string) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      const { error: deleteError } = await supabase
-        .from('horarios_funcionamento')
-        .delete()
-        .eq('id', id)
-
-      if (deleteError) {
-        throw deleteError
+  const deleteHorarioFuncionamento = useCallback(
+    async (id: string) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
 
-      setHorariosFuncionamento(prev => prev.filter(horario => horario.id !== id))
+      try {
+        const { error: deleteError } = await supabase
+          .from('horarios_funcionamento')
+          .delete()
+          .eq('id', id)
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao deletar horário de funcionamento:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao deletar horário de funcionamento'
+        if (deleteError) {
+          throw deleteError
+        }
+
+        setHorariosFuncionamento((prev) => prev.filter((horario) => horario.id !== id))
+
+        return { success: true }
+      } catch (err) {
+        console.error('Erro ao deletar horário de funcionamento:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao deletar horário de funcionamento',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para criar bloqueio de horário
-  const createBloqueioHorario = useCallback(async (data: CreateBloqueioHorarioData) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
+  const createBloqueioHorario = useCallback(
+    async (data: CreateBloqueioHorarioData) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
+      }
 
-    try {
-      const { data: newBloqueio, error: createError } = await supabase
-        .from('bloqueios_horario')
-        .insert([{
-          ...data,
-          created_by: user?.id
-        }])
-        .select(`
+      try {
+        const { data: newBloqueio, error: createError } = await supabase
+          .from('bloqueios_horario')
+          .insert([
+            {
+              ...data,
+              created_by: user?.id,
+            },
+          ])
+          .select(
+            `
           *,
           funcionario:funcionarios(
             id,
             profile:profiles(nome)
           ),
           created_by_profile:profiles!bloqueios_horario_created_by_fkey(nome)
-        `)
-        .single()
+        `
+          )
+          .single()
 
-      if (createError) {
-        throw createError
+        if (createError) {
+          throw createError
+        }
+
+        setBloqueiosHorario((prev) =>
+          [newBloqueio, ...prev].sort(
+            (a, b) => new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime()
+          )
+        )
+
+        return { success: true }
+      } catch (err) {
+        console.error('Erro ao criar bloqueio de horário:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao criar bloqueio de horário',
+        }
       }
-
-      setBloqueiosHorario(prev => [newBloqueio, ...prev].sort((a, b) => 
-        new Date(a.data_inicio).getTime() - new Date(b.data_inicio).getTime()
-      ))
-
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao criar bloqueio de horário:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao criar bloqueio de horário'
-      }
-    }
-  }, [hasPermission, user?.id])
+    },
+    [hasPermission, user?.id]
+  )
 
   // Função para atualizar bloqueio de horário
-  const updateBloqueioHorario = useCallback(async (id: string, data: UpdateBloqueioHorarioData) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      const { error: updateError } = await supabase
-        .from('bloqueios_horario')
-        .update(data)
-        .eq('id', id)
-
-      if (updateError) {
-        throw updateError
+  const updateBloqueioHorario = useCallback(
+    async (id: string, data: UpdateBloqueioHorarioData) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
 
-      setBloqueiosHorario(prev =>
-        prev.map(bloqueio =>
-          bloqueio.id === id ? { ...bloqueio, ...data } : bloqueio
+      try {
+        const { error: updateError } = await supabase
+          .from('bloqueios_horario')
+          .update(data)
+          .eq('id', id)
+
+        if (updateError) {
+          throw updateError
+        }
+
+        setBloqueiosHorario((prev) =>
+          prev.map((bloqueio) => (bloqueio.id === id ? { ...bloqueio, ...data } : bloqueio))
         )
-      )
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao atualizar bloqueio de horário:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao atualizar bloqueio de horário'
+        return { success: true }
+      } catch (err) {
+        console.error('Erro ao atualizar bloqueio de horário:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao atualizar bloqueio de horário',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para deletar bloqueio de horário
-  const deleteBloqueioHorario = useCallback(async (id: string) => {
-    if (!hasPermission) {
-      return { success: false, error: 'Acesso negado' }
-    }
-
-    try {
-      const { error: deleteError } = await supabase
-        .from('bloqueios_horario')
-        .delete()
-        .eq('id', id)
-
-      if (deleteError) {
-        throw deleteError
+  const deleteBloqueioHorario = useCallback(
+    async (id: string) => {
+      if (!hasPermission) {
+        return { success: false, error: 'Acesso negado' }
       }
 
-      setBloqueiosHorario(prev => prev.filter(bloqueio => bloqueio.id !== id))
+      try {
+        const { error: deleteError } = await supabase
+          .from('bloqueios_horario')
+          .delete()
+          .eq('id', id)
 
-      return { success: true }
-    } catch (err) {
-      console.error('Erro ao deletar bloqueio de horário:', err)
-      return {
-        success: false,
-        error: err instanceof Error ? err.message : 'Erro ao deletar bloqueio de horário'
+        if (deleteError) {
+          throw deleteError
+        }
+
+        setBloqueiosHorario((prev) => prev.filter((bloqueio) => bloqueio.id !== id))
+
+        return { success: true }
+      } catch (err) {
+        console.error('Erro ao deletar bloqueio de horário:', err)
+        return {
+          success: false,
+          error: err instanceof Error ? err.message : 'Erro ao deletar bloqueio de horário',
+        }
       }
-    }
-  }, [hasPermission])
+    },
+    [hasPermission]
+  )
 
   // Função para buscar horário por dia da semana
-  const getHorarioByDiaSemana = useCallback((diaSemana: number) => {
-    return horariosFuncionamento.find(horario => horario.dia_semana === diaSemana && horario.ativo)
-  }, [horariosFuncionamento])
+  const getHorarioByDiaSemana = useCallback(
+    (diaSemana: number) => {
+      return horariosFuncionamento.find(
+        (horario) => horario.dia_semana === diaSemana && horario.ativo
+      )
+    },
+    [horariosFuncionamento]
+  )
 
   // Função para buscar bloqueios ativos
   const getBloqueiosAtivos = useCallback(() => {
     const hoje = new Date().toISOString().split('T')[0]
-    return bloqueiosHorario.filter(bloqueio => 
-      bloqueio.data_fim >= hoje
-    )
+    return bloqueiosHorario.filter((bloqueio) => bloqueio.data_fim >= hoje)
   }, [bloqueiosHorario])
 
   // Função para verificar se horário está disponível
-  const isHorarioDisponivel = useCallback(async (data: string, horario: string, funcionarioId?: string) => {
-    try {
-      const dataObj = new Date(data)
-      const diaSemana = dataObj.getDay()
-      
-      // Verificar se está dentro do horário de funcionamento
-      const horarioFuncionamento = getHorarioByDiaSemana(diaSemana)
-      if (!horarioFuncionamento) {
-        return false
-      }
+  const isHorarioDisponivel = useCallback(
+    async (data: string, horario: string, funcionarioId?: string) => {
+      try {
+        const dataObj = new Date(data)
+        const diaSemana = dataObj.getDay()
 
-      // Verificar se está dentro do horário de funcionamento
-      if (horario < horarioFuncionamento.horario_inicio || horario > horarioFuncionamento.horario_fim) {
-        return false
-      }
-
-      // Verificar se está no intervalo (se houver)
-      if (horarioFuncionamento.intervalo_inicio && horarioFuncionamento.intervalo_fim) {
-        if (horario >= horarioFuncionamento.intervalo_inicio && horario <= horarioFuncionamento.intervalo_fim) {
-          return false
-        }
-      }
-
-      // Verificar bloqueios
-      const bloqueiosAtivos = getBloqueiosAtivos()
-      const temBloqueio = bloqueiosAtivos.some(bloqueio => {
-        // Verificar se a data está no período do bloqueio
-        if (data < bloqueio.data_inicio || data > bloqueio.data_fim) {
+        // Verificar se está dentro do horário de funcionamento
+        const horarioFuncionamento = getHorarioByDiaSemana(diaSemana)
+        if (!horarioFuncionamento) {
           return false
         }
 
-        // Se é bloqueio específico de funcionário
-        if (bloqueio.funcionario_id && bloqueio.funcionario_id !== funcionarioId) {
+        // Verificar se está dentro do horário de funcionamento
+        if (
+          horario < horarioFuncionamento.horario_inicio ||
+          horario > horarioFuncionamento.horario_fim
+        ) {
           return false
         }
 
-        // Se tem horário específico no bloqueio
-        if (bloqueio.horario_inicio && bloqueio.horario_fim) {
-          return horario >= bloqueio.horario_inicio && horario <= bloqueio.horario_fim
+        // Verificar se está no intervalo (se houver)
+        if (horarioFuncionamento.intervalo_inicio && horarioFuncionamento.intervalo_fim) {
+          if (
+            horario >= horarioFuncionamento.intervalo_inicio &&
+            horario <= horarioFuncionamento.intervalo_fim
+          ) {
+            return false
+          }
         }
 
-        // Bloqueio do dia inteiro
-        return true
-      })
+        // Verificar bloqueios
+        const bloqueiosAtivos = getBloqueiosAtivos()
+        const temBloqueio = bloqueiosAtivos.some((bloqueio) => {
+          // Verificar se a data está no período do bloqueio
+          if (data < bloqueio.data_inicio || data > bloqueio.data_fim) {
+            return false
+          }
 
-      if (temBloqueio) {
-        return false
-      }
+          // Se é bloqueio específico de funcionário
+          if (bloqueio.funcionario_id && bloqueio.funcionario_id !== funcionarioId) {
+            return false
+          }
 
-      // Verificar se já existe agendamento neste horário
-      const { data: agendamentoExistente, error } = await supabase
-        .from('appointments')
-        .select('id')
-        .eq('data_agendamento', `${data} ${horario}:00`)
-        .neq('status', 'cancelado')
+          // Se tem horário específico no bloqueio
+          if (bloqueio.horario_inicio && bloqueio.horario_fim) {
+            return horario >= bloqueio.horario_inicio && horario <= bloqueio.horario_fim
+          }
 
-      if (error) {
-        console.error('Erro ao verificar agendamento existente:', error)
-        return false
-      }
+          // Bloqueio do dia inteiro
+          return true
+        })
 
-      // Se é para funcionário específico, verificar apenas para ele
-      if (funcionarioId && agendamentoExistente) {
-        const { data: agendamentoFuncionario } = await supabase
+        if (temBloqueio) {
+          return false
+        }
+
+        // Verificar se já existe agendamento neste horário
+        const { data: agendamentoExistente, error } = await supabase
           .from('appointments')
           .select('id')
           .eq('data_agendamento', `${data} ${horario}:00`)
-          .eq('barbeiro_id', funcionarioId)
           .neq('status', 'cancelado')
 
-        return !agendamentoFuncionario || agendamentoFuncionario.length === 0
-      }
+        if (error) {
+          console.error('Erro ao verificar agendamento existente:', error)
+          return false
+        }
 
-      return !agendamentoExistente || agendamentoExistente.length === 0
-    } catch (err) {
-      console.error('Erro ao verificar disponibilidade:', err)
-      return false
-    }
-  }, [getHorarioByDiaSemana, getBloqueiosAtivos])
+        // Se é para funcionário específico, verificar apenas para ele
+        if (funcionarioId && agendamentoExistente) {
+          const { data: agendamentoFuncionario } = await supabase
+            .from('appointments')
+            .select('id')
+            .eq('data_agendamento', `${data} ${horario}:00`)
+            .eq('barbeiro_id', funcionarioId)
+            .neq('status', 'cancelado')
+
+          return !agendamentoFuncionario || agendamentoFuncionario.length === 0
+        }
+
+        return !agendamentoExistente || agendamentoExistente.length === 0
+      } catch (err) {
+        console.error('Erro ao verificar disponibilidade:', err)
+        return false
+      }
+    },
+    [getHorarioByDiaSemana, getBloqueiosAtivos]
+  )
 
   // Buscar dados na inicialização
   useEffect(() => {
@@ -489,6 +548,6 @@ export function useAdminHorarios(): UseAdminHorariosReturn {
     getHorarioByDiaSemana,
     getBloqueiosAtivos,
     isHorarioDisponivel,
-    refetch: fetchData
+    refetch: fetchData,
   }
 }

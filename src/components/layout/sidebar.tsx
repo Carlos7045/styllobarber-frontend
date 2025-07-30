@@ -9,6 +9,7 @@ import {
   Users,
   Scissors,
   UserCheck,
+  Clock,
   DollarSign,
   BarChart3,
   Settings,
@@ -101,6 +102,12 @@ const navigationItems: Record<string, NavItem[]> = {
       label: 'Serviços',
       href: '/dashboard/servicos',
       icon: Scissors,
+    },
+    {
+      id: 'horarios',
+      label: 'Horários',
+      href: '/dashboard/admin/horarios',
+      icon: Clock,
     },
     {
       id: 'financeiro',

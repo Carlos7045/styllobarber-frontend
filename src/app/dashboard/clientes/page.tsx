@@ -134,8 +134,8 @@ export default function ClientesPage() {
 
               {isBarber && (
                 <select
-                  value={filters.periodo || 'todos'}
-                  onChange={(e) => updateFilters({ ...filters, periodo: e.target.value })}
+                  value={(filters as any).periodo || 'todos'}
+                  onChange={(e) => updateFilters({ ...filters, periodo: e.target.value } as any)}
                   className="min-w-[120px] rounded-lg border border-gray-200 bg-white px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-gold dark:border-secondary-graphite-card/30 dark:bg-secondary-graphite-light dark:text-white"
                 >
                   <option value="todos">Todos os períodos</option>
@@ -197,7 +197,10 @@ export default function ClientesPage() {
                   <div className="mb-1 text-3xl font-bold text-blue-600 dark:text-blue-400">
                     {totalClientes > 0
                       ? Math.round(
-                          clientes.reduce((acc, c) => acc + c.totalAgendamentos, 0) / totalClientes
+                          clientes.reduce(
+                            (acc, c) => acc + ((c as any).totalAgendamentos || 0),
+                            0
+                          ) / totalClientes
                         )
                       : 0}
                   </div>
@@ -218,7 +221,7 @@ export default function ClientesPage() {
                   <div className="mb-1 text-3xl font-bold text-primary-gold">
                     R${' '}
                     {(isAdmin
-                      ? clientes.reduce((acc, c) => acc + (c.valor_total_gasto || 0), 0)
+                      ? clientes.reduce((acc, c) => acc + ((c as any).valor_total_gasto || 0), 0)
                       : (barberClientsData as any).receitaTotal || 0
                     ).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                   </div>
@@ -328,7 +331,7 @@ export default function ClientesPage() {
                               </Badge>
                               <span className="flex items-center gap-1 text-xs text-gray-500 dark:text-gray-400">
                                 <Calendar className="h-3 w-3" />
-                                {cliente.totalAgendamentos} agendamentos
+                                {(cliente as any).totalAgendamentos || 0} agendamentos
                               </span>
                               <span className="flex items-center gap-1 text-xs text-primary-gold">
                                 <Star className="h-3 w-3" />

@@ -2,7 +2,23 @@
  * Utilitários para manipulação de datas e horários
  */
 
-import { format, addDays, subDays, addMonths, subMonths, startOfWeek, endOfWeek, startOfMonth, endOfMonth, isToday, isBefore, isAfter, addMinutes, setHours, setMinutes } from 'date-fns'
+import {
+  format,
+  addDays,
+  subDays,
+  addMonths,
+  subMonths,
+  startOfWeek,
+  endOfWeek,
+  startOfMonth,
+  endOfMonth,
+  isToday,
+  isBefore,
+  isAfter,
+  addMinutes,
+  setHours,
+  setMinutes,
+} from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import type { CalendarConfig, TimeSlot } from '@/types/appointments'
 
@@ -49,6 +65,37 @@ export function parseDBDate(dateString: string): Date {
 }
 
 /**
+ * Formatar string de data para exibição
+ */
+export function formatDateString(dateString: string, pattern: string = 'dd/MM/yyyy'): string {
+  const date = new Date(dateString)
+  return format(date, pattern, { locale: ptBR })
+}
+
+/**
+ * Formatar string de hora para exibição (HH:mm)
+ */
+export function formatTimeString(timeString: string): string {
+  // Se já está no formato HH:mm, retorna como está
+  if (timeString.match(/^\d{2}:\d{2}$/)) {
+    return timeString
+  }
+
+  // Se está no formato HH:mm:ss, remove os segundos
+  if (timeString.match(/^\d{2}:\d{2}:\d{2}$/)) {
+    return timeString.substring(0, 5)
+  }
+
+  // Tenta converter para Date e formatar
+  try {
+    const date = new Date(`1970-01-01T${timeString}`)
+    return format(date, 'HH:mm', { locale: ptBR })
+  } catch {
+    return timeString
+  }
+}
+
+/**
  * Verificar se uma data é hoje
  */
 export function isDateToday(date: Date): boolean {
@@ -74,11 +121,11 @@ export function isDateFuture(date: Date): boolean {
  */
 export function getNextWorkDay(date: Date, workDays: number[]): Date {
   let nextDay = addDays(date, 1)
-  
+
   while (!workDays.includes(nextDay.getDay())) {
     nextDay = addDays(nextDay, 1)
   }
-  
+
   return nextDay
 }
 
@@ -87,11 +134,11 @@ export function getNextWorkDay(date: Date, workDays: number[]): Date {
  */
 export function getPreviousWorkDay(date: Date, workDays: number[]): Date {
   let prevDay = subDays(date, 1)
-  
+
   while (!workDays.includes(prevDay.getDay())) {
     prevDay = subDays(prevDay, 1)
   }
-  
+
   return prevDay
 }
 
@@ -101,28 +148,28 @@ export function getPreviousWorkDay(date: Date, workDays: number[]): Date {
 export function generateTimeSlots(date: Date, config: CalendarConfig): TimeSlot[] {
   const slots: TimeSlot[] = []
   const dayOfWeek = date.getDay()
-  
+
   // Verificar se é dia útil
   if (!config.workDays.includes(dayOfWeek)) {
     return slots
   }
-  
+
   // Verificar se é feriado
   const dateString = formatDateForDB(date)
   if (config.holidays.includes(dateString)) {
     return slots
   }
-  
+
   // Gerar slots de horário
   for (let hour = config.startHour; hour < config.endHour; hour++) {
     for (let minute = 0; minute < 60; minute += config.slotDuration) {
       const slotTime = setMinutes(setHours(date, hour), minute)
-      
+
       // Não criar slots no passado
       if (isBefore(slotTime, new Date())) {
         continue
       }
-      
+
       const slot: TimeSlot = {
         time: formatTime(slotTime),
         date: dateString,
@@ -130,11 +177,11 @@ export function generateTimeSlots(date: Date, config: CalendarConfig): TimeSlot[
         available: true,
         blocked: false,
       }
-      
+
       slots.push(slot)
     }
   }
-  
+
   return slots
 }
 
@@ -164,11 +211,11 @@ export function getMonthRange(date: Date): { start: Date; end: Date } {
 export function getWeekDays(date: Date): Date[] {
   const { start } = getWeekRange(date)
   const days: Date[] = []
-  
+
   for (let i = 0; i < 7; i++) {
     days.push(addDays(start, i))
   }
-  
+
   return days
 }
 
@@ -178,13 +225,13 @@ export function getWeekDays(date: Date): Date[] {
 export function getMonthDays(date: Date): Date[] {
   const { start, end } = getMonthRange(date)
   const days: Date[] = []
-  
+
   let currentDate = start
   while (!isAfter(currentDate, end)) {
     days.push(currentDate)
     currentDate = addDays(currentDate, 1)
   }
-  
+
   return days
 }
 
@@ -208,12 +255,7 @@ export { addDays, subDays, addMonths, subMonths }
 /**
  * Verificar se dois horários se sobrepõem
  */
-export function timeSlotsOverlap(
-  start1: Date,
-  end1: Date,
-  start2: Date,
-  end2: Date
-): boolean {
+export function timeSlotsOverlap(start1: Date, end1: Date, start2: Date, end2: Date): boolean {
   return isBefore(start1, end2) && isAfter(end1, start2)
 }
 

@@ -4,18 +4,10 @@
  */
 
 // Componente Button
-export {
-  Button,
-  buttonVariants,
-  type ButtonProps,
-} from './button'
+export { Button, buttonVariants, type ButtonProps } from './button'
 
 // Componente Input
-export {
-  Input,
-  inputVariants,
-  type InputProps,
-} from './input'
+export { Input, inputVariants, type InputProps } from './input'
 
 // Componentes Card
 export {
@@ -33,28 +25,13 @@ export {
 } from './card'
 
 // Componentes Toast (simplificado)
-export {
-  ToastProvider,
-  useToast,
-  type Toast,
-  type ToastType,
-} from './toast'
+export { ToastProvider, useToast, type Toast, type ToastType } from './toast'
 
 // Componente Textarea
-export {
-  Textarea,
-  textareaVariants,
-  type TextareaProps,
-} from './textarea'
+export { Textarea, textareaVariants, type TextareaProps } from './textarea'
 
 // Componentes Badge
-export {
-  Badge,
-  BadgeGroup,
-  BadgeStatus,
-  badgeVariants,
-  type BadgeProps,
-} from './badge'
+export { Badge, BadgeGroup, BadgeStatus, badgeVariants, type BadgeProps } from './badge'
 
 // Componentes Modal
 export {
@@ -77,12 +54,7 @@ export {
 } from './date-picker'
 
 // Componente TimePicker
-export {
-  TimePicker,
-  timePickerVariants,
-  type TimePickerProps,
-  type TimeSlot,
-} from './time-picker'
+export { TimePicker, timePickerVariants, type TimePickerProps, type TimeSlot } from './time-picker'
 
 // Componentes ConfirmDialog
 export {
@@ -94,3 +66,9 @@ export {
   useConfirmDialog,
   type ConfirmDialogProps,
 } from './confirm-dialog'
+
+// Componente Switch
+export { Switch, type SwitchProps } from './switch'
+
+// Componente Label
+export { Label, type LabelProps } from './label'
