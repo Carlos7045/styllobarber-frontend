@@ -127,7 +127,7 @@ export function useFinancialData(periodo: string = 'mes') {
             .gte('data_despesa', inicioAtual.toISOString())
             .lte('data_despesa', fimAtual.toISOString())
             .then((result) => result)
-            .catch(() => ({ data: [], error: null })), // Fallback se não existir tabela
+            .then(result => result, () => ({ data: [], error: null })), // Fallback se não existir tabela
 
           // Despesas do período anterior
           supabase
@@ -136,7 +136,7 @@ export function useFinancialData(periodo: string = 'mes') {
             .gte('data_despesa', inicioAnterior.toISOString())
             .lte('data_despesa', fimAnterior.toISOString())
             .then((result) => result)
-            .catch(() => ({ data: [], error: null })), // Fallback se não existir tabela
+            .then(result => result, () => ({ data: [], error: null })), // Fallback se não existir tabela
 
           // Transações financeiras do período atual (PDV)
           supabase
@@ -468,7 +468,7 @@ async function getEvolutionData(): Promise<EvolutionData[]> {
           .gte('data_despesa', mes.toISOString())
           .lte('data_despesa', proximoMes.toISOString())
           .then((result) => result)
-          .catch(() => ({ data: [] })),
+          .then(result => result, () => ({ data: [] })),
 
         supabase
           .from('transacoes_financeiras')

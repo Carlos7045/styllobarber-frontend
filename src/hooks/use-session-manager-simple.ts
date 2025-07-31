@@ -91,7 +91,7 @@ export function useSessionManagerSimple() {
     setSessionState(prev => ({
       ...prev,
       isValid,
-      expiresAt,
+      expiresAt: expiresAt || null,
       timeUntilExpiry,
     }))
 

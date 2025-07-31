@@ -144,7 +144,7 @@ export function useStableSessionManager(config: Partial<SessionConfig> = {}) {
         setSessionState(prev => ({
             ...prev,
             isValid,
-            expiresAt,
+            expiresAt: expiresAt || null,
             lastCheck: now,
             error: undefined,
         }))

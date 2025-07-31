@@ -7,6 +7,21 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 
+// Tipos para os dados do banco
+interface AppointmentData {
+  preco_final?: number
+  service?: { preco?: number }
+}
+
+interface ExpenseData {
+  valor?: number
+}
+
+interface TransactionData {
+  tipo: 'RECEITA' | 'DESPESA'
+  valor: string | number
+}
+
 export interface CashFlowSummary {
   saldoAtual: number
   entradasDia: number
@@ -102,7 +117,7 @@ export function useCashFlowData() {
             .gte('data_despesa', inicioHoje)
             .lte('data_despesa', fimHoje)
             .then((result) => result)
-            .catch(() => ({ data: [], error: null })),
+            .then(result => result, () => ({ data: [], error: null })),
 
           // Saldo anterior (receitas acumuladas até ontem)
           supabase
@@ -140,25 +155,12 @@ export function useCashFlowData() {
           getRecentMovements(),
         ])
 
-        // Tipos para os dados do banco
-        interface AppointmentData {
-          preco_final?: number
-          service?: { preco?: number }
-        }
 
-        interface ExpenseData {
-          valor?: number
-        }
-
-        interface TransactionData {
-          tipo: 'RECEITA' | 'DESPESA'
-          valor: string | number
-        }
 
         // Calcular entradas de hoje (agendamentos)
         const entradasAgendamentos =
-          entradasResult.data?.reduce((sum: number, apt: AppointmentData) => {
-            const preco = apt.preco_final || apt.service?.preco || 0
+          entradasResult.data?.reduce((sum: number, apt: any) => {
+            const preco = apt.preco_final || apt.service?.[0]?.preco || 0
             return sum + preco
           }, 0) || 0
 
@@ -170,8 +172,8 @@ export function useCashFlowData() {
 
         // Calcular saldo anterior (agendamentos)
         const saldoAnteriorAgendamentos =
-          saldoAnteriorResult.data?.reduce((sum: number, apt: AppointmentData) => {
-            const preco = apt.preco_final || apt.service?.preco || 0
+          saldoAnteriorResult.data?.reduce((sum: number, apt: any) => {
+            const preco = apt.preco_final || apt.service?.[0]?.preco || 0
             return sum + preco
           }, 0) || 0
 
@@ -300,7 +302,7 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
           .gte('data_despesa', inicioDay)
           .lte('data_despesa', fimDay)
           .then((result) => result)
-          .catch(() => ({ data: [] })),
+          .then(result => result, () => ({ data: [] })),
 
         supabase
           .from('transacoes_financeiras')
@@ -309,23 +311,11 @@ async function getWeeklyEvolution(): Promise<WeeklyEvolution[]> {
           .eq('data_transacao', diaStr),
       ])
 
-      interface AppointmentData {
-        preco_final?: number
-        service?: { preco?: number }
-      }
 
-      interface ExpenseData {
-        valor?: number
-      }
-
-      interface TransactionData {
-        tipo: 'RECEITA' | 'DESPESA'
-        valor: string | number
-      }
 
       const entradasAgendamentos =
-        entradasResult.data?.reduce((sum: number, apt: AppointmentData) => {
-          const preco = apt.preco_final || apt.service?.preco || 0
+        entradasResult.data?.reduce((sum: number, apt: any) => {
+          const preco = apt.preco_final || apt.service?.[0]?.preco || 0
           return sum + preco
         }, 0) || 0
 
@@ -412,7 +402,7 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
       .order('data_agendamento', { ascending: false })
       .limit(5)
 
-    // Tipos para os dados
+    // Tipos específicos para esta função
     interface TransacaoPDV {
       id: string
       tipo: 'RECEITA' | 'DESPESA'
@@ -445,14 +435,14 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
 
     // Adicionar agendamentos como entradas (apenas se não tiver muitas transações PDV)
     if (movimentacoes.length < 10) {
-      agendamentos?.forEach((apt: AgendamentoData) => {
-        const preco = apt.preco_final || apt.service?.preco || 0
+      agendamentos?.forEach((apt: any) => {
+        const preco = apt.preco_final || apt.service?.[0]?.preco || 0
         if (preco > 0) {
           movimentacoes.push({
             id: apt.id,
             tipo: 'ENTRADA',
             valor: preco,
-            descricao: `${apt.service?.nome || 'Serviço'} - ${apt.cliente?.nome || 'Cliente'}`,
+            descricao: `${apt.service?.[0]?.nome || 'Serviço'} - ${apt.cliente?.[0]?.nome || 'Cliente'}`,
             categoria: 'Agendamentos',
             data: new Date(apt.data_agendamento),
             metodo_pagamento: 'Não especificado',
@@ -469,17 +459,10 @@ async function getRecentMovements(): Promise<CashFlowMovement[]> {
         .order('data_despesa', { ascending: false })
         .limit(5)
         .then((result) => result)
-        .catch(() => ({ data: [] }))
+        .then(result => result, () => ({ data: [] }))
 
       // Adicionar despesas como saídas
-      interface DespesaData {
-        id: string
-        valor: number
-        descricao?: string
-        data_despesa: string
-      }
-
-      despesasResult.data?.forEach((desp: DespesaData) => {
+      despesasResult.data?.forEach((desp: any) => {
         if (desp.valor > 0) {
           movimentacoes.push({
             id: desp.id,
@@ -539,8 +522,8 @@ async function calcularMediaDiariaEntradas(): Promise<number> {
     }
 
     const totalSemana =
-      data?.reduce((sum: number, apt: AppointmentData) => {
-        const preco = apt.preco_final || apt.service?.preco || 0
+      data?.reduce((sum: number, apt: any) => {
+        const preco = apt.preco_final || apt.service?.[0]?.preco || 0
         return sum + preco
       }, 0) || 0
 
@@ -600,8 +583,8 @@ async function getFallbackCashFlowData(): Promise<Omit<CashFlowData, 'loading' |
     }
 
     const receitaRecente =
-      receitasRecentes?.reduce((sum: number, apt: AppointmentData) => {
-        const preco = apt.preco_final || apt.service?.preco || 0
+      receitasRecentes?.reduce((sum: number, apt: any) => {
+        const preco = apt.preco_final || apt.service?.[0]?.preco || 0
         return sum + preco
       }, 0) || 0
 

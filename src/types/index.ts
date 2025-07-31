@@ -3,6 +3,7 @@ export * from './auth'
 export * from './appointments'
 export * from './services'
 export * from './funcionarios'
+export * from './notifications'
 
 // Tipos utilitários comuns
 export interface ApiResponse<T> {

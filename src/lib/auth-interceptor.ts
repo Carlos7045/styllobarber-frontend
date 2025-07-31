@@ -221,7 +221,7 @@ export class AuthInterceptor {
     return (
       error.type === 'auth' ||
       error.type === 'server' ||
-      (error.statusCode && error.statusCode >= 500)
+      Boolean(error.statusCode && error.statusCode >= 500)
     )
   }
 

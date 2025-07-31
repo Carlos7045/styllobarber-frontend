@@ -157,7 +157,7 @@ export function useAdminClientes(): UseAdminClientesReturn {
           const valorTotalGasto =
             agendamentos
               ?.filter((a) => a.status === 'concluido')
-              .reduce((sum, a) => sum + (a.preco_final || a.service?.preco || 0), 0) || 0
+              .reduce((sum, a) => sum + (a.preco_final || a.service?.[0]?.preco || 0), 0) || 0
 
           // Encontrar último agendamento
           const ultimoAgendamento = agendamentos?.sort(
@@ -169,8 +169,8 @@ export function useAdminClientes(): UseAdminClientesReturn {
           const servicosCount =
             agendamentos?.reduce(
               (acc, a) => {
-                if (a.service?.nome) {
-                  acc[a.service.nome] = (acc[a.service.nome] || 0) + 1
+                if (a.service?.[0]?.nome) {
+                  acc[a.service[0].nome] = (acc[a.service[0].nome] || 0) + 1
                 }
                 return acc
               },
@@ -402,7 +402,7 @@ export function useAdminClientes(): UseAdminClientesReturn {
 
         if (Object.keys(servicosCount).length > 0) {
           stats.servico_mais_usado = Object.entries(servicosCount).sort(
-            ([, a], [, b]) => b - a
+            ([, a], [, b]) => (b as number) - (a as number)
           )[0][0]
         }
 
@@ -420,7 +420,7 @@ export function useAdminClientes(): UseAdminClientesReturn {
 
         if (Object.keys(barbeirosCount).length > 0) {
           stats.barbeiro_preferido = Object.entries(barbeirosCount).sort(
-            ([, a], [, b]) => b - a
+            ([, a], [, b]) => (b as number) - (a as number)
           )[0][0]
         }
 

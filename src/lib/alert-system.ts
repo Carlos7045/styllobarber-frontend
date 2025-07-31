@@ -3,7 +3,7 @@
  * Monitora métricas e dispara alertas quando necessário
  */
 
-import { authLogger } from './logger'
+import { logger } from './logger'
 import { performanceMonitor } from './performance-monitor'
 
 export enum AlertSeverity {
@@ -297,7 +297,7 @@ export class AlertSystem {
     this.lastAlertTime.set(rule.id, now)
 
     // Log do alerta
-    authLogger.securityEvent('ALERT_TRIGGERED', undefined, {
+    logger.info('ALERT_TRIGGERED', {
       alertId: alert.id,
       type: alert.type,
       severity: alert.severity,
@@ -324,7 +324,7 @@ export class AlertSystem {
       alert.resolved = true
       alert.resolvedAt = new Date()
 
-      authLogger.securityEvent('ALERT_RESOLVED', undefined, {
+      logger.info('ALERT_RESOLVED', {
         alertId: alert.id,
         type: alert.type,
         resolvedAt: alert.resolvedAt

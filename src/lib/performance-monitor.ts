@@ -3,7 +3,7 @@
  * Coleta métricas de tempo de resposta, taxa de sucesso, etc.
  */
 
-import { authLogger } from './logger'
+import { logger } from './logger'
 
 export interface PerformanceMetric {
   operation: string
@@ -69,7 +69,7 @@ export class PerformanceMonitor {
 
     this.activeOperations.set(operationId, metric)
     
-    authLogger.performanceMetric(operation, 0, true) // Log início
+    logger.info(`Performance started: ${operation}`) // Log início
     
     return operationId
   }
@@ -97,7 +97,7 @@ export class PerformanceMonitor {
     this.activeOperations.delete(operationId)
 
     // Log da performance
-    authLogger.performanceMetric(metric.operation, metric.duration, success)
+    logger.info(`Performance completed: ${metric.operation}`, { duration: metric.duration, success })
   }
 
   /**

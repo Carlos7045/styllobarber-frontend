@@ -7,6 +7,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/use-auth'
 
+// Tipos para os dados do banco
+interface AppointmentData {
+  preco_final?: number
+  service?: { preco?: number }
+}
+
 export interface DashboardMetrics {
   agendamentosHoje: number
   clientesAtivos: number
@@ -105,14 +111,10 @@ export function useDashboardData() {
         const funcionariosAtivos = funcionariosResult.data?.length || 0
 
         // Calcular receita de hoje (agendamentos + PDV)
-        interface AppointmentData {
-          preco_final?: number
-          service?: { preco?: number }
-        }
 
         const receitaAgendamentos =
-          receitaResult.data?.reduce((sum, apt: AppointmentData) => {
-            const precoFinal = apt.preco_final || apt.service?.preco || 0
+          receitaResult.data?.reduce((sum: number, apt: any) => {
+            const precoFinal = apt.preco_final || apt.service?.[0]?.preco || 0
             return sum + precoFinal
           }, 0) || 0
 
@@ -181,14 +183,11 @@ async function getFallbackData(): Promise<Omit<DashboardMetrics, 'loading' | 'er
       .eq('status', 'concluido')
       .gte('data_agendamento', seteDiasAtras.toISOString())
 
-    interface AppointmentData {
-      preco_final?: number
-      service?: { preco?: number }
-    }
+    // Usando interface global AppointmentData
 
     const receitaMedia = dadosHistoricos
-      ? dadosHistoricos.reduce((sum, apt: AppointmentData) => {
-          const preco = apt.preco_final || apt.service?.preco || 0
+      ? dadosHistoricos.reduce((sum: number, apt: any) => {
+          const preco = apt.preco_final || apt.service?.[0]?.preco || 0
           return sum + preco
         }, 0) / 7 // Média diária
       : 0

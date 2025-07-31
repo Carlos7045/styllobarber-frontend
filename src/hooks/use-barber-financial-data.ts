@@ -127,7 +127,7 @@ export function useBarberFinancialData(periodo: string = 'mes') {
 
         // Calcular receita dos agendamentos
         const receitaAgendamentos = agendamentos.reduce((sum, apt) => {
-          const preco = apt.preco_final || apt.service?.preco || 0
+          const preco = apt.preco_final || apt.service?.[0]?.preco || 0
           return sum + preco
         }, 0)
 
@@ -143,7 +143,7 @@ export function useBarberFinancialData(periodo: string = 'mes') {
         const comissaoAcumulada = receitaGerada * 0.4
 
         // Clientes únicos atendidos
-        const clientesUnicos = new Set(agendamentos.map((apt) => apt.cliente?.nome).filter(Boolean))
+        const clientesUnicos = new Set(agendamentos.map((apt) => apt.cliente?.[0]?.nome).filter(Boolean))
         const clientesAtendidos = clientesUnicos.size
 
         // Total de serviços realizados
@@ -268,7 +268,7 @@ async function getBarberWeeklyEvolution(barbeiroId: string): Promise<BarberEvolu
 
       // Calcular receita dos agendamentos
       const receitaAgendamentos = agendamentos.reduce((sum, apt) => {
-        const preco = apt.preco_final || apt.service?.preco || 0
+        const preco = apt.preco_final || apt.service?.[0]?.preco || 0
         return sum + preco
       }, 0)
 
@@ -324,8 +324,8 @@ async function getBarberPopularServices(
     const servicosMap = new Map<string, { quantidade: number; receita: number }>()
 
     agendamentos.forEach((apt) => {
-      const nomeServico = apt.service?.nome || 'Serviço não identificado'
-      const preco = apt.preco_final || apt.service?.preco || 0
+      const nomeServico = apt.service?.[0]?.nome || 'Serviço não identificado'
+      const preco = apt.preco_final || apt.service?.[0]?.preco || 0
 
       if (servicosMap.has(nomeServico)) {
         const existing = servicosMap.get(nomeServico)!
@@ -375,13 +375,13 @@ async function getBarberUpcomingAppointments(barbeiroId: string): Promise<Barber
     if (!agendamentos) return []
 
     return agendamentos.map((apt) => ({
-      cliente: apt.cliente?.nome || 'Cliente não identificado',
-      servico: apt.service?.nome || 'Serviço não identificado',
+      cliente: apt.cliente?.[0]?.nome || 'Cliente não identificado',
+      servico: apt.service?.[0]?.nome || 'Serviço não identificado',
       horario: new Date(apt.data_agendamento).toLocaleTimeString('pt-BR', {
         hour: '2-digit',
         minute: '2-digit',
       }),
-      valor: apt.preco_final || apt.service?.preco || 0,
+      valor: apt.preco_final || apt.service?.[0]?.preco || 0,
       data: apt.data_agendamento,
     }))
   } catch (error) {

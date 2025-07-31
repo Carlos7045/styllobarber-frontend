@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Container } from '@/components/layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
 import { Settings, User, Bell, Shield, Palette } from 'lucide-react'
@@ -16,6 +17,12 @@ import { Settings, User, Bell, Shield, Palette } from 'lucide-react'
  * Permite ajustar preferências e configurações
  */
 export default function ConfiguracoesPage() {
+  const router = useRouter()
+
+  const handleNotificacoesClick = () => {
+    router.push('/dashboard/admin/notificacoes')
+  }
+
   return (
     <Container className="py-8">
       <div className="mx-auto max-w-4xl">
@@ -69,7 +76,10 @@ export default function ConfiguracoesPage() {
           </Card>
 
           {/* Notificações */}
-          <Card className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-xl dark:from-secondary-graphite-light dark:to-secondary-graphite">
+          <Card 
+            className="border-l-4 border-l-green-500 bg-gradient-to-br from-white to-gray-50 transition-all duration-300 hover:scale-105 hover:shadow-xl dark:from-secondary-graphite-light dark:to-secondary-graphite cursor-pointer"
+            onClick={handleNotificacoesClick}
+          >
             <CardHeader>
               <CardTitle className="flex items-center gap-3">
                 <div className="rounded-lg bg-green-100 p-2 dark:bg-green-900/30">
@@ -79,20 +89,25 @@ export default function ConfiguracoesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="mb-4 text-text-muted">Configure como e quando receber notificações</p>
+              <p className="mb-4 text-text-muted">Configure templates, logs e configurações de notificações</p>
               <div className="space-y-2">
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm">Email</span>
-                  <span className="text-xs font-medium text-yellow-600">Em desenvolvimento</span>
+                  <span className="text-sm">Templates de Email</span>
+                  <span className="text-xs font-medium text-green-600">✓ Disponível</span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm">WhatsApp</span>
-                  <span className="text-xs font-medium text-yellow-600">Em desenvolvimento</span>
+                  <span className="text-sm">Logs de Envio</span>
+                  <span className="text-xs font-medium text-green-600">✓ Disponível</span>
                 </div>
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-sm">Push & SMS</span>
-                  <span className="text-xs font-medium text-yellow-600">Em desenvolvimento</span>
+                  <span className="text-sm">Agendamento & SMS</span>
+                  <span className="text-xs font-medium text-green-600">✓ Disponível</span>
                 </div>
+              </div>
+              <div className="mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
+                <p className="text-xs text-green-600 font-medium">
+                  👆 Clique para acessar o sistema completo
+                </p>
               </div>
             </CardContent>
           </Card>

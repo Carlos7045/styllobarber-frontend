@@ -283,10 +283,10 @@ export class Logger {
         console.warn(prefix, logData)
         break
       case LogLevel.ERROR:
-        console.error(prefix, logData, entry.error)
+        console.error(prefix, logData, entry.error || '')
         break
       case LogLevel.CRITICAL:
-        console.error(`🚨 ${prefix}`, logData, entry.error)
+        console.error(`🚨 ${prefix}`, logData, entry.error || '')
         break
     }
   }

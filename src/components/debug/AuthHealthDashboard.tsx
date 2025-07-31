@@ -7,7 +7,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuthHealth } from '@/hooks/use-auth-health'
-import { logger, authLogger, LogLevel } from '@/lib/logger'
+import { logger, LogLevel } from '@/lib/logger'
 import { performanceMonitor } from '@/lib/performance-monitor'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
 import { 

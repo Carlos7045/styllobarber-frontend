@@ -229,7 +229,7 @@ class RateLimiterEnhanced {
       info.resetTime = blockUntil
 
       // Log de segurança
-      securityLogger.logRateLimitExceeded(identifier, configName, {
+      securityLogger.logSuspiciousActivity(`Rate limit exceeded for ${configName}`, identifier, undefined, {
         requests: validRequests.length,
         maxRequests: config.maxRequests,
         windowMs: config.windowMs,
