@@ -27,23 +27,23 @@ jest.mock('@/lib/supabase', () => ({
     from: jest.fn(() => ({
       select: jest.fn(() => ({
         eq: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null }))
-        }))
+          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        })),
       })),
       insert: jest.fn(() => ({
         select: jest.fn(() => ({
-          single: jest.fn(() => Promise.resolve({ data: null, error: null }))
-        }))
+          single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+        })),
       })),
       update: jest.fn(() => ({
         eq: jest.fn(() => ({
           select: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({ data: null, error: null }))
-          }))
-        }))
-      }))
-    }))
-  }
+            single: jest.fn(() => Promise.resolve({ data: null, error: null })),
+          })),
+        })),
+      })),
+    })),
+  },
 }))
 
 // Mock dos utilitários de auth
@@ -62,7 +62,7 @@ describe('Fluxo Completo de Autenticação', () => {
 
   beforeEach(() => {
     jest.clearAllMocks()
-    
+
     mockUseRouter.mockReturnValue({
       push: mockPush,
       replace: mockReplace,
@@ -71,30 +71,30 @@ describe('Fluxo Completo de Autenticação', () => {
     // Mock padrão para getSession
     mockSupabase.auth.getSession.mockResolvedValue({
       data: { session: null },
-      error: null
+      error: null,
     })
 
     // Mock padrão para onAuthStateChange
     mockSupabase.auth.onAuthStateChange.mockReturnValue({
-      data: { subscription: { unsubscribe: mockUnsubscribe } }
+      data: { subscription: { unsubscribe: mockUnsubscribe } },
     })
   })
 
   describe('Fluxo de Login Completo', () => {
     it('deve realizar login completo com sucesso', async () => {
       const user = userEvent.setup()
-      
+
       // Mock de usuário autenticado
       const mockUser = {
         id: 'user-123',
         email: 'test@example.com',
-        user_metadata: { nome: 'Test User' }
+        user_metadata: { nome: 'Test User' },
       }
-      
+
       const mockSession = {
         user: mockUser,
         access_token: 'mock-token',
-        expires_at: Math.floor(Date.now() / 1000) + 3600
+        expires_at: Math.floor(Date.now() / 1000) + 3600,
       }
 
       // Mock do perfil do usuário
@@ -103,23 +103,25 @@ describe('Fluxo Completo de Autenticação', () => {
         nome: 'Test User',
         email: 'test@example.com',
         role: 'client',
-        ativo: true
+        ativo: true,
       }
 
       mockSupabase.auth.signInWithPassword.mockResolvedValue({
         data: { user: mockUser, session: mockSession },
-        error: null
+        error: null,
       })
 
       mockSupabase.from.mockReturnValue({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: mockProfile,
-              error: null
-            }))
-          }))
-        }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: mockProfile,
+                error: null,
+              })
+            ),
+          })),
+        })),
       })
 
       // Renderizar formulário de login dentro do AuthProvider
@@ -142,7 +144,7 @@ describe('Fluxo Completo de Autenticação', () => {
       await waitFor(() => {
         expect(mockSupabase.auth.signInWithPassword).toHaveBeenCalledWith({
           email: 'test@example.com',
-          password: 'password123'
+          password: 'password123',
         })
       })
 
@@ -154,10 +156,10 @@ describe('Fluxo Completo de Autenticação', () => {
 
     it('deve lidar com erro de login e mostrar mensagem', async () => {
       const user = userEvent.setup()
-      
+
       mockSupabase.auth.signInWithPassword.mockResolvedValue({
         data: { user: null, session: null },
-        error: { message: 'Credenciais inválidas' }
+        error: { message: 'Credenciais inválidas' },
       })
 
       render(
@@ -186,19 +188,19 @@ describe('Fluxo Completo de Autenticação', () => {
   describe('Fluxo de Cadastro Completo', () => {
     it('deve realizar cadastro completo com criação de perfil', async () => {
       const user = userEvent.setup()
-      
+
       const mockUser = {
         id: 'new-user-123',
         email: 'newuser@example.com',
-        user_metadata: { 
+        user_metadata: {
           nome: 'Novo Usuário',
-          telefone: '(11) 99999-9999'
-        }
+          telefone: '(11) 99999-9999',
+        },
       }
 
       mockSupabase.auth.signUp.mockResolvedValue({
         data: { user: mockUser, session: null },
-        error: null
+        error: null,
       })
 
       render(
@@ -224,9 +226,9 @@ describe('Fluxo Completo de Autenticação', () => {
           options: {
             data: {
               nome: 'Novo Usuário',
-              telefone: '(11) 99999-9999'
-            }
-          }
+              telefone: '(11) 99999-9999',
+            },
+          },
         })
       })
 
@@ -238,7 +240,7 @@ describe('Fluxo Completo de Autenticação', () => {
 
     it('deve validar dados antes do cadastro', async () => {
       const user = userEvent.setup()
-      
+
       render(
         <AuthProvider>
           <SignUpForm />
@@ -265,26 +267,26 @@ describe('Fluxo Completo de Autenticação', () => {
   describe('Fluxo de Logout Completo', () => {
     it('deve realizar logout completo com limpeza', async () => {
       const user = userEvent.setup()
-      
+
       // Simular usuário logado
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com'
+        email: 'test@example.com',
       }
 
       const mockSession = {
         user: mockUser,
-        access_token: 'mock-token'
+        access_token: 'mock-token',
       }
 
       // Mock inicial com usuário logado
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       })
 
       mockSupabase.auth.signOut.mockResolvedValue({
-        error: null
+        error: null,
       })
 
       render(
@@ -324,44 +326,44 @@ describe('Fluxo Completo de Autenticação', () => {
     it('deve manter estado entre recarregamentos', async () => {
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com'
+        email: 'test@example.com',
       }
 
       const mockSession = {
         user: mockUser,
-        access_token: 'mock-token'
+        access_token: 'mock-token',
       }
 
       const mockProfile = {
         id: 'user-123',
         nome: 'Test User',
         email: 'test@example.com',
-        role: 'client'
+        role: 'client',
       }
 
       // Simular sessão existente
       mockSupabase.auth.getSession.mockResolvedValue({
         data: { session: mockSession },
-        error: null
+        error: null,
       })
 
       mockSupabase.from.mockReturnValue({
         select: jest.fn(() => ({
           eq: jest.fn(() => ({
-            single: jest.fn(() => Promise.resolve({
-              data: mockProfile,
-              error: null
-            }))
-          }))
-        }))
+            single: jest.fn(() =>
+              Promise.resolve({
+                data: mockProfile,
+                error: null,
+              })
+            ),
+          })),
+        })),
       })
 
       const TestComponent = () => {
         return (
           <AuthProvider>
-            <div data-testid="auth-state">
-              {/* Componente que mostra estado de auth */}
-            </div>
+            <div data-testid="auth-state">{/* Componente que mostra estado de auth */}</div>
           </AuthProvider>
         )
       }
@@ -398,12 +400,12 @@ describe('Fluxo Completo de Autenticação', () => {
       // Simular mudança de estado para SIGNED_IN
       const mockUser = {
         id: 'user-123',
-        email: 'test@example.com'
+        email: 'test@example.com',
       }
 
       const mockSession = {
         user: mockUser,
-        access_token: 'mock-token'
+        access_token: 'mock-token',
       }
 
       await act(async () => {

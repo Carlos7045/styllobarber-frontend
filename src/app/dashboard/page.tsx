@@ -69,7 +69,7 @@ export default function DashboardRedirect() {
 
   // Se é admin ou barber, mostrar dashboard administrativo
   if (userRole === 'admin' || userRole === 'barber') {
-    return <AdminBarberDashboard userRole={userRole} profile={profile} />
+    return <AdminBarberDashboard userRole={userRole} profile={profile as any} />
   }
 
   // Para outros casos, mostrar loading (enquanto redireciona)
@@ -195,7 +195,8 @@ function AdminBarberDashboard({
                 Dashboard {userRole === 'admin' ? 'Administrativo' : 'do Barbeiro'}
               </h1>
               <p className="text-lg font-medium text-gray-600 dark:text-gray-300">
-                Bem-vindo, {profile?.nome || 'Usuário'}! Visão geral das atividades de hoje.
+                Bem-vindo, {(profile as any)?.nome || 'Usuário'}! Visão geral das atividades de
+                hoje.
               </p>
             </div>
           </div>
@@ -357,7 +358,7 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
               Nenhum agendamento para hoje
             </p>
           ) : (
-            barberData.agendaHoje.slice(0, 5).map((agendamento) => (
+            barberData.agendaHoje.slice(0, 5).map((agendamento: any) => (
               <div
                 key={agendamento.id}
                 className="rounded-lg bg-gray-100 p-3 dark:bg-secondary-graphite"
