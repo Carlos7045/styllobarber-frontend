@@ -15,7 +15,7 @@ import {
   Clock,
   AlertTriangle,
   Eye,
-  Calendar
+  X
 } from 'lucide-react'
 
 import { useAdminNotificacoes } from '@/hooks/use-admin-notificacoes'
