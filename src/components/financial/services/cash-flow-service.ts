@@ -84,7 +84,7 @@ export class CashFlowService {
       const movimentacoes: MovimentacaoFluxoCaixa[] = []
 
       // Buscar transações realizadas
-      let queryTransacoes = supabase
+      const queryTransacoes = supabase
         .from('transacoes_financeiras')
         .select(`
           id,

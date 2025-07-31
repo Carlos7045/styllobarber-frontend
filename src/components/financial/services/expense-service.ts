@@ -154,8 +154,8 @@ export class ExpenseService {
     total: number
   }> {
     try {
-      let whereConditions: string[] = []
-      let params: any[] = []
+      const whereConditions: string[] = []
+      const params: any[] = []
       let paramIndex = 1
 
       // Construir condições WHERE
@@ -578,7 +578,7 @@ export class ExpenseService {
   async checkBudgetAlerts(categoriaId?: string): Promise<BudgetAlert[]> {
     try {
       let whereClause = 'WHERE cf.tipo = \'DESPESA\' AND cf.orcamento_mensal IS NOT NULL AND cf.ativo = true'
-      let params: any[] = []
+      const params: any[] = []
 
       if (categoriaId) {
         whereClause += ' AND cf.id = $1'

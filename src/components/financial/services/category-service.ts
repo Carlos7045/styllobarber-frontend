@@ -118,8 +118,8 @@ export class CategoryService {
     comOrcamento?: boolean
   } = {}): Promise<CategoriaFinanceira[]> {
     try {
-      let whereConditions: string[] = []
-      let params: any[] = []
+      const whereConditions: string[] = []
+      const params: any[] = []
       let paramIndex = 1
 
       if (filters.tipo) {

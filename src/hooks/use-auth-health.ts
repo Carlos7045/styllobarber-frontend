@@ -32,7 +32,7 @@ export function useAuthHealth() {
     console.log('🔍 Executando diagnóstico completo do sistema de autenticação...')
     
     const startTime = Date.now()
-    let diagnosticResults = {
+    const diagnosticResults = {
       sessionValidity: true,
       profileSyncStatus: true,
       errorRecoveryStatus: true,

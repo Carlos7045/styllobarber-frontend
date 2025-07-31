@@ -62,7 +62,7 @@ const generateTimeSlots = (
   const [startHour, startMinute] = startTime.split(':').map(Number)
   const [endHour, endMinute] = endTime.split(':').map(Number)
   
-  let currentTime = new Date()
+  const currentTime = new Date()
   currentTime.setHours(startHour, startMinute, 0, 0)
   
   const endDateTime = new Date()
