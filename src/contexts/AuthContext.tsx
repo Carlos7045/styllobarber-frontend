@@ -136,13 +136,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     circuitState: 'closed',
     failureCount: 0,
     isInFallbackMode: false,
-    lastHealthCheck: null as Date | null
+    lastHealthCheck: null as Date | null,
   })
 
   // Hook de error recovery
   const errorRecoveryHook = useErrorRecovery()
-
-
 
   // Função para realizar health check do sistema
   const performHealthCheck = async (): Promise<void> => {
@@ -154,7 +152,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         circuitState: 'closed',
         failureCount: 0,
         isInFallbackMode: false,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       }
 
       // Verificar errorRecovery com try-catch
@@ -195,10 +193,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('✅ Health check concluído:', health)
     } catch (error) {
       console.error('❌ Erro durante health check:', error)
-      setSystemHealth(prev => ({
+      setSystemHealth((prev) => ({
         ...prev,
         isHealthy: false,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       }))
     }
   }
@@ -211,7 +209,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const recoveryResult = await errorRecovery.recoverFromError(error, {
         userId: user?.id,
         context: 'AuthContext',
-        timestamp: Date.now()
+        timestamp: Date.now(),
       })
 
       if (recoveryResult.success) {
@@ -252,10 +250,41 @@ export function AuthProvider({ children }: AuthProviderProps) {
       circuitState: 'closed',
       failureCount: 0,
       isInFallbackMode: false,
-      lastHealthCheck: new Date()
+      lastHealthCheck: new Date(),
     })
 
     console.log('✅ Estado do sistema resetado')
+  }
+
+  // Função simples de fallback para buscar perfil (com timeout)
+  const fetchProfileDirect = async (userId: string): Promise<UserProfile | null> => {
+    try {
+      console.log('🔄 Buscando perfil diretamente (fallback):', userId)
+
+      // Promise com timeout para evitar travamento
+      const profilePromise = supabase.from('profiles').select('*').eq('id', userId).single()
+
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Direct query timeout')), 8000) // 8s timeout
+      })
+
+      const { data: profile, error } = (await Promise.race([profilePromise, timeoutPromise])) as any
+
+      if (error) {
+        console.warn('⚠️ Erro na busca direta do perfil:', error)
+        return null
+      }
+
+      if (profile) {
+        console.log('✅ Perfil obtido via busca direta')
+        return profile
+      }
+
+      return null
+    } catch (error) {
+      console.error('❌ Erro na busca direta do perfil:', error)
+      return null
+    }
   }
 
   // Função para buscar perfil do usuário com otimizações de performance
@@ -268,12 +297,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('🔍 Buscando perfil para usuário:', userId)
 
-      // Usar QueryOptimizer para busca otimizada
+      // Primeiro tentar busca direta simples para login mais rápido
+      const directResult = await fetchProfileDirect(userId)
+      if (directResult) {
+        // Armazenar no cache para próximas consultas
+        cacheManager.setProfile(userId, directResult)
+        return directResult
+      }
+
+      // Se falhar, tentar com QueryOptimizer
+      console.log('🔄 Tentando com QueryOptimizer...')
       const result = await queryOptimizer.getProfile(userId, {
         enableCache: true,
         cacheTTL: 10 * 60 * 1000, // 10 minutos
-        timeout: 8000,
-        retries: 2
+        timeout: 15000, // 15 segundos
+        retries: 1, // Apenas 1 tentativa para ser mais rápido
       })
 
       if (result.data) {
@@ -283,76 +321,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
           email: result.data.email,
           role: result.data.role,
           fromCache: result.fromCache,
-          executionTime: result.executionTime
+          executionTime: result.executionTime,
         })
         return result.data
       }
 
-      if (result.error) {
-        console.warn('⚠️ Erro no QueryOptimizer, tentando fallback:', result.error)
-      }
-
-      // Fallback: query direta
-      try {
-        const { data: profile, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
-
-        if (error) {
-          console.warn('⚠️ Erro na query direta do perfil:', error)
-        } else if (profile) {
-          console.log('✅ Perfil obtido via fallback direto:', {
-            id: profile.id,
-            nome: profile.nome,
-            email: profile.email,
-            role: profile.role
-          })
-
-          // Armazenar no cache para próximas consultas
-          cacheManager.setProfile(userId, profile)
-          return profile
-        }
-      } catch (directQueryError) {
-        console.warn('⚠️ Erro na query direta:', directQueryError)
-      }
-
-      // Fallback: usar ProfileSync
-      try {
-        const syncResult = await profileSync.syncProfile(userId)
-        if (syncResult.success && syncResult.profile) {
-          console.log('✅ Perfil obtido via ProfileSync')
-
-          // Tentar armazenar no cache (se disponível)
-          if (cacheManager) {
-            try {
-              cacheManager.setProfile(userId, syncResult.profile)
-            } catch (cacheError) {
-              console.warn('⚠️ Erro ao armazenar no cache:', cacheError)
-            }
-          }
-
-          return syncResult.profile
-        }
-      } catch (syncError) {
-        console.warn('⚠️ Erro no ProfileSync:', syncError)
-      }
-
-      // Último fallback: tentar recuperação
-      try {
-        const recoveredProfile = await profileSync.recoverProfile(userId)
-        if (recoveredProfile) {
-          console.log('✅ Perfil recuperado com fallback')
-          return recoveredProfile
-        }
-      } catch (recoveryError) {
-        console.warn('⚠️ Erro na recuperação:', recoveryError)
-      }
-
-      console.warn('⚠️ Não foi possível obter perfil para o usuário:', userId)
+      // Se QueryOptimizer falhar, já tentamos busca direta antes
+      console.warn('⚠️ QueryOptimizer falhou e busca direta também falhou')
       return null
-
     } catch (error) {
       console.error('❌ Erro inesperado ao buscar perfil:', {
         error: error instanceof Error ? error.message : error,
@@ -366,7 +342,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const updateAuthState = async (session: Session | null) => {
     console.log('🔄 Atualizando estado de autenticação:', {
       hasSession: !!session,
-      userId: session?.user?.id
+      userId: session?.user?.id,
     })
 
     setSession(session)
@@ -387,7 +363,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         } catch (healthError) {
           console.warn('⚠️ Erro no health check (não crítico):', healthError)
         }
-
       } catch (error) {
         console.error('❌ Erro ao buscar perfil:', error)
         setProfile(null)
@@ -397,10 +372,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setProfile(null)
 
       // Limpar estado de saúde quando não há sessão
-      setSystemHealth(prev => ({
+      setSystemHealth((prev) => ({
         ...prev,
         isHealthy: true,
-        lastHealthCheck: new Date()
+        lastHealthCheck: new Date(),
       }))
     }
 
@@ -442,15 +417,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
     initializeAuth()
 
     // Escutar mudanças de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔄 Auth state changed:', event)
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 Auth state changed:', event)
 
-        if (mounted) {
-          await updateAuthState(session)
-        }
+      if (mounted) {
+        await updateAuthState(session)
       }
-    )
+    })
 
     return () => {
       mounted = false
@@ -485,11 +460,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const rateLimitResult = checkLoginRateLimit(data.email)
       if (!rateLimitResult.allowed) {
         console.warn('🚫 Login bloqueado por rate limiting:', rateLimitResult)
-        
+
         securityLogger.logLoginBlocked(data.email, {
           retryAfter: rateLimitResult.retryAfter,
           requests: rateLimitResult.info.requests,
-          maxRequests: rateLimitResult.info.requests
+          maxRequests: rateLimitResult.info.requests,
         })
 
         return {
@@ -498,7 +473,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             `Muitas tentativas de login. Tente novamente em ${Math.ceil(rateLimitResult.retryAfter! / 60)} minutos.`,
             'RATE_LIMIT_EXCEEDED',
             429
-          )
+          ),
         }
       }
 
@@ -512,7 +487,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: !authError,
         hasUser: !!authData?.user,
         hasSession: !!authData?.session,
-        error: authError
+        error: authError,
       })
 
       if (authError) {
@@ -522,14 +497,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         recordLoginAttempt(data.email, false)
 
         // Log de segurança para tentativa falhada
-        securityLogger.logLoginFailed(
-          data.email,
-          authError.message || 'Erro desconhecido',
-          {
-            errorCode: authError.status,
-            timestamp: Date.now()
-          }
-        )
+        securityLogger.logLoginFailed(data.email, authError.message || 'Erro desconhecido', {
+          errorCode: authError.status,
+          timestamp: Date.now(),
+        })
 
         // Mensagem mais clara para erro de email não confirmado
         let errorToReturn = authError
@@ -543,7 +514,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         return {
           success: false,
-          error: errorToReturn
+          error: errorToReturn,
         }
       }
 
@@ -551,7 +522,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Login sem usuário retornado')
         return {
           success: false,
-          error: createAuthError('Usuário não retornado pelo login')
+          error: createAuthError('Usuário não retornado pelo login'),
         }
       }
 
@@ -571,23 +542,19 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
 
       // Log de segurança para login bem-sucedido
-      securityLogger.logLoginSuccess(
-        user.id,
-        data.email,
-        {
-          userRole: userProfile?.role || user.user_metadata?.role,
-          profileFound: !!userProfile,
-          timestamp: Date.now()
-        }
-      )
+      securityLogger.logLoginSuccess(user.id, data.email, {
+        userRole: userProfile?.role || user.user_metadata?.role,
+        profileFound: !!userProfile,
+        timestamp: Date.now(),
+      })
 
       // Cache warming para melhor performance
       if (user && userProfile) {
         try {
-          await cacheManager.warmup(user.id, { 
-            user, 
+          await cacheManager.warmup(user.id, {
+            user,
             profile: userProfile,
-            session: authData.session 
+            session: authData.session,
           })
           console.log('🔥 Cache aquecido para usuário:', user.id)
         } catch (cacheError) {
@@ -599,14 +566,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: true,
         error: null,
         user: user,
-        profile: userProfile
+        profile: userProfile,
       }
-
     } catch (error) {
       console.error('❌ Erro inesperado no login:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -626,7 +592,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           data: {
             nome: data.nome,
             telefone: data.telefone,
-            role: 'client' // Definir role padrão
+            role: 'client', // Definir role padrão
           },
         },
       })
@@ -635,7 +601,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: !error,
         hasUser: !!authData?.user,
         needsConfirmation: !authData?.session,
-        error
+        error,
       })
 
       if (error) {
@@ -647,7 +613,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Cadastro sem usuário retornado')
         return {
           success: false,
-          error: createAuthError('Usuário não foi criado')
+          error: createAuthError('Usuário não foi criado'),
         }
       }
 
@@ -663,7 +629,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user: authData.user,
           profile: null,
           // Adicionar mensagem específica para confirmação
-          message: 'Cadastro realizado com sucesso! Verifique seu email para confirmar a conta antes de fazer login.'
+          message:
+            'Cadastro realizado com sucesso! Verifique seu email para confirmar a conta antes de fazer login.',
         }
       }
 
@@ -681,7 +648,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               telefone: data.telefone,
               role: 'client',
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .select()
             .single()
@@ -700,13 +667,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: true,
         error: null,
         user: authData.user,
-        message: 'Cadastro realizado e confirmado com sucesso!'
+        message: 'Cadastro realizado e confirmado com sucesso!',
       }
     } catch (error) {
       console.error('❌ Erro inesperado no cadastro:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -727,7 +694,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             nome: data.nome,
             telefone: data.telefone,
             role: 'admin',
-            barbeariaId: data.barbeariaId
+            barbeariaId: data.barbeariaId,
           },
         },
       })
@@ -740,7 +707,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!authData?.user) {
         return {
           success: false,
-          error: createAuthError('Administrador não foi criado')
+          error: createAuthError('Administrador não foi criado'),
         }
       }
 
@@ -760,7 +727,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               role: 'admin',
               barbearia_id: data.barbeariaId,
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .select()
             .single()
@@ -779,13 +746,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: true,
         error: null,
         user: authData.user,
-        message: 'Administrador criado com sucesso!'
+        message: 'Administrador criado com sucesso!',
       }
     } catch (error) {
       console.error('❌ Erro inesperado ao criar admin:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -793,7 +760,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }
 
   // Função para cadastrar funcionário/barbeiro (apenas Admin)
-  const createEmployee = async (data: SignUpData & { barbeariaId: string }): Promise<AuthResult> => {
+  const createEmployee = async (
+    data: SignUpData & { barbeariaId: string }
+  ): Promise<AuthResult> => {
     try {
       setLoading(true)
       console.log('✂️ Criando funcionário:', { email: data.email, nome: data.nome })
@@ -806,7 +775,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             nome: data.nome,
             telefone: data.telefone,
             role: 'barber',
-            barbeariaId: data.barbeariaId
+            barbeariaId: data.barbeariaId,
           },
         },
       })
@@ -819,7 +788,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       if (!authData?.user) {
         return {
           success: false,
-          error: createAuthError('Funcionário não foi criado')
+          error: createAuthError('Funcionário não foi criado'),
         }
       }
 
@@ -839,7 +808,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
               role: 'barber',
               barbearia_id: data.barbeariaId,
               created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
+              updated_at: new Date().toISOString(),
             })
             .select()
             .single()
@@ -858,13 +827,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         success: true,
         error: null,
         user: authData.user,
-        message: 'Funcionário criado com sucesso!'
+        message: 'Funcionário criado com sucesso!',
       }
     } catch (error) {
       console.error('❌ Erro inesperado ao criar funcionário:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -887,14 +856,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Log de segurança (sem bloquear o logout)
       try {
         if (currentUserId && profile?.email) {
-          securityLogger.logLogout(
-            currentUserId,
-            profile.email,
-            {
-              userRole: profile.role,
-              timestamp: Date.now()
-            }
-          )
+          securityLogger.logLogout(currentUserId, profile.email, {
+            userRole: profile.role,
+            timestamp: Date.now(),
+          })
         }
       } catch (logError) {
         console.warn('⚠️ Erro no log de segurança (não crítico):', logError)
@@ -920,7 +885,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('✅ AuthContext: Estado local limpo')
       return { success: true, error: null }
-
     } catch (error) {
       console.error('❌ Erro no AuthContext signOut:', error)
 
@@ -938,7 +902,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Retornar sucesso mesmo com erro (logout local funcionou)
       return { success: true, error: null }
-
     } finally {
       setLoading(false)
     }
@@ -959,7 +922,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     } catch (error) {
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     }
   }
@@ -971,7 +934,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
         return {
           success: false,
-          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401)
+          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401),
         }
       }
 
@@ -985,13 +948,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (Object.keys(authUpdates).length > 0) {
         console.log('🔄 Atualizando dados do auth:', authUpdates)
-        const authResult = await authInterceptor.wrapSupabaseOperation(
-          async () => {
-            const response = await supabase.auth.updateUser({ data: authUpdates })
-            return { data: response.data, error: response.error }
-          },
-          'updateUserAuth'
-        )
+        const authResult = await authInterceptor.wrapSupabaseOperation(async () => {
+          const response = await supabase.auth.updateUser({ data: authUpdates })
+          return { data: response.data, error: response.error }
+        }, 'updateUserAuth')
 
         if (!authResult.success) {
           console.error('❌ Erro ao atualizar auth:', authResult.error)
@@ -1009,18 +969,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.log('🔄 Atualizando tabela profiles:', profileUpdates)
 
       // Atualizar na tabela profiles com interceptor
-      const profileResult = await authInterceptor.wrapSupabaseOperation(
-        async () => {
-          const response = await supabase
-            .from('profiles')
-            .update(profileUpdates)
-            .eq('id', user.id)
-            .select()
-            .single()
-          return { data: response.data, error: response.error }
-        },
-        'updateProfile'
-      )
+      const profileResult = await authInterceptor.wrapSupabaseOperation(async () => {
+        const response = await supabase
+          .from('profiles')
+          .update(profileUpdates)
+          .eq('id', user.id)
+          .select()
+          .single()
+        return { data: response.data, error: response.error }
+      }, 'updateProfile')
 
       if (!profileResult.success) {
         console.error('❌ Erro ao atualizar profiles:', profileResult.error)
@@ -1035,13 +992,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return {
         success: true,
         error: null,
-        profile: profileResult.data as UserProfile
+        profile: profileResult.data as UserProfile,
       }
     } catch (error) {
       console.error('❌ Erro inesperado ao atualizar perfil:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -1055,7 +1012,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Tentativa de atualizar perfil sem usuário autenticado')
         return {
           success: false,
-          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401)
+          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401),
         }
       }
 
@@ -1083,13 +1040,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
       return {
         success: true,
         error: null,
-        profile: data as UserProfile
+        profile: data as UserProfile,
       }
     } catch (error) {
       console.error('❌ Erro inesperado ao atualizar perfil:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -1103,7 +1060,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Tentativa de upload sem usuário autenticado')
         return {
           success: false,
-          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401)
+          error: createAuthError('Usuário não autenticado', 'UNAUTHENTICATED', 401),
         }
       }
 
@@ -1111,7 +1068,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         userId: user.id,
         fileName: file.name,
         fileSize: file.size,
-        fileType: file.type
+        fileType: file.type,
       })
 
       setLoading(true)
@@ -1141,7 +1098,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Erro no upload (incluindo fallback):', uploadResult.error)
         return {
           success: false,
-          error: createAuthError(uploadResult.error || 'Erro no upload', 'UPLOAD_ERROR', 500)
+          error: createAuthError(uploadResult.error || 'Erro no upload', 'UPLOAD_ERROR', 500),
         }
       }
 
@@ -1150,7 +1107,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Atualizar perfil com nova URL do avatar
       console.log('🔄 Atualizando perfil com nova URL do avatar...')
       const updateResult = await updateProfile({
-        avatar_url: uploadResult.url
+        avatar_url: uploadResult.url,
       })
 
       if (updateResult.success) {
@@ -1164,7 +1121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       console.error('❌ Erro inesperado no upload de avatar:', error)
       return {
         success: false,
-        error: error as AuthError
+        error: error as AuthError,
       }
     } finally {
       setLoading(false)
@@ -1212,19 +1169,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
       saas_owner: ['*'], // SaaS Owner tem todas as permissões
       admin: [
         // Usuários
-        'manage_users', 'view_users', 'create_users', 'edit_users', 'delete_users',
+        'manage_users',
+        'view_users',
+        'create_users',
+        'edit_users',
+        'delete_users',
         // Funcionários
-        'manage_employees', 'view_employees', 'create_employees', 'edit_employees', 'delete_employees',
+        'manage_employees',
+        'view_employees',
+        'create_employees',
+        'edit_employees',
+        'delete_employees',
         // Serviços
-        'manage_services', 'view_services', 'create_services', 'edit_services', 'delete_services',
+        'manage_services',
+        'view_services',
+        'create_services',
+        'edit_services',
+        'delete_services',
         // Agendamentos
-        'manage_all_appointments', 'view_all_appointments', 'create_appointments', 'cancel_appointments',
+        'manage_all_appointments',
+        'view_all_appointments',
+        'create_appointments',
+        'cancel_appointments',
         // Financeiro
-        'view_financial', 'manage_financial', 'view_all_financial', 'manage_transactions', 'view_reports', 'export_data',
+        'view_financial',
+        'manage_financial',
+        'view_all_financial',
+        'manage_transactions',
+        'view_reports',
+        'export_data',
         // Configurações
-        'manage_settings', 'view_settings',
+        'manage_settings',
+        'view_settings',
         // Sistema
-        'manage_roles'
+        'manage_roles',
       ],
       barber: [
         // Usuários (limitado)
@@ -1232,20 +1210,26 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Serviços (visualização)
         'view_services',
         // Agendamentos (próprios e visualização)
-        'view_all_appointments', 'manage_own_appointments', 'create_appointments',
+        'view_all_appointments',
+        'manage_own_appointments',
+        'create_appointments',
         // Financeiro (próprio)
-        'view_financial', 'view_own_financial', 'view_reports',
+        'view_financial',
+        'view_own_financial',
+        'view_reports',
         // Configurações (limitado)
-        'view_settings'
+        'view_settings',
       ],
       client: [
         // Agendamentos (próprios)
-        'view_own_appointments', 'create_appointments', 'cancel_appointments',
+        'view_own_appointments',
+        'create_appointments',
+        'cancel_appointments',
         // Serviços (visualização)
         'view_services',
         // Configurações (próprias)
-        'view_settings'
-      ]
+        'view_settings',
+      ],
     }
 
     const userPermissions = rolePermissions[profile.role] || []
@@ -1286,9 +1270,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshProfile,
   }
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

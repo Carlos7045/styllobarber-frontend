@@ -72,3 +72,9 @@ export { Switch, type SwitchProps } from './switch'
 
 // Componente Label
 export { Label, type LabelProps } from './label'
+
+// Componentes Tabs
+export { Tabs, TabsList, TabsTrigger, TabsContent } from './tabs'
+
+// Componente LoadingSpinner
+export { LoadingSpinner, loadingSpinnerVariants, type LoadingSpinnerProps } from './loading-spinner'

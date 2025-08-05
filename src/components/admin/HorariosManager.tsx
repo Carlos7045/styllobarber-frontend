@@ -238,62 +238,64 @@ function HorariosFuncionamentoList({
   })
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
       {horariosPorDia.map(({ dia, horario, diaSemana }) => (
         <Card key={diaSemana} className="relative">
-          <CardHeader className="pb-3">
+          <CardHeader className="px-3 pb-2 pt-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">{dia}</CardTitle>
+              <CardTitle className="text-sm font-medium">{dia}</CardTitle>
               {horario ? (
                 <Badge
                   variant="outline"
-                  className={`transition-all duration-200 ${
+                  className={`px-1.5 py-0.5 text-xs ${
                     horario.ativo
                       ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 dark:border-emerald-400/50 dark:text-emerald-300'
                       : 'border-gray-500/50 bg-gray-500/10 text-gray-400 dark:border-gray-400/50 dark:text-gray-300'
                   }`}
                 >
                   {horario.ativo ? (
-                    <CheckCircle className="mr-1 h-3 w-3" />
+                    <CheckCircle className="mr-1 h-2.5 w-2.5" />
                   ) : (
-                    <XCircle className="mr-1 h-3 w-3" />
+                    <XCircle className="mr-1 h-2.5 w-2.5" />
                   )}
                   {horario.ativo ? 'Ativo' : 'Inativo'}
                 </Badge>
               ) : (
                 <Badge
                   variant="outline"
-                  className="border-amber-500/50 bg-amber-500/10 text-amber-400 dark:border-amber-400/50 dark:text-amber-300"
+                  className="border-amber-500/50 bg-amber-500/10 px-1.5 py-0.5 text-xs text-amber-400 dark:border-amber-400/50 dark:text-amber-300"
                 >
-                  <AlertCircle className="mr-1 h-3 w-3" />
-                  Não configurado
+                  <AlertCircle className="mr-1 h-2.5 w-2.5" />
+                  Não config.
                 </Badge>
               )}
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-3 pb-3">
             {horario ? (
-              <div className="space-y-3">
-                <div className="flex items-center text-sm">
-                  <Clock className="mr-2 h-4 w-4 text-primary-gold" />
-                  <span>
+              <div className="space-y-2">
+                <div className="flex items-center text-xs">
+                  <Clock className="mr-1.5 h-3 w-3 text-primary-gold" />
+                  <span className="font-medium">
                     {formatTimeString(horario.horario_inicio)} -{' '}
                     {formatTimeString(horario.horario_fim)}
                   </span>
                 </div>
 
                 {horario.intervalo_inicio && horario.intervalo_fim && (
-                  <div className="flex items-center text-sm text-text-muted">
-                    <span className="mr-2">Intervalo:</span>
-                    <span>
-                      {formatTimeString(horario.intervalo_inicio)} -{' '}
-                      {formatTimeString(horario.intervalo_fim)}
-                    </span>
+                  <div className="pl-4.5 text-xs text-gray-500 dark:text-gray-400">
+                    Intervalo: {formatTimeString(horario.intervalo_inicio)} -{' '}
+                    {formatTimeString(horario.intervalo_fim)}
                   </div>
                 )}
 
-                <div className="flex space-x-2 pt-2">
-                  <Button size="sm" variant="outline" onClick={() => onEdit(horario)}>
+                <div className="flex space-x-1 pt-1">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onEdit(horario)}
+                    className="h-7 w-7 p-0"
+                  >
                     <Edit className="h-3 w-3" />
                   </Button>
                   <Button
@@ -301,31 +303,20 @@ function HorariosFuncionamentoList({
                     variant="outline"
                     onClick={() => onToggleAtivo(horario)}
                     disabled={loadingToggle === horario.id}
-                    className={`transition-all duration-200 ${
+                    className={`h-7 w-7 p-0 transition-all duration-200 ${
                       horario.ativo
                         ? 'border-orange-500/50 bg-orange-500/10 text-orange-400 hover:border-orange-400 hover:bg-orange-500/20 dark:border-orange-400/50 dark:text-orange-300 dark:hover:bg-orange-400/20'
                         : 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400 hover:border-emerald-400 hover:bg-emerald-500/20 dark:border-emerald-400/50 dark:text-emerald-300 dark:hover:bg-emerald-400/20'
                     }`}
                   >
                     {loadingToggle === horario.id ? (
-                      <div className="flex items-center">
-                        <div className="mr-1 h-3 w-3 animate-spin rounded-full border-b-2 border-current"></div>
-                        <span className="text-xs">
-                          {horario.ativo ? 'Desativando...' : 'Ativando...'}
-                        </span>
-                      </div>
+                      <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-current"></div>
                     ) : (
                       <>
                         {horario.ativo ? (
-                          <>
-                            <XCircle className="mr-1 h-3 w-3" />
-                            <span className="text-xs">Desativar</span>
-                          </>
+                          <XCircle className="h-3 w-3" />
                         ) : (
-                          <>
-                            <CheckCircle className="mr-1 h-3 w-3" />
-                            <span className="text-xs">Ativar</span>
-                          </>
+                          <CheckCircle className="h-3 w-3" />
                         )}
                       </>
                     )}
@@ -335,6 +326,7 @@ function HorariosFuncionamentoList({
                     variant="destructive"
                     onClick={() => onDelete(horario.id)}
                     disabled={loadingDelete === horario.id}
+                    className="h-7 w-7 p-0"
                   >
                     {loadingDelete === horario.id ? (
                       <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-current"></div>
@@ -345,11 +337,14 @@ function HorariosFuncionamentoList({
                 </div>
               </div>
             ) : (
-              <div className="py-4 text-center">
-                <p className="mb-3 text-sm text-text-muted">
-                  Nenhum horário configurado para este dia
-                </p>
-                <Button size="sm" variant="outline" onClick={() => onCreateHorario(diaSemana)}>
+              <div className="py-2 text-center">
+                <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">Não configurado</p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onCreateHorario(diaSemana)}
+                  className="h-7 text-xs"
+                >
                   <Plus className="mr-1 h-3 w-3" />
                   Configurar
                 </Button>
@@ -399,10 +394,10 @@ function BloqueiosHorarioList({
       {/* Bloqueios Ativos */}
       {bloqueiosAtivos.length > 0 && (
         <div>
-          <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-white">
+          <h3 className="mb-3 text-base font-semibold text-gray-900 dark:text-white">
             Bloqueios Ativos ({bloqueiosAtivos.length})
           </h3>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {bloqueiosAtivos.map((bloqueio) => (
               <BloqueioCard
                 key={bloqueio.id}
@@ -420,10 +415,10 @@ function BloqueiosHorarioList({
       {/* Bloqueios Expirados */}
       {bloqueiosExpirados.length > 0 && (
         <div>
-          <h3 className="mb-4 text-lg font-semibold text-gray-500 dark:text-gray-400">
+          <h3 className="mb-3 text-base font-semibold text-gray-500 dark:text-gray-400">
             Bloqueios Expirados ({bloqueiosExpirados.length})
           </h3>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {bloqueiosExpirados.map((bloqueio) => (
               <BloqueioCard
                 key={bloqueio.id}
@@ -457,33 +452,33 @@ function BloqueioCard({
 }) {
   return (
     <Card className={`relative ${isExpired ? 'opacity-60' : ''}`}>
-      <CardHeader className="pb-3">
+      <CardHeader className="px-3 pb-2 pt-3">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base">{bloqueio.motivo}</CardTitle>
+          <CardTitle className="truncate pr-2 text-sm font-medium">{bloqueio.motivo}</CardTitle>
           <Badge
             variant="outline"
-            className={
+            className={`flex-shrink-0 px-1.5 py-0.5 text-xs ${
               isExpired
                 ? 'border-gray-500/50 bg-gray-500/10 text-gray-400 dark:border-gray-400/50 dark:text-gray-300'
                 : 'border-red-500/50 bg-red-500/10 text-red-400 dark:border-red-400/50 dark:text-red-300'
-            }
+            }`}
           >
             {isExpired ? 'Expirado' : 'Ativo'}
           </Badge>
         </div>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          <div className="flex items-center text-sm">
-            <Calendar className="mr-2 h-4 w-4 text-primary-gold" />
+      <CardContent className="px-3 pb-3">
+        <div className="space-y-1.5">
+          <div className="flex items-center text-xs">
+            <Calendar className="mr-1.5 h-3 w-3 text-primary-gold" />
             <span>
               {formatDateString(bloqueio.data_inicio)} - {formatDateString(bloqueio.data_fim)}
             </span>
           </div>
 
           {bloqueio.horario_inicio && bloqueio.horario_fim && (
-            <div className="flex items-center text-sm">
-              <Clock className="mr-2 h-4 w-4 text-primary-gold" />
+            <div className="flex items-center text-xs">
+              <Clock className="mr-1.5 h-3 w-3 text-primary-gold" />
               <span>
                 {formatTimeString(bloqueio.horario_inicio)} -{' '}
                 {formatTimeString(bloqueio.horario_fim)}
@@ -492,14 +487,19 @@ function BloqueioCard({
           )}
 
           {bloqueio.funcionario && (
-            <div className="flex items-center text-sm text-text-muted">
-              <User className="mr-2 h-4 w-4" />
-              <span>{bloqueio.funcionario.profile.nome}</span>
+            <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+              <User className="mr-1.5 h-3 w-3" />
+              <span className="truncate">{bloqueio.funcionario.profile.nome}</span>
             </div>
           )}
 
-          <div className="flex space-x-2 pt-3">
-            <Button size="sm" variant="outline" onClick={() => onEdit(bloqueio)}>
+          <div className="flex space-x-1 pt-1">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onEdit(bloqueio)}
+              className="h-7 w-7 p-0"
+            >
               <Edit className="h-3 w-3" />
             </Button>
             <Button
@@ -507,6 +507,7 @@ function BloqueioCard({
               variant="destructive"
               onClick={() => onDelete(bloqueio.id)}
               disabled={loadingDelete === bloqueio.id}
+              className="h-7 w-7 p-0"
             >
               {loadingDelete === bloqueio.id ? (
                 <div className="h-3 w-3 animate-spin rounded-full border-b-2 border-current"></div>

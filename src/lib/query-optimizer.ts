@@ -27,26 +27,29 @@ interface QueryConfig {
 // Configurações padrão
 const DEFAULT_CONFIG = {
   CACHE_TTL: 5 * 60 * 1000, // 5 minutos
-  TIMEOUT: 10000, // 10 segundos
-  RETRIES: 3,
+  TIMEOUT: 15000, // 15 segundos (aumentado para evitar timeouts)
+  RETRIES: 2, // Reduzido para ser mais rápido
   BATCH_SIZE: 10,
   BATCH_DELAY: 100, // 100ms
 }
 
 class QueryOptimizer {
   private queryCache = new Map<string, any>()
-  private batchQueue = new Map<string, Array<{
-    resolve: (value: any) => void
-    reject: (error: any) => void
-    config: QueryConfig
-  }>>()
+  private batchQueue = new Map<
+    string,
+    Array<{
+      resolve: (value: any) => void
+      reject: (error: any) => void
+      config: QueryConfig
+    }>
+  >()
   private batchTimer: NodeJS.Timeout | null = null
   private stats = {
     totalQueries: 0,
     cacheHits: 0,
     cacheMisses: 0,
     errors: 0,
-    avgExecutionTime: 0
+    avgExecutionTime: 0,
   }
 
   constructor() {
@@ -65,17 +68,27 @@ class QueryOptimizer {
    * Executar query com timeout
    */
   private async executeWithTimeout<T>(
-    queryPromise: Promise<T>, 
+    queryPromise: Promise<T>,
     timeout: number = DEFAULT_CONFIG.TIMEOUT
   ): Promise<T> {
     const timeoutPromise = new Promise<never>((_, reject) => {
-      const timeoutId = setTimeout(() => reject(new Error('Query timeout')), timeout)
-      
+      const timeoutId = setTimeout(() => {
+        reject(new Error(`Query timeout after ${timeout}ms`))
+      }, timeout)
+
       // Limpar timeout se a promise resolver primeiro
       queryPromise.finally(() => clearTimeout(timeoutId))
     })
 
-    return Promise.race([queryPromise, timeoutPromise])
+    try {
+      return await Promise.race([queryPromise, timeoutPromise])
+    } catch (error) {
+      // Log mais detalhado para debug
+      if (error instanceof Error && error.message.includes('timeout')) {
+        console.warn(`⏱️ Query timeout após ${timeout}ms`)
+      }
+      throw error
+    }
   }
 
   /**
@@ -93,11 +106,11 @@ class QueryOptimizer {
       } catch (error) {
         lastError = error
         console.warn(`⚠️ Query falhou (tentativa ${attempt}/${retries}):`, error)
-        
+
         if (attempt < retries) {
           // Backoff exponencial
           const delay = Math.pow(2, attempt) * 1000
-          await new Promise(resolve => setTimeout(resolve, delay))
+          await new Promise((resolve) => setTimeout(resolve, delay))
         }
       }
     }
@@ -117,12 +130,12 @@ class QueryOptimizer {
       try {
         // Executar query uma vez para todos os requests
         const result = await this.executeQuery(key, requests[0].config)
-        
+
         // Resolver todos os requests com o mesmo resultado
-        requests.forEach(request => request.resolve(result))
+        requests.forEach((request) => request.resolve(result))
       } catch (error) {
         // Rejeitar todos os requests com o mesmo erro
-        requests.forEach(request => request.reject(error))
+        requests.forEach((request) => request.reject(error))
       }
     }
 
@@ -150,7 +163,7 @@ class QueryOptimizer {
       cacheTTL: DEFAULT_CONFIG.CACHE_TTL,
       timeout: DEFAULT_CONFIG.TIMEOUT,
       retries: DEFAULT_CONFIG.RETRIES,
-      ...config
+      ...config,
     }
 
     const cacheKey = `profile:${userId}`
@@ -164,7 +177,7 @@ class QueryOptimizer {
           data: cached,
           error: null,
           fromCache: true,
-          executionTime: Date.now() - startTime
+          executionTime: Date.now() - startTime,
         }
       }
     }
@@ -201,9 +214,8 @@ class QueryOptimizer {
         data: result,
         error: null,
         fromCache: false,
-        executionTime
+        executionTime,
       }
-
     } catch (error) {
       this.stats.errors++
       console.error('❌ Erro na query otimizada de perfil:', error)
@@ -212,7 +224,7 @@ class QueryOptimizer {
         data: null,
         error,
         fromCache: false,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       }
     }
   }
@@ -220,7 +232,10 @@ class QueryOptimizer {
   /**
    * Buscar múltiplos perfis otimizado
    */
-  async getProfiles(userIds: string[], config: QueryConfig = {}): Promise<QueryResult<UserProfile[]>> {
+  async getProfiles(
+    userIds: string[],
+    config: QueryConfig = {}
+  ): Promise<QueryResult<UserProfile[]>> {
     const startTime = Date.now()
     this.stats.totalQueries++
 
@@ -229,7 +244,7 @@ class QueryOptimizer {
       cacheTTL: DEFAULT_CONFIG.CACHE_TTL,
       timeout: DEFAULT_CONFIG.TIMEOUT,
       retries: DEFAULT_CONFIG.RETRIES,
-      ...config
+      ...config,
     }
 
     // Verificar cache para cada usuário
@@ -257,7 +272,7 @@ class QueryOptimizer {
         data: cachedProfiles,
         error: null,
         fromCache: true,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       }
     }
 
@@ -280,7 +295,7 @@ class QueryOptimizer {
 
       // Armazenar no cache
       if (finalConfig.enableCache && uncachedProfiles) {
-        uncachedProfiles.forEach(profile => {
+        uncachedProfiles.forEach((profile) => {
           cacheManager.setProfile(profile.id, profile)
         })
       }
@@ -293,9 +308,8 @@ class QueryOptimizer {
         data: allProfiles,
         error: null,
         fromCache: cachedProfiles.length > 0,
-        executionTime
+        executionTime,
       }
-
     } catch (error) {
       this.stats.errors++
       console.error('❌ Erro na query otimizada de perfis:', error)
@@ -304,7 +318,7 @@ class QueryOptimizer {
         data: cachedProfiles.length > 0 ? cachedProfiles : null,
         error,
         fromCache: cachedProfiles.length > 0,
-        executionTime: Date.now() - startTime
+        executionTime: Date.now() - startTime,
       }
     }
   }
@@ -313,9 +327,9 @@ class QueryOptimizer {
    * Atualizar tempo médio de execução
    */
   private updateAvgExecutionTime(executionTime: number): void {
-    this.stats.avgExecutionTime = (
-      (this.stats.avgExecutionTime * (this.stats.totalQueries - 1)) + executionTime
-    ) / this.stats.totalQueries
+    this.stats.avgExecutionTime =
+      (this.stats.avgExecutionTime * (this.stats.totalQueries - 1) + executionTime) /
+      this.stats.totalQueries
   }
 
   /**
@@ -330,7 +344,7 @@ class QueryOptimizer {
    * Invalidar cache de múltiplos usuários
    */
   invalidateUsersCache(userIds: string[]): void {
-    userIds.forEach(userId => this.invalidateUserCache(userId))
+    userIds.forEach((userId) => this.invalidateUserCache(userId))
   }
 
   /**
@@ -338,7 +352,7 @@ class QueryOptimizer {
    */
   async preloadProfiles(userIds: string[]): Promise<void> {
     console.log(`🔥 Pré-carregando ${userIds.length} perfis`)
-    
+
     // Dividir em batches para não sobrecarregar
     const batches = []
     for (let i = 0; i < userIds.length; i += DEFAULT_CONFIG.BATCH_SIZE) {
@@ -348,10 +362,10 @@ class QueryOptimizer {
     // Processar batches sequencialmente
     for (const batch of batches) {
       await this.getProfiles(batch, { enableCache: true })
-      
+
       // Pequeno delay entre batches
       if (batches.length > 1) {
-        await new Promise(resolve => setTimeout(resolve, DEFAULT_CONFIG.BATCH_DELAY))
+        await new Promise((resolve) => setTimeout(resolve, DEFAULT_CONFIG.BATCH_DELAY))
       }
     }
   }
@@ -362,12 +376,10 @@ class QueryOptimizer {
   getStats() {
     return {
       ...this.stats,
-      cacheHitRate: this.stats.totalQueries > 0 
-        ? (this.stats.cacheHits / this.stats.totalQueries) * 100 
-        : 0,
-      errorRate: this.stats.totalQueries > 0 
-        ? (this.stats.errors / this.stats.totalQueries) * 100 
-        : 0
+      cacheHitRate:
+        this.stats.totalQueries > 0 ? (this.stats.cacheHits / this.stats.totalQueries) * 100 : 0,
+      errorRate:
+        this.stats.totalQueries > 0 ? (this.stats.errors / this.stats.totalQueries) * 100 : 0,
     }
   }
 
@@ -380,7 +392,7 @@ class QueryOptimizer {
       cacheHits: 0,
       cacheMisses: 0,
       errors: 0,
-      avgExecutionTime: 0
+      avgExecutionTime: 0,
     }
     console.log('📊 Estatísticas do QueryOptimizer resetadas')
   }

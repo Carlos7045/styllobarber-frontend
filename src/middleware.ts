@@ -9,11 +9,7 @@ const protectedRoutes = [
 ]
 
 // Rotas que só podem ser acessadas por usuários não autenticados
-const authRoutes = [
-  '/login',
-  '/cadastro',
-  '/recuperar-senha',
-]
+const authRoutes = ['/login', '/cadastro', '/recuperar-senha']
 
 // Rotas públicas que não precisam de verificação
 const publicRoutes = [
@@ -42,7 +38,7 @@ export async function middleware(request: NextRequest) {
   ]
 
   // Se é rota pública, permitir sempre
-  if (publicRoutes.some(route => pathname === route || pathname.startsWith(route))) {
+  if (publicRoutes.some((route) => pathname === route || pathname.startsWith(route))) {
     return response
   }
 
@@ -78,9 +74,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const isAuthenticated = !!session?.user
-    const isProtectedRoute = protectedRoutes.some(route => 
-      pathname.startsWith(route)
-    )
+    const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
 
     // Se é uma rota protegida e o usuário não está autenticado
     if (isProtectedRoute && !isAuthenticated) {
@@ -92,24 +86,24 @@ export async function middleware(request: NextRequest) {
     // Verificar permissões baseadas em role para usuários autenticados
     if (isAuthenticated && isProtectedRoute) {
       const userRole = session.user.user_metadata?.role || 'client'
-      
+
       // Verificar se o usuário tem permissão para acessar a rota
       const hasPermission = checkRoutePermission(pathname, userRole)
-      
+
       if (!hasPermission) {
         // Redirecionar para a área apropriada baseada no role
         let redirectPath = '/dashboard'
-        
+
         if (userRole === 'saas_owner') {
           redirectPath = '/saas-admin'
         } else if (userRole === 'client') {
           redirectPath = '/dashboard/clientes'
         }
-        
+
         const redirectUrl = new URL(redirectPath, request.url)
         redirectUrl.searchParams.set('error', 'unauthorized')
         redirectUrl.searchParams.set('attempted', pathname)
-        
+
         return NextResponse.redirect(redirectUrl)
       }
     }
@@ -117,9 +111,9 @@ export async function middleware(request: NextRequest) {
     return response
   } catch (error) {
     console.error('Erro no middleware:', error)
-    
+
     // Em caso de erro, redirecionar rotas protegidas para login (com proteção contra loop)
-    if (protectedRoutes.some(route => pathname.startsWith(route))) {
+    if (protectedRoutes.some((route) => pathname.startsWith(route))) {
       const loginUrl = new URL('/login', request.url)
       // Não adicionar redirect se já estamos em um erro para evitar loops
       if (!request.nextUrl.searchParams.get('error')) {
@@ -127,7 +121,7 @@ export async function middleware(request: NextRequest) {
       }
       return NextResponse.redirect(loginUrl)
     }
-    
+
     return response
   }
 }
@@ -152,10 +146,10 @@ function checkRoutePermission(pathname: string, userRole: string): boolean {
   }
 
   const allowedRoutes = rolePermissions[userRole] || []
-  
+
   // Verificar se a rota está permitida para o role
-  const hasPermission = allowedRoutes.some(route => 
-    pathname === route || pathname.startsWith(route + '/')
+  const hasPermission = allowedRoutes.some(
+    (route) => pathname === route || pathname.startsWith(route + '/')
   )
 
   // Log para debug de permissões
