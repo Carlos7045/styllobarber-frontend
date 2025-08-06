@@ -4,11 +4,11 @@ import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Crown, User, Mail, Lock, Phone, CheckCircle, AlertCircle } from 'lucide-react'
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import { AuthFeedback, useAuthFeedback } from '@/components/auth/AuthFeedback'
-import { ButtonLoading } from '@/components/auth/AuthLoadingState'
-import { useFieldValidation, validationRules, ValidationDisplay, PasswordStrength } from '@/components/auth/AuthValidation'
-import { supabase } from '@/lib/supabase'
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
+import { AuthFeedback, useAuthFeedback } from '@/domains/auth/components/AuthFeedback'
+import { ButtonLoading } from '@/domains/auth/components/AuthLoadingState'
+import { useFieldValidation, validationRules, ValidationDisplay, PasswordStrength } from '@/domains/auth/components/AuthValidation'
+import { supabase } from '@/lib/api/supabase'
 
 export default function SetupSaasPage() {
   const router = useRouter()

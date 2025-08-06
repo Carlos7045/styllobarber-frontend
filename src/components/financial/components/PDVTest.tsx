@@ -2,8 +2,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { useQuickTransactions } from '../hooks/use-quick-transactions'
 import { formatCurrency } from '../utils'
 

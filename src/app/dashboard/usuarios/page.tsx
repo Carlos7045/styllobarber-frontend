@@ -3,10 +3,10 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Metadata } from 'next'
-import { Container } from '@/components/layout'
-import { UserManagement } from '@/components/admin/UserManagement'
-import { useBarberPermissions } from '@/hooks/use-barber-permissions'
-import { FullPageLoading } from '@/components/auth/AuthLoadingState'
+import { Container } from '@/shared/components/layout'
+import { UserManagement } from '@/domains/users/components/admin/UserManagement'
+import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
+import { FullPageLoading } from '@/domains/auth/components/AuthLoadingState'
 
 // Não podemos usar metadata em client component, então vamos remover
 // export const metadata: Metadata = {

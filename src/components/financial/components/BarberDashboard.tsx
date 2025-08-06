@@ -15,9 +15,9 @@ import {
   Award,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
+import { Badge } from '@/shared/components/ui'
 import {
   LineChart,
   Line,
@@ -30,9 +30,9 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { useBarberPermissions } from '@/hooks/use-barber-permissions'
+import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
 import { useQuickTransactions } from '../hooks/use-quick-transactions'
-import { useBarberFinancialData } from '@/hooks/use-barber-financial-data'
+import { useBarberFinancialData } from '@/domains/users/hooks/use-barber-financial-data'
 import { formatCurrency, formatDate } from '../utils'
 
 interface BarberDashboardProps {

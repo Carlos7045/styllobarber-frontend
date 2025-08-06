@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import {
   uploadAvatar,
   removeAvatar,
@@ -10,7 +10,7 @@ import {
 } from '../storage'
 
 // Mock do Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     storage: {
       from: jest.fn(() => ({

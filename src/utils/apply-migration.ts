@@ -2,7 +2,7 @@
  * Utilitário para aplicar migração de especialidades
  */
 
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 
 export async function applyEspecialidadesMigration() {
   try {

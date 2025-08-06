@@ -3,7 +3,7 @@
  * Implementa cache de queries, batching e otimizações de performance
  */
 
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import { cacheManager } from '@/lib/cache-manager'
 import { UserProfile } from '@/contexts/AuthContext'
 

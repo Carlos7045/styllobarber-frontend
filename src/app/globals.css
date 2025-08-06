@@ -381,6 +381,165 @@ h6 {
   padding: var(--button-padding-y, 0.5rem) var(--button-padding-x, 1rem);
 }
 
+/* === PADRONIZAÇÃO DE COMPONENTES DE FORMULÁRIO === */
+
+/* Cores padrão para formulários */
+:root {
+  /* Cores para campos de formulário */
+  --form-bg: #ffffff;
+  --form-bg-dark: #404040;
+  --form-text: #111827;
+  --form-text-dark: #f3f4f6;
+  --form-border: #d1d5db;
+  --form-border-dark: rgba(75, 85, 99, 0.3);
+  --form-placeholder: #6b7280;
+  --form-placeholder-dark: #9ca3af;
+  
+  /* Cores para labels */
+  --label-text: #374151;
+  --label-text-dark: #f9fafb;
+  
+  /* Cores de foco */
+  --form-focus-ring: var(--primary-gold);
+  --form-focus-border: var(--primary-gold);
+}
+
+/* Aplicar tema escuro */
+.dark {
+  --form-bg: var(--form-bg-dark);
+  --form-text: var(--form-text-dark);
+  --form-border: var(--form-border-dark);
+  --form-placeholder: var(--form-placeholder-dark);
+  --label-text: var(--label-text-dark);
+}
+
+/* Padronização de inputs nativos */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+textarea,
+select {
+  background-color: var(--form-bg) !important;
+  color: var(--form-text) !important;
+  border-color: var(--form-border) !important;
+  transition: all 0.2s ease-in-out;
+}
+
+input[type="text"]::placeholder,
+input[type="email"]::placeholder,
+input[type="password"]::placeholder,
+input[type="number"]::placeholder,
+input[type="tel"]::placeholder,
+input[type="url"]::placeholder,
+textarea::placeholder {
+  color: var(--form-placeholder) !important;
+}
+
+/* Foco em campos de formulário */
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+input[type="tel"]:focus,
+input[type="url"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+input[type="time"]:focus,
+textarea:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--form-focus-border) !important;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Selects nativos */
+select {
+  background-color: var(--form-bg) !important;
+  color: var(--form-text) !important;
+  border-color: var(--form-border) !important;
+}
+
+select option {
+  background-color: var(--form-bg) !important;
+  color: var(--form-text) !important;
+}
+
+/* Labels padronizados */
+label {
+  color: var(--label-text) !important;
+  font-weight: 500;
+}
+
+/* Campos desabilitados */
+input:disabled,
+textarea:disabled,
+select:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+  background-color: var(--form-bg) !important;
+}
+
+/* Melhorar aparência dos campos */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+textarea,
+select {
+  border-radius: 0.5rem;
+  border-width: 1px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+
+/* Altura padrão para inputs */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"],
+select {
+  height: 2.5rem;
+}
+
+/* Campos com erro */
+.error input,
+.error textarea,
+.error select,
+input.error,
+textarea.error,
+select.error {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+}
+
+/* Campos de sucesso */
+.success input,
+.success textarea,
+.success select,
+input.success,
+textarea.success,
+select.success {
+  border-color: #10b981 !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
+}
+
 /* Configurações padrão (comfortable/medium) */
 :root {
   --spacing-xs: 0.5rem;
@@ -400,4 +559,280 @@ h6 {
   --text-2xl: 1.5rem;
   --text-3xl: 1.875rem;
   --text-4xl: 2.25rem;
+}
+
+/* === CORREÇÃO DE ÍCONES EM INPUTS === */
+/* Garantir que ícones em inputs fiquem por cima do texto */
+.relative input {
+  position: relative;
+  z-index: 1 !important;
+}
+
+.relative div[class*="absolute"] {
+  z-index: 30 !important;
+  position: absolute !important;
+}
+
+/* Ícones em inputs devem ficar sempre visíveis */
+input[type="text"] ~ div svg,
+input[type="email"] ~ div svg,
+input[type="password"] ~ div svg,
+input[type="number"] ~ div svg,
+input[type="tel"] ~ div svg,
+input[type="url"] ~ div svg,
+input[type="date"] ~ div svg,
+input[type="datetime-local"] ~ div svg,
+input[type="time"] ~ div svg {
+  z-index: 30 !important;
+  position: relative !important;
+}
+
+/* Correção específica para ícones em containers relativos */
+div.relative > div.absolute {
+  z-index: 30 !important;
+}
+
+/* Garantir que SVGs dentro de divs absolutos tenham z-index alto */
+div.absolute svg {
+  z-index: 30 !important;
+}
+
+/* === CORREÇÃO DE PLACEHOLDER EM INPUTS COM ÍCONES === */
+/* Garantir que placeholder e texto não fiquem por baixo dos ícones */
+input.pl-12::placeholder {
+  text-indent: 0 !important;
+  padding-left: 0 !important;
+}
+
+input.pr-12::placeholder {
+  padding-right: 0 !important;
+}
+
+/* Garantir que o texto digitado também respeite o padding */
+input.pl-12 {
+  text-indent: 0 !important;
+}
+
+/* Correção específica para inputs com ícones à esquerda */
+.relative input[class*="pl-12"] {
+  padding-left: 3rem !important;
+}
+
+/* Correção específica para inputs com ícones à direita */
+.relative input[class*="pr-12"] {
+  padding-right: 3rem !important;
+}
+
+/* Garantir que o cursor e o texto comecem na posição correta */
+.relative input[class*="pl-12"]:focus {
+  text-indent: 0 !important;
+}
+
+/* Correção para diferentes tipos de input */
+input[type="text"].pl-12,
+input[type="email"].pl-12,
+input[type="password"].pl-12,
+input[type="number"].pl-12,
+input[type="tel"].pl-12,
+input[type="url"].pl-12,
+input[type="date"].pl-12,
+input[type="datetime-local"].pl-12,
+input[type="time"].pl-12 {
+  padding-left: 3rem !important;
+}
+
+input[type="text"].pr-12,
+input[type="email"].pr-12,
+input[type="password"].pr-12,
+input[type="number"].pr-12,
+input[type="tel"].pr-12,
+input[type="url"].pr-12,
+input[type="date"].pr-12,
+input[type="datetime-local"].pr-12,
+input[type="time"].pr-12 {
+  padding-right: 3rem !important;
+}
+
+/* === CORREÇÃO ESPECÍFICA PARA INPUTS DO PDV === */
+/* Inputs com ícones maiores precisam de mais padding */
+input[type="number"].pl-16,
+input[type="text"].pl-14 {
+  padding-left: 4rem !important;
+}
+
+input[type="number"].pl-16::placeholder,
+input[type="text"].pl-14::placeholder {
+  text-indent: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* Garantir que ícones grandes não sobreponham o texto */
+.relative input[class*="pl-16"] {
+  padding-left: 4rem !important;
+}
+
+.relative input[class*="pl-14"] {
+  padding-left: 3.5rem !important;
+}
+
+/* === CORREÇÃO ESPECÍFICA PARA SELECTS === */
+/* Garantir que o texto dos selects seja sempre visível */
+select {
+  color: var(--form-text) !important;
+  background-color: var(--form-bg) !important;
+}
+
+/* Correção específica para selects em tema escuro */
+.dark select {
+  color: #f3f4f6 !important;
+  background-color: #404040 !important;
+}
+
+/* Garantir que options também tenham cores corretas */
+select option {
+  color: var(--form-text) !important;
+  background-color: var(--form-bg) !important;
+}
+
+.dark select option {
+  color: #f3f4f6 !important;
+  background-color: #404040 !important;
+}
+
+/* Correção para selects com classes específicas do Tailwind */
+select.text-gray-900 {
+  color: #111827 !important;
+}
+
+.dark select.text-gray-900 {
+  color: #f3f4f6 !important;
+}
+
+/* === CORREÇÃO PARA SELECT CUSTOMIZADO === */
+/* Remover aparência padrão do select */
+select.appearance-none {
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: none !important;
+}
+
+/* Garantir que o texto do select seja sempre visível */
+select.appearance-none:not([multiple]) {
+  background-image: none !important;
+  padding-right: 3rem !important;
+}
+
+/* Correção específica para selects do PDV */
+.relative select {
+  color: inherit !important;
+  background-color: inherit !important;
+}
+
+/* Garantir que o valor selecionado seja visível */
+select option:checked {
+  background-color: var(--primary-gold) !important;
+  color: var(--primary-black) !important;
+}
+
+/* === CORREÇÃO ESPECÍFICA PARA SELECT DO PDV === */
+/* Forçar cores específicas para o select de categoria */
+.categoria-select {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+.dark .categoria-select {
+  color: #f3f4f6 !important;
+  background-color: #404040 !important;
+}
+
+.categoria-select option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+}
+
+.dark .categoria-select option {
+  color: #f3f4f6 !important;
+  background-color: #404040 !important;
+}
+
+/* Garantir que o texto não seja transparente */
+.categoria-select:not([multiple]) {
+  text-indent: 0 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+/* === RESET COMPLETO PARA SELECTS DO PDV === */
+/* Resetar todos os estilos que podem estar interferindo */
+select.pdv-select {
+  /* Reset completo */
+  all: unset !important;
+  
+  /* Aplicar estilos básicos proporcionais */
+  display: block !important;
+  width: 100% !important;
+  padding: 1rem 3rem 1rem 1rem !important;
+  border: 2px solid #d1d5db !important;
+  border-radius: 0.75rem !important;
+  background-color: #ffffff !important;
+  color: #111827 !important;
+  font-size: 1rem !important;
+  font-weight: 500 !important;
+  line-height: 1.25 !important;
+  text-indent: 0 !important;
+  text-align: left !important;
+  cursor: pointer !important;
+  min-height: 2.75rem !important;
+  box-sizing: border-box !important;
+  
+  /* Remover aparência nativa */
+  -webkit-appearance: none !important;
+  -moz-appearance: none !important;
+  appearance: none !important;
+  background-image: none !important;
+  
+  /* Adicionar sombra sutil */
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+.dark select.pdv-select {
+  background-color: #404040 !important;
+  color: #f3f4f6 !important;
+  border-color: rgba(75, 85, 99, 0.3) !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2) !important;
+}
+
+select.pdv-select option {
+  color: #111827 !important;
+  background-color: #ffffff !important;
+  padding: 0.5rem !important;
+}
+
+.dark select.pdv-select option {
+  color: #f3f4f6 !important;
+  background-color: #404040 !important;
+}
+
+/* Estados de interação para selects do PDV */
+select.pdv-select:hover {
+  border-color: #9ca3af !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(156, 163, 175, 0.3) !important;
+}
+
+select.pdv-select:focus {
+  outline: none !important;
+  border-color: #f59e0b !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
+}
+
+.dark select.pdv-select:hover {
+  border-color: #6b7280 !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(107, 114, 128, 0.3) !important;
+}
+
+.dark select.pdv-select:focus {
+  border-color: #f59e0b !important;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(245, 158, 11, 0.2) !important;
 }

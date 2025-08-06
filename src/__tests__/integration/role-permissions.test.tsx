@@ -1,12 +1,12 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { RouteGuard } from '@/components/auth/route-guard'
-import { UserManagement } from '@/components/admin/UserManagement'
-import { supabase } from '@/lib/supabase'
+import { RouteGuard } from '@/domains/auth/components/route-guard'
+import { UserManagement } from '@/domains/users/components/admin/UserManagement'
+import { supabase } from '@/lib/api/supabase'
 
 // Mock do Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     auth: {
       getSession: jest.fn(),

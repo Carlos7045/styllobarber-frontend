@@ -147,6 +147,8 @@ const config: Config = {
         "scale-out": "scaleOut 0.2s ease-out",
         "bounce-subtle": "bounceSubtle 0.6s ease-in-out",
         "pulse-gold": "pulseGold 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "spin-slow": "spin 3s linear infinite",
+        "spin-fast": "spin 0.5s linear infinite",
       },
       keyframes: {
         fadeIn: {

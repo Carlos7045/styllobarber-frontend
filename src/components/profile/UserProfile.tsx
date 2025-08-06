@@ -5,12 +5,12 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { User, Mail, Phone, Calendar, Save, X, Shield, Award } from 'lucide-react'
 
-import { useAuth } from '@/hooks/use-auth'
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { AvatarUpload } from './AvatarUpload'
-import { useToast } from '@/components/ui/toast'
-import { formatarTelefone } from '@/lib/utils'
-import { schemaPerfilUsuario, type DadosPerfilUsuario } from '@/lib/validations'
+import { useToast } from '@/shared/components/ui/toast'
+import { formatarTelefone } from '@/shared/utils'
+import { schemaPerfilUsuario, type DadosPerfilUsuario } from '@/shared/utils/validation'
 
 interface UserProfileProps {
   className?: string

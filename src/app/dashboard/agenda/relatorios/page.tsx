@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import { Container } from '@/components/layout'
-import { AppointmentReportsCenter } from '@/components/appointments/AppointmentReportsCenter'
+import { Container } from '@/shared/components/layout'
+import { AppointmentReportsCenter } from '@/domains/appointments/components/AppointmentReportsCenter'
 
 export const metadata: Metadata = {
   title: 'Relatórios de Agendamentos - StylloBarber',

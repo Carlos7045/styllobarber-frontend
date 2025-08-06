@@ -12,8 +12,8 @@ import {
   AlertCircle,
   RefreshCw
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { useMetrics } from '../hooks/use-metrics'
 import { getMonthRange } from '../utils'
 import { MetricCard, MetricCardsGrid } from './MetricCard'

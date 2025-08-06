@@ -1,14 +1,14 @@
 'use client'
 
 import React, { useState } from 'react'
-import { Container } from '@/components/layout'
-import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/components/ui'
-import { NovoAgendamentoModal } from '@/components/client/NovoAgendamentoModal'
-import { ServicoFormModal } from '@/components/admin/ServicoFormModal'
-import { useAuth } from '@/hooks/use-auth'
-import { usePermissions, PERMISSIONS } from '@/hooks/use-permissions'
-import { useAdminServicos, type ServicoAdmin } from '@/hooks/use-admin-servicos'
-import { useServices } from '@/hooks/use-services'
+import { Container } from '@/shared/components/layout'
+import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/shared/components/ui'
+import { NovoAgendamentoModal } from '@/domains/users/components/client/NovoAgendamentoModal'
+import { ServicoFormModal } from '@/domains/users/components/admin/ServicoFormModal'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { usePermissions, PERMISSIONS } from '@/domains/auth/hooks/use-permissions'
+import { useAdminServicos, type ServicoAdmin } from '@/domains/users/hooks/use-admin-servicos'
+import { useServices } from '@/shared/hooks/data/use-services'
 import {
   Scissors,
   Plus,
@@ -27,13 +27,14 @@ import {
   Users,
   Star,
 } from 'lucide-react'
-import { formatarMoeda } from '@/lib/utils'
+import { formatarMoeda } from '@/shared/utils'
 import {
   ServicoAnalyticsCard,
   HistoricoPrecoModal,
   ServicoCategoriaManager,
-} from '@/components/admin'
+} from '@/domains/users/components/admin'
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd'
+
 
 /**
  * Página de serviços - versão adaptativa para clientes e administradores
@@ -53,6 +54,8 @@ export default function ServicosPage() {
   const [isCategoriaManagerOpen, setIsCategoriaManagerOpen] = useState(false)
   const [showInactive, setShowInactive] = useState(false)
   const [filtroCategoria, setFiltroCategoria] = useState<string>('')
+  
+
 
   // Usar hook apropriado baseado nas permissões
   const isAdmin = canManageServices
@@ -736,6 +739,8 @@ export default function ServicosPage() {
           }}
         />
       )}
+
+
     </>
   )
 }

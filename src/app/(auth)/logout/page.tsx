@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { LogoutPage } from '@/components/auth/LogoutPage'
+import { LogoutPage } from '@/domains/auth/components/LogoutPage'
 
 export const metadata: Metadata = {
   title: 'Logout - StylloBarber',

@@ -1,4 +1,4 @@
-import { supabase } from './supabase'
+import { supabase } from './api/supabase'
 
 /**
  * Utilitários para gerenciamento de arquivos no Supabase Storage

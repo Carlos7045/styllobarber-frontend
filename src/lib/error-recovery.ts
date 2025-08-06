@@ -5,7 +5,7 @@
 
 import { sessionManager } from './session-manager'
 import { profileSync } from './profile-sync'
-import { supabase } from './supabase'
+import { supabase } from './api/supabase'
 
 // Tipos de erro que o sistema pode recuperar
 export enum ErrorType {

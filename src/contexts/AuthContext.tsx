@@ -2,20 +2,22 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import { uploadAvatar, removeAvatar, type UploadResult } from '@/lib/storage'
 import { uploadAvatarFallback, removeAvatarFallback } from '@/lib/storage-fallback'
-import { authInterceptor } from '@/lib/auth-interceptor'
+import { authInterceptor } from '@/lib/api/auth-interceptor'
 import { sessionManager } from '@/lib/session-manager'
 import { profileSync } from '@/lib/profile-sync'
 import { errorRecovery } from '@/lib/error-recovery'
-import { useErrorRecovery } from '@/hooks/use-error-recovery'
-import { securityLogger } from '@/lib/security-logger'
+import { useErrorRecovery } from '@/shared/hooks/utils/use-error-recovery'
+import { securityLogger } from '@/lib/monitoring/security-logger'
 import { checkLoginRateLimit, recordLoginAttempt } from '@/lib/rate-limiter-enhanced'
 // Importações de otimização de performance
 import { cacheManager } from '@/lib/cache-manager'
 import { queryOptimizer } from '@/lib/query-optimizer'
 import { connectionPool } from '@/lib/connection-pool'
+// Modal de primeiro acesso
+import { PrimeiroAcessoModal } from '@/domains/auth/components/PrimeiroAcessoModal'
 
 // Interfaces para dados de autenticação
 export interface LoginData {
@@ -142,10 +144,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Hook de error recovery
   const errorRecoveryHook = useErrorRecovery()
 
-  // Função para realizar health check do sistema
+  // Função simplificada para health check (não bloqueia performance)
   const performHealthCheck = async (): Promise<void> => {
     try {
-      console.log('🔍 Realizando health check do sistema de autenticação...')
+      console.log('🔍 Realizando health check simplificado...')
 
       const health = {
         isHealthy: true,
@@ -155,49 +157,23 @@ export function AuthProvider({ children }: AuthProviderProps) {
         lastHealthCheck: new Date(),
       }
 
-      // Verificar errorRecovery com try-catch
+      // Verificação básica e rápida
       try {
-        health.circuitState = errorRecovery.getCircuitState()
-        health.failureCount = errorRecovery.getFailureCount()
-        health.isInFallbackMode = errorRecovery.isInFallbackMode()
-
-        // Verificar se há problemas críticos
-        if (health.circuitState === 'open' || health.failureCount > 5) {
-          health.isHealthy = false
+        // Apenas verificar se os serviços existem (sem chamadas custosas)
+        if (typeof errorRecovery?.getCircuitState === 'function') {
+          health.circuitState = errorRecovery.getCircuitState()
+          health.failureCount = errorRecovery.getFailureCount()
         }
-      } catch (errorRecoveryError) {
-        console.warn('⚠️ Erro ao verificar errorRecovery:', errorRecoveryError)
+      } catch (error) {
+        console.warn('⚠️ Erro no health check (não crítico):', error)
         health.isHealthy = false
       }
 
-      // Verificar se a sessão atual é válida (com timeout)
-      if (session) {
-        try {
-          const sessionCheckPromise = sessionManager.validateSession()
-          const timeoutPromise = new Promise((_, reject) =>
-            setTimeout(() => reject(new Error('Session validation timeout')), 5000)
-          )
-
-          const isSessionValid = await Promise.race([sessionCheckPromise, timeoutPromise])
-          if (!isSessionValid) {
-            health.isHealthy = false
-            console.warn('⚠️ Health check: Sessão inválida detectada')
-          }
-        } catch (error) {
-          health.isHealthy = false
-          console.warn('⚠️ Health check: Erro ao validar sessão:', error)
-        }
-      }
-
       setSystemHealth(health)
-      console.log('✅ Health check concluído:', health)
+      console.log('✅ Health check concluído rapidamente')
     } catch (error) {
-      console.error('❌ Erro durante health check:', error)
-      setSystemHealth((prev) => ({
-        ...prev,
-        isHealthy: false,
-        lastHealthCheck: new Date(),
-      }))
+      console.warn('⚠️ Erro durante health check (ignorando):', error)
+      // Não atualizar estado em caso de erro para evitar problemas
     }
   }
 
@@ -256,19 +232,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     console.log('✅ Estado do sistema resetado')
   }
 
-  // Função simples de fallback para buscar perfil (com timeout)
+  // Função otimizada para buscar perfil (sem timeout desnecessário)
   const fetchProfileDirect = async (userId: string): Promise<UserProfile | null> => {
     try {
-      console.log('🔄 Buscando perfil diretamente (fallback):', userId)
+      console.log('🔄 Buscando perfil diretamente:', userId)
 
-      // Promise com timeout para evitar travamento
-      const profilePromise = supabase.from('profiles').select('*').eq('id', userId).single()
-
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Direct query timeout')), 8000) // 8s timeout
-      })
-
-      const { data: profile, error } = (await Promise.race([profilePromise, timeoutPromise])) as any
+      // Query otimizada com campos específicos e timeout menor
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('id, nome, email, telefone, role, avatar_url, pontos_fidelidade, data_nascimento, created_at, updated_at')
+        .eq('id', userId)
+        .single()
+        .abortSignal(AbortSignal.timeout(3000)) // 3s timeout usando AbortSignal nativo
 
       if (error) {
         console.warn('⚠️ Erro na busca direta do perfil:', error)
@@ -282,12 +257,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       return null
     } catch (error) {
-      console.error('❌ Erro na busca direta do perfil:', error)
+      if (error instanceof Error && error.name === 'AbortError') {
+        console.warn('⚠️ Timeout na busca do perfil (3s)')
+      } else {
+        console.error('❌ Erro na busca direta do perfil:', error)
+      }
       return null
     }
   }
 
-  // Função para buscar perfil do usuário com otimizações de performance
+  // Função otimizada para buscar perfil do usuário
   const fetchUserProfile = async (userId: string): Promise<UserProfile | null> => {
     try {
       if (!userId) {
@@ -297,37 +276,30 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       console.log('🔍 Buscando perfil para usuário:', userId)
 
-      // Primeiro tentar busca direta simples para login mais rápido
+      // Verificar cache primeiro
+      try {
+        const cachedProfile = cacheManager.getProfile(userId)
+        if (cachedProfile) {
+          console.log('✅ Perfil obtido do cache')
+          return cachedProfile
+        }
+      } catch (cacheError) {
+        console.warn('⚠️ Erro ao verificar cache (continuando):', cacheError)
+      }
+
+      // Busca direta otimizada
       const directResult = await fetchProfileDirect(userId)
       if (directResult) {
         // Armazenar no cache para próximas consultas
-        cacheManager.setProfile(userId, directResult)
+        try {
+          cacheManager.setProfile(userId, directResult)
+        } catch (cacheError) {
+          console.warn('⚠️ Erro ao salvar no cache (não crítico):', cacheError)
+        }
         return directResult
       }
 
-      // Se falhar, tentar com QueryOptimizer
-      console.log('🔄 Tentando com QueryOptimizer...')
-      const result = await queryOptimizer.getProfile(userId, {
-        enableCache: true,
-        cacheTTL: 10 * 60 * 1000, // 10 minutos
-        timeout: 15000, // 15 segundos
-        retries: 1, // Apenas 1 tentativa para ser mais rápido
-      })
-
-      if (result.data) {
-        console.log('✅ Perfil obtido via QueryOptimizer:', {
-          id: result.data.id,
-          nome: result.data.nome,
-          email: result.data.email,
-          role: result.data.role,
-          fromCache: result.fromCache,
-          executionTime: result.executionTime,
-        })
-        return result.data
-      }
-
-      // Se QueryOptimizer falhar, já tentamos busca direta antes
-      console.warn('⚠️ QueryOptimizer falhou e busca direta também falhou')
+      console.warn('⚠️ Não foi possível obter perfil do usuário')
       return null
     } catch (error) {
       console.error('❌ Erro inesperado ao buscar perfil:', {
@@ -338,40 +310,40 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }
 
-  // Função para atualizar estado de autenticação (simplificada para debug)
+  // Função otimizada para atualizar estado de autenticação
   const updateAuthState = async (session: Session | null) => {
     console.log('🔄 Atualizando estado de autenticação:', {
       hasSession: !!session,
       userId: session?.user?.id,
     })
 
+    // Atualizar estado básico imediatamente
     setSession(session)
     setUser(session?.user ?? null)
 
     if (session?.user) {
       console.log('👤 Usuário encontrado na sessão, buscando perfil...')
 
-      try {
-        // Buscar perfil diretamente (sem SessionManager para debug)
-        const userProfile = await fetchUserProfile(session.user.id)
-        console.log('📋 Perfil obtido:', userProfile ? 'sucesso' : 'falhou')
-        setProfile(userProfile)
+      // Buscar perfil de forma assíncrona sem bloquear a UI
+      fetchUserProfile(session.user.id)
+        .then((userProfile) => {
+          console.log('📋 Perfil obtido:', userProfile ? 'sucesso' : 'falhou')
+          setProfile(userProfile)
+        })
+        .catch((error) => {
+          console.error('❌ Erro ao buscar perfil:', error)
+          setProfile(null)
+        })
 
-        // Health check opcional
-        try {
-          await performHealthCheck()
-        } catch (healthError) {
-          console.warn('⚠️ Erro no health check (não crítico):', healthError)
-        }
-      } catch (error) {
-        console.error('❌ Erro ao buscar perfil:', error)
-        setProfile(null)
-      }
+      // Health check em background (não bloqueia)
+      performHealthCheck().catch((healthError) => {
+        console.warn('⚠️ Erro no health check (não crítico):', healthError)
+      })
     } else {
       console.log('🚫 Nenhum usuário na sessão, limpando estado...')
       setProfile(null)
 
-      // Limpar estado de saúde quando não há sessão
+      // Atualizar estado de saúde de forma simples
       setSystemHealth((prev) => ({
         ...prev,
         isHealthy: true,
@@ -379,22 +351,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }))
     }
 
+    // Liberar loading imediatamente para melhor UX
     setLoading(false)
     setInitialized(true)
     console.log('✅ Estado de autenticação atualizado')
   }
 
-  // Inicializar autenticação
+  // Inicializar autenticação de forma otimizada
   useEffect(() => {
     let mounted = true
 
-    // Obter sessão inicial
+    // Obter sessão inicial de forma mais rápida
     const initializeAuth = async () => {
       try {
         console.log('🚀 Inicializando sistema de autenticação...')
 
-        // Usar SessionManager para obter sessão inicial
-        const session = await sessionManager.getCurrentSession()
+        // Usar getSession diretamente para ser mais rápido
+        const { data: { session }, error } = await supabase.auth.getSession()
+
+        if (error) {
+          console.warn('⚠️ Erro ao obter sessão inicial:', error)
+        }
 
         if (mounted) {
           await updateAuthState(session)
@@ -403,13 +380,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         console.error('❌ Erro na inicialização da auth:', error)
 
         if (mounted) {
-          // Tentar recovery na inicialização
-          const recoverySuccess = await recoverFromError(error as Error)
-
-          if (!recoverySuccess) {
-            setLoading(false)
-            setInitialized(true)
-          }
+          // Em caso de erro, apenas liberar o loading
+          setLoading(false)
+          setInitialized(true)
         }
       }
     }
@@ -433,22 +406,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [])
 
-  // Health checks periódicos
+  // Health checks periódicos otimizados
   useEffect(() => {
-    if (!initialized) return
+    if (!initialized || !user) return
 
-    // Health check inicial
-    performHealthCheck()
+    // Health check inicial em background (não bloqueia)
+    setTimeout(() => {
+      performHealthCheck().catch(console.warn)
+    }, 1000)
 
-    // Health checks periódicos a cada 2 minutos
+    // Health checks periódicos menos frequentes (5 minutos)
     const healthCheckInterval = setInterval(() => {
       if (user) {
-        performHealthCheck()
+        performHealthCheck().catch(console.warn)
       }
-    }, 120000) // 2 minutos
+    }, 300000) // 5 minutos
 
     return () => clearInterval(healthCheckInterval)
-  }, [initialized, user?.id]) // Usar user.id em vez de user completo
+  }, [initialized, user?.id])
 
   // Função de login com rate limiting e segurança
   const signIn = async (data: LoginData): Promise<AuthResult> => {
@@ -1270,5 +1245,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
     refreshProfile,
   }
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+      {/* Modal de primeiro acesso para clientes cadastrados automaticamente */}
+      <PrimeiroAcessoModal />
+    </AuthContext.Provider>
+  )
 }

@@ -2,9 +2,9 @@
 
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { Container } from '@/components/layout'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Container } from '@/shared/components/layout'
+import { Card } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import {
   BarChart3,
   FileText,

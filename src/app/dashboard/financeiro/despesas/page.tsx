@@ -2,9 +2,9 @@
 
 import { motion } from 'framer-motion'
 import { TrendingDown, ArrowLeft, Calendar, Filter, Download, Plus, DollarSign, CreditCard, AlertCircle } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Container } from '@/components/layout'
+import { Card } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
+import { Container } from '@/shared/components/layout'
 import { useRouter } from 'next/navigation'
 
 export default function DespesasPage() {

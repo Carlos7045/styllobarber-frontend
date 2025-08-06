@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { Plus, Filter } from 'lucide-react'
 
-import { Container, Stack } from '@/components/layout'
-import { Button } from '@/components/ui'
+import { Container, Stack } from '@/shared/components/layout'
+import { Button } from '@/shared/components/ui'
 import { Calendar, CalendarStats, CalendarFilters } from '@/components/calendar'
-import { RouteGuard } from '@/components/auth'
-import { useAppointments } from '@/hooks/use-appointments'
-import { formatDateForDB } from '@/lib/date-utils'
+import { RouteGuard } from '@/domains/auth/components'
+import { useAppointments } from '@/domains/appointments/hooks/use-appointments'
+import { formatDateForDB } from '@/shared/utils/date-utils'
 import type { CalendarView, CalendarFilters as CalendarFiltersType } from '@/types/appointments'
 
 export default function AgendaPage() {

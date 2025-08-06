@@ -1,8 +1,8 @@
 'use client'
 
 import { Calendar, Clock, DollarSign, Users, TrendingUp, AlertCircle } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, Badge } from '@/components/ui'
-import { formatDate } from '@/lib/date-utils'
+import { Card, CardContent, CardHeader, CardTitle, Badge } from '@/shared/components/ui'
+import { formatDate } from '@/shared/utils/date-utils'
 import type { CalendarStats } from '@/types/appointments'
 
 interface CalendarStatsProps {

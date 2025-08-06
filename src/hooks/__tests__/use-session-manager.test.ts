@@ -2,7 +2,7 @@ import { renderHook, act, waitFor } from '@testing-library/react'
 import { useSessionManager } from '../use-session-manager'
 import { useAuth } from '../use-auth'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 
 // Mock do useAuth
 jest.mock('../use-auth')
@@ -13,7 +13,7 @@ jest.mock('next/navigation')
 const mockUseRouter = useRouter as jest.MockedFunction<typeof useRouter>
 
 // Mock do Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     auth: {
       refreshSession: jest.fn(),
@@ -22,7 +22,7 @@ jest.mock('@/lib/supabase', () => ({
 }))
 
 // Mock dos utilitários de auth
-jest.mock('@/lib/auth-utils', () => ({
+jest.mock('@/lib/api/auth-utils', () => ({
   clearAuthLocalData: jest.fn(),
   prepareForLogout: jest.fn(() => Promise.resolve()),
 }))

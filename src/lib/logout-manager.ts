@@ -1,6 +1,6 @@
 'use client'
 
-import { supabase } from './supabase'
+import { supabase } from './api/supabase'
 
 /**
  * Gerenciador de logout robusto que evita loops

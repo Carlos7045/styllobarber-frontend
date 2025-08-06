@@ -2,7 +2,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import { QuickTransactionService } from '../services/quick-transaction-service'
 
 interface QuickTransactionData {

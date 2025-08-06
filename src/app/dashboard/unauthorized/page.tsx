@@ -4,8 +4,8 @@ import React from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { ShieldX, ArrowLeft, Home } from 'lucide-react'
-import { Button } from '@/components/ui'
-import { useAuth } from '@/hooks/use-auth'
+import { Button } from '@/shared/components/ui'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
 
 export default function UnauthorizedPage() {
   const router = useRouter()

@@ -17,11 +17,11 @@ import {
   Filter,
   FileText
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { BarberDashboard } from './BarberDashboard'
-import { useBarberPermissions } from '@/hooks/use-barber-permissions'
-import { useFinancialData } from '@/hooks/use-financial-data'
+import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
+import { useFinancialData } from '@/shared/hooks/data/use-financial-data'
 import { DataSourceIndicator, useDataSource } from './DataSourceIndicator'
 import { 
   LineChart,

@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { Palette, Sun, Moon, Monitor, Globe, Type, Zap, Check, Eye } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
 import { useSettings } from '@/hooks/use-settings'
 import type { AppearanceSettings } from '@/types/settings'
 

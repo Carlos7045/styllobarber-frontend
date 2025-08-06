@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { SignUpForm } from '@/components/forms/auth'
+import { SignUpForm } from '@/shared/components/forms'
 
 // Metadados da página
 export const metadata: Metadata = {

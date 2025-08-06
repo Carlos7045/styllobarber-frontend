@@ -19,7 +19,7 @@ import {
   Pie,
   Cell
 } from 'recharts'
-import { Card } from '@/components/ui/card'
+import { Card } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'
 
 // Cores para os gráficos

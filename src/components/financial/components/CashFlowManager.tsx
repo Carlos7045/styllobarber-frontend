@@ -21,9 +21,9 @@ import {
   Plus,
   X
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
+import { Badge } from '@/shared/components/ui'
 import {
   BarChart,
   Bar,
@@ -43,7 +43,7 @@ import type {
 } from '../types'
 import { QuickTransactionPDV } from './QuickTransactionPDV'
 import { useQuickTransactions } from '../hooks/use-quick-transactions'
-import { useCashFlowData } from '@/hooks/use-cash-flow-data'
+import { useCashFlowData } from '@/shared/hooks/data/use-cash-flow-data'
 import { DataSourceIndicator, useDataSource } from './DataSourceIndicator'
 
 // Dados mockados removidos - agora usando dados reais

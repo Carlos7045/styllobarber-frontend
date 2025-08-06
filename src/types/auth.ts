@@ -1,4 +1,4 @@
-import { ROLES_USUARIO } from '@/lib/constants'
+import { ROLES_USUARIO } from '@/lib/config/constants'
 
 export type RoleUsuario = typeof ROLES_USUARIO[keyof typeof ROLES_USUARIO]
 

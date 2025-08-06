@@ -20,12 +20,12 @@ import {
   Eye,
   UserPlus,
 } from 'lucide-react'
-import { Button, Badge } from '@/components/ui'
-import { Container } from '@/components/layout'
-import { RouteGuard, PermissionGate } from '@/components/auth'
-import { useBarberPermissions } from '@/hooks/use-barber-permissions'
-import { useBarberClients } from '@/hooks/use-barber-clients'
-import { useAdminClientes } from '@/hooks/use-admin-clientes'
+import { Button, Badge } from '@/shared/components/ui'
+import { Container } from '@/shared/components/layout'
+import { RouteGuard, PermissionGuard } from '@/domains/auth/components'
+import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
+import { useBarberClients } from '@/domains/users/hooks/use-barber-clients'
+import { useAdminClientes } from '@/domains/users/hooks/use-admin-clientes'
 
 export default function ClientesPage() {
   const { isBarber, isAdmin } = useBarberPermissions()

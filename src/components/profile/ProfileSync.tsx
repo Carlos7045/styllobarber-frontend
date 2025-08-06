@@ -1,7 +1,7 @@
 'use client'
 
-import { useProfileSync } from '@/hooks/use-profile-sync'
-import { Card, CardContent, Button } from '@/components/ui'
+import { useProfileSync } from '@/domains/users/hooks/use-profile-sync'
+import { Card, CardContent, Button } from '@/shared/components/ui'
 import { RefreshCw, CheckCircle, AlertTriangle, ArrowLeftRight, Settings } from 'lucide-react'
 
 export function ProfileSync() {

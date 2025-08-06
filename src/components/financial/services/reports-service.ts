@@ -1,5 +1,5 @@
 // Serviço para geração de relatórios financeiros
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import type { 
   ConfigRelatorio,
   RelatorioReceitas,

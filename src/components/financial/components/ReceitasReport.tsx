@@ -15,8 +15,8 @@ import {
   BarChart3,
   ArrowLeft
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { useReceitasReport } from '../hooks/use-reports'
 import { formatCurrency, formatDate, getMonthRange } from '../utils'
 import { 

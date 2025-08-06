@@ -1,5 +1,5 @@
 // Serviço para cálculo de métricas financeiras
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import type { 
   MetricasFinanceiras, 
   PerformanceBarbeiro, 

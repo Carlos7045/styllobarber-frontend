@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
-import { Container } from '@/components/layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { Container } from '@/shared/components/layout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { History, Calendar } from 'lucide-react'
 
 export const metadata: Metadata = {

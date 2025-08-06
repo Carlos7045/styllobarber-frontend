@@ -1,7 +1,7 @@
 'use client'
 
-import { Container } from '@/components/layout'
-import { Card, CardContent } from '@/components/ui'
+import { Container } from '@/shared/components/layout'
+import { Card, CardContent } from '@/shared/components/ui'
 import { 
   Bell, 
   CheckCircle,
@@ -9,7 +9,7 @@ import {
   BarChart3,
   FileText
 } from 'lucide-react'
-import { NotificacoesManager } from '@/components/admin/NotificacoesManager'
+import { NotificacoesManager } from '@/domains/users/components/admin/NotificacoesManager'
 
 /**
  * Página de gestão do sistema de notificações

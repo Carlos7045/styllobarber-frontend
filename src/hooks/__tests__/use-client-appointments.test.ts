@@ -8,11 +8,11 @@ import { useClientAppointments } from '../use-client-appointments'
 // Mock dos hooks e dependências
 jest.mock('../use-auth')
 jest.mock('../use-appointments')
-jest.mock('@/lib/supabase')
+jest.mock('@/lib/api/supabase')
 
 import { useAuth } from '../use-auth'
 import { useAppointments } from '../use-appointments'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 const mockUseAppointments = useAppointments as jest.MockedFunction<typeof useAppointments>

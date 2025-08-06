@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/use-auth'
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
 import { History, Clock, User, Phone, Calendar, Image, RefreshCw } from 'lucide-react'
 
 interface ProfileChange {

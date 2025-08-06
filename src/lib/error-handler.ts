@@ -3,7 +3,7 @@
  * Fornece funcionalidades robustas para captura, classificação e recuperação de erros
  */
 
-import { useToast } from '@/components/ui/toast'
+import { useToast } from '@/shared/components/ui/toast'
 
 // Tipos de erro do sistema
 export enum ErrorType {

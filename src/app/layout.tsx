@@ -2,7 +2,8 @@ import type { Metadata } from 'next'
 import { Inter, Montserrat, Poppins } from 'next/font/google'
 import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { ErrorProvider } from '@/components/providers/ErrorProvider'
+import { ErrorProvider } from '@/shared/components/ErrorProvider'
+import { ToastProvider } from '@/shared/components/ui'
 
 // Configuração das fontes do StylloBarber
 const inter = Inter({
@@ -81,9 +82,11 @@ export default function RootLayout({
           enableNetworkErrorHandling={true}
           enablePerformanceMonitoring={process.env.NODE_ENV === 'development'}
         >
-          <AuthProvider>
-            <div id="root">{children}</div>
-          </AuthProvider>
+          <ToastProvider>
+            <AuthProvider>
+              <div id="root">{children}</div>
+            </AuthProvider>
+          </ToastProvider>
         </ErrorProvider>
       </body>
     </html>

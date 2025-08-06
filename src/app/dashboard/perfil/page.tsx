@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { UserProfile } from '@/components/profile/UserProfileSimple'
 import { ProfileSummary } from '@/components/profile/ProfileSummary'
 import { ProfileHistory } from '@/components/profile/ProfileHistory'
-import { Container } from '@/components/layout'
+import { Container } from '@/shared/components/layout'
 
 export const metadata: Metadata = {
   title: 'Meu Perfil - StylloBarber',

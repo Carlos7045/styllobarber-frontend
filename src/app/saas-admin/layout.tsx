@@ -5,7 +5,7 @@
 
 'use client'
 
-import { RouteGuard } from '@/components/auth'
+import { RouteGuard } from '@/domains/auth/components'
 import { SaasAdminSidebar } from '@/components/saas/SaasAdminSidebar'
 import { SaasAdminHeader } from '@/components/saas/SaasAdminHeader'
 

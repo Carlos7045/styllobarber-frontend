@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Container } from '@/components/layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { Container } from '@/shared/components/layout'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { Settings, User, Bell, Shield, Palette } from 'lucide-react'
 
 // Não podemos usar metadata em client components, então vamos remover por enquanto

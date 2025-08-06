@@ -1,5 +1,5 @@
 // Serviço para integração com agendamentos
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 
 export interface Cliente {
   id: string

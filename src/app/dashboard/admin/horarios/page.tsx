@@ -2,13 +2,12 @@
 
 import { useState } from 'react'
 import { Metadata } from 'next'
-import { Container } from '@/components/layout'
-import { Card } from '@/components/ui'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui'
+import { Container } from '@/shared/components/layout'
+import { Card, Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui'
 import { Clock, Calendar, Settings, AlertCircle } from 'lucide-react'
-import { useAdminHorarios } from '@/hooks/use-admin-horarios'
-import { HorariosManager } from '@/components/admin/HorariosManager'
-import { LoadingSpinner } from '@/components/ui'
+import { useAdminHorarios } from '@/domains/users/hooks/use-admin-horarios'
+import { HorariosManager } from '@/domains/users/components/admin/HorariosManager'
+import { LoadingSpinner } from '@/shared/components/ui'
 
 export default function HorariosPage() {
   const [activeTab, setActiveTab] = useState<'funcionamento' | 'bloqueios'>('funcionamento')

@@ -6,8 +6,8 @@ import { renderHook, act } from '@testing-library/react'
 import { useServices } from '../use-services'
 
 // Mock do supabase
-jest.mock('@/lib/supabase')
-import { supabase } from '@/lib/supabase'
+jest.mock('@/lib/api/supabase')
+import { supabase } from '@/lib/api/supabase'
 const mockSupabase = supabase
 
 describe('useServices', () => {

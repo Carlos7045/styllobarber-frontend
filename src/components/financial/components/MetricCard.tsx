@@ -3,7 +3,7 @@
 
 import { motion } from 'framer-motion'
 import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react'
-import { Card } from '@/components/ui/card'
+import { Card } from '@/shared/components/ui'
 import { formatCurrency, formatPercentage } from '../utils'
 
 interface MetricCardProps {

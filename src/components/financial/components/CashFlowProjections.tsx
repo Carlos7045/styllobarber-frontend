@@ -13,9 +13,9 @@ import {
   Clock,
   BarChart3
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
+import { Badge } from '@/shared/components/ui'
 import { 
   LineChart,
   Line,

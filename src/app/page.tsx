@@ -1,6 +1,6 @@
 import Link from 'next/link'
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '@/components/ui'
-import { Container, Section, Grid, Header, HeaderContent, HeaderLogo } from '@/components/layout'
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '@/shared/components/ui'
+import { Container, Section, Grid, Header, HeaderContent, HeaderLogo } from '@/shared/components/layout'
 import { Calendar, Users, BarChart3 } from 'lucide-react'
 
 export default function Home() {

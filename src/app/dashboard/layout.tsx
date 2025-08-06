@@ -1,16 +1,16 @@
 'use client'
 
 import { Suspense } from 'react'
-import { Sidebar, useSidebar } from '@/components/layout/sidebar'
-import { Header, HeaderContent } from '@/components/layout/header'
-import { Container } from '@/components/layout'
-import { UserMenu } from '@/components/layout/UserMenu'
-import { RouteGuard } from '@/components/auth'
-import { ToastProvider } from '@/components/ui'
+import { Sidebar, useSidebar } from '@/shared/components/layout/sidebar'
+import { Header, HeaderContent } from '@/shared/components/layout/header'
+import { Container } from '@/shared/components/layout'
+import { UserMenu } from '@/shared/components/layout/UserMenu'
+import { RouteGuard } from '@/domains/auth/components'
+import { ToastProvider } from '@/shared/components/ui'
 // Debug components removidos - problema resolvido!
-// import { SessionProvider } from '@/components/auth/SessionProvider' // Removido temporariamente
-import { useAuth } from '@/hooks/use-auth'
-import { cn } from '@/lib/utils'
+// import { SessionProvider } from '@/domains/auth/components/SessionProvider' // Removido temporariamente
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { cn } from '@/shared/utils'
 
 // Componente de loading para o dashboard
 function DashboardSkeleton() {

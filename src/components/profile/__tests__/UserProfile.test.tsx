@@ -1,10 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { UserProfile } from '../UserProfile'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
 
 // Mock do hook useAuth
-jest.mock('@/hooks/use-auth')
+jest.mock('@/domains/auth/hooks/use-auth')
 const mockUseAuth = useAuth as jest.MockedFunction<typeof useAuth>
 
 // Mock das funções de storage

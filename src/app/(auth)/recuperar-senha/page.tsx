@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import { ResetPasswordForm } from '@/components/forms/auth'
+import { ResetPasswordForm } from '@/shared/components/forms'
 
 // Metadados da página
 export const metadata: Metadata = {

@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Filter, X, User, Calendar, Clock } from 'lucide-react'
-import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Input } from '@/components/ui'
-// import { formatDate } from '@/lib/date-utils' // Não usado no momento
+import { Button, Card, CardContent, CardHeader, CardTitle, Badge, Input } from '@/shared/components/ui'
+// import { formatDate } from '@/shared/utils/date-utils' // Não usado no momento
 import { APPOINTMENT_STATUS_LABELS } from '@/types/appointments'
 import type { CalendarFilters, AppointmentStatus } from '@/types/appointments'
 

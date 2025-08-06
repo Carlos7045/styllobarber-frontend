@@ -5,14 +5,14 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ArrowLeft, Calculator, TrendingUp, Clock, DollarSign, BarChart3 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@/shared/components/ui/button'
+import { Card } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
 import { QuickTransactionPDV } from '@/components/financial/components/QuickTransactionPDV'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
-import { PDVDataDebug } from '@/components/debug/PDVDataDebug'
+// Removido import de debug component
 
-import { PDVGuard } from '@/components/auth/PermissionGuard'
+import { PDVGuard } from '@/domains/auth/components/PermissionGuard'
 import {
   useQuickTransactions,
   useRealtimeStats,
@@ -289,8 +289,7 @@ export default function PDVPage() {
           </motion.div>
         </div>
 
-        {/* Componente de Debug */}
-        <PDVDataDebug />
+        {/* Debug removido para produção */}
       </div>
     </PDVGuard>
   )

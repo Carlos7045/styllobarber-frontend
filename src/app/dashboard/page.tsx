@@ -1,13 +1,13 @@
 'use client'
 
-import { useAuth } from '@/hooks/use-auth'
-import { usePermissions } from '@/hooks/use-permissions'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { usePermissions } from '@/domains/auth/hooks/use-permissions'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Container } from '@/components/layout'
-import { FullPageLoading } from '@/components/auth/AuthLoadingState'
-import { useDashboardData, useBarberDashboardData } from '@/hooks/use-dashboard-data'
-import { formatarMoeda } from '@/lib/utils'
+import { Container } from '@/shared/components/layout'
+import { FullPageLoading } from '@/domains/auth/components/AuthLoadingState'
+import { useDashboardData, useBarberDashboardData } from '@/shared/hooks/data/use-dashboard-data'
+import { formatarMoeda } from '@/shared/utils'
 
 // Dashboard principal - Redireciona baseado no role do usuário
 export default function DashboardRedirect() {

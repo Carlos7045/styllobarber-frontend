@@ -14,8 +14,8 @@ import {
   Filter,
   RefreshCw
 } from 'lucide-react'
-import { Button, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import { securityLogger, type SecurityLogEntry, type SecurityEventType } from '@/lib/security-logger'
+import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
+import { securityLogger, type SecurityLogEntry, type SecurityEventType } from '@/lib/monitoring/security-logger'
 
 interface SecurityLogsProps {
   className?: string

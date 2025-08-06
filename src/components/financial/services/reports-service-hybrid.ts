@@ -1,5 +1,5 @@
 // Serviço híbrido para relatórios - usa dados reais com fallback para mockados
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import { ReportsServiceSimple } from './reports-service-simple'
 import type { 
   ConfigRelatorio,

@@ -1,5 +1,5 @@
 // Serviço para gerenciar transações rápidas do PDV
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import { AgendamentoService } from './agendamento-service'
 
 export interface QuickTransactionData {
@@ -55,7 +55,7 @@ export class QuickTransactionService {
         descricao: data.descricao.trim(),
         metodo_pagamento: data.metodoPagamento || 'DINHEIRO',
         status: 'CONFIRMADA',
-        data_transacao: new Date().toISOString(),
+        data_transacao: new Date().toISOString().split('T')[0], // Apenas a data, sem hora
         observacoes: data.observacoes?.trim() || null,
       }
 
@@ -133,13 +133,18 @@ export class QuickTransactionService {
         await this.marcarAgendamentoComoPago(data.agendamentoId, transacao.id)
       }
 
-      // Registrar no fluxo de caixa
-      await this.registrarMovimentacaoFluxoCaixa(
-        transacao.id,
-        data.tipo,
-        data.valor,
-        data.descricao
-      )
+      // Registrar no fluxo de caixa (não bloquear se falhar)
+      try {
+        await this.registrarMovimentacaoFluxoCaixa(
+          transacao.id,
+          data.tipo,
+          data.valor,
+          data.descricao
+        )
+      } catch (fluxoCaixaError) {
+        console.warn('Falha ao registrar no fluxo de caixa (não crítico):', fluxoCaixaError)
+        // Continuar normalmente, pois a transação principal foi salva
+      }
 
       return {
         success: true,
@@ -409,7 +414,7 @@ export class QuickTransactionService {
         descricao: `Comissão ${percentual}% - Transação ${transacaoId.slice(-8)}`,
         barbeiro_id: barbeiroId,
         status: 'CONFIRMADA',
-        data_transacao: new Date().toISOString(),
+        data_transacao: new Date().toISOString().split('T')[0], // Apenas a data
         observacoes: `Comissão calculada automaticamente. Valor do serviço: R$ ${valorServico.toFixed(2)}`,
       })
     } catch (error) {
@@ -424,6 +429,30 @@ export class QuickTransactionService {
     descricao: string
   ) {
     try {
+      // Primeiro, verificar se a transação existe
+      const { data: transacaoExiste, error: checkError } = await supabase
+        .from('transacoes_financeiras')
+        .select('id')
+        .eq('id', transacaoId)
+        .single()
+
+      if (checkError || !transacaoExiste) {
+        console.warn(`Transação ${transacaoId} não encontrada, pulando registro no fluxo de caixa`)
+        return
+      }
+
+      // Verificar se já existe uma movimentação para esta transação
+      const { data: movimentacaoExiste, error: existsError } = await supabase
+        .from('movimentacoes_fluxo_caixa')
+        .select('id')
+        .eq('transacao_id', transacaoId)
+        .single()
+
+      if (!existsError && movimentacaoExiste) {
+        console.log(`Movimentação já existe para transação ${transacaoId}`)
+        return
+      }
+
       // Registrar na tabela de movimentações do fluxo de caixa
       const { error } = await supabase.from('movimentacoes_fluxo_caixa').insert({
         tipo: tipo === 'ENTRADA' ? 'ENTRADA' : 'SAIDA',
@@ -433,17 +462,34 @@ export class QuickTransactionService {
         data: new Date().toISOString().split('T')[0], // Data sem hora
         status: 'REALIZADA',
         transacao_id: transacaoId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       })
 
       if (error) {
         console.error('Erro ao registrar movimentação no fluxo de caixa:', error)
+        // Log detalhado do erro para debug
+        console.error('Detalhes do erro:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          transacaoId,
+          tipo,
+          valor,
+          descricao
+        })
       } else {
         console.log(
-          `Movimentação registrada no fluxo de caixa: ${tipo} - R$ ${valor.toFixed(2)} - ${descricao}`
+          `✅ Movimentação registrada no fluxo de caixa: ${tipo} - R$ ${valor.toFixed(2)} - ${descricao}`
         )
       }
     } catch (error) {
-      console.error('Erro ao registrar movimentação no fluxo de caixa:', error)
+      console.error('Erro inesperado ao registrar movimentação no fluxo de caixa:', error)
+      // Log detalhado para debug
+      console.error('Stack trace:', error instanceof Error ? error.stack : error)
+      // Não vamos interromper o fluxo principal por erro na movimentação
+      // A transação principal já foi salva em transacoes_financeiras
     }
   }
 

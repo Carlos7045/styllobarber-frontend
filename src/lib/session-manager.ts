@@ -1,8 +1,8 @@
 'use client'
 
 import { Session, User } from '@supabase/supabase-js'
-import { supabase } from './supabase'
-import type { UserProfile } from '@/hooks/use-auth'
+import { supabase } from './api/supabase'
+import type { UserProfile } from '@/domains/auth/hooks/use-auth'
 
 // Interfaces
 export interface SessionHealth {

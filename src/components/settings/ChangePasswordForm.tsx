@@ -9,7 +9,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Eye, EyeOff, Lock, Check, X } from 'lucide-react'
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { useSettings } from '@/hooks/use-settings'
 
 // Schema de validação

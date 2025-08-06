@@ -20,13 +20,13 @@ import {
   Target,
   Settings,
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import {
   useOperationalReports,
   type ConfigRelatorioOperacional,
   type DateRange,
-} from '@/hooks/use-operational-reports'
+} from '@/shared/hooks/data/use-operational-reports'
 import { getMonthRange, formatCurrency } from '@/components/financial/utils'
 
 interface OperationalReportsCenterProps {

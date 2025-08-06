@@ -2,10 +2,10 @@ import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useRouter } from 'next/navigation'
 import { AuthProvider } from '@/contexts/AuthContext'
-import { LoginForm } from '@/components/forms/auth/login-form'
-import { SignUpForm } from '@/components/forms/auth/signup-form'
-import { LogoutButton } from '@/components/auth/LogoutButton'
-import { supabase } from '@/lib/supabase'
+import { LoginForm } from '@/shared/components/forms/login-form'
+import { SignUpForm } from '@/shared/components/forms/signup-form'
+import { LogoutButton } from '@/domains/auth/components/LogoutButton'
+import { supabase } from '@/lib/api/supabase'
 
 // Mock do Next.js router
 jest.mock('next/navigation', () => ({
@@ -13,7 +13,7 @@ jest.mock('next/navigation', () => ({
 }))
 
 // Mock do Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     auth: {
       getSession: jest.fn(),
@@ -47,7 +47,7 @@ jest.mock('@/lib/supabase', () => ({
 }))
 
 // Mock dos utilitários de auth
-jest.mock('@/lib/auth-utils', () => ({
+jest.mock('@/lib/api/auth-utils', () => ({
   clearAuthLocalData: jest.fn(),
   prepareForLogout: jest.fn(() => Promise.resolve()),
 }))

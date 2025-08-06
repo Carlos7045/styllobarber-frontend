@@ -5,9 +5,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
-import { Card, CardContent, Button } from '@/components/ui'
+import { Card, CardContent, Button } from '@/shared/components/ui'
 import { Crown, X, Sparkles, Shield, TrendingUp } from 'lucide-react'
 
 export function WelcomeNotification() {

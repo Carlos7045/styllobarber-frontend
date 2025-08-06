@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Container } from '@/components/layout'
+import { Container } from '@/shared/components/layout'
 import { FinancialDashboardSimple } from '@/components/financial/components/FinancialDashboardSimple'
 
 export const metadata: Metadata = {

@@ -18,8 +18,8 @@ import {
   ArrowLeft,
   RefreshCw
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { useReports } from '../hooks/use-reports'
 import { getMonthRange, formatCurrency } from '../utils'
 import type { DateRange } from '../types/index'

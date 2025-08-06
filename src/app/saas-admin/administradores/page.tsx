@@ -30,7 +30,7 @@ import {
   Button,
   Input,
   Badge 
-} from '@/components/ui'
+} from '@/shared/components/ui'
 
 export const metadata: Metadata = {
   title: 'Gestão de Administradores - SaaS Admin',

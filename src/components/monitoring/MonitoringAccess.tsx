@@ -5,13 +5,13 @@
 
 'use client'
 
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { SaasOwnerDashboard } from '@/components/saas/SaasOwnerDashboard'
-import { SystemStatusCard } from '@/components/admin/SystemStatusCard'
-import { AuthHealthDashboard } from '@/components/debug/AuthHealthDashboard'
+import { SystemStatusCard } from '@/domains/users/components/admin/SystemStatusCard'
+// Removido import de debug component
 import { WelcomeNotification } from '@/components/monitoring/WelcomeNotification'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { Crown, Shield, Code, AlertTriangle } from 'lucide-react'
 
 export function MonitoringAccess() {
@@ -119,7 +119,16 @@ export function MonitoringAccess() {
             </CardHeader>
           </Card>
 
-          <AuthHealthDashboard />
+          <Card>
+            <CardHeader>
+              <CardTitle>Sistema de Monitoramento</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-4">
+                <p className="text-gray-600">Dashboard técnico em desenvolvimento</p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

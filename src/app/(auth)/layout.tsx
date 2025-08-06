@@ -1,6 +1,6 @@
 import { Suspense } from 'react'
 import Link from 'next/link'
-import { Container, Section } from '@/components/layout'
+import { Container, Section } from '@/shared/components/layout'
 
 // Componente de loading para páginas de auth
 function AuthPageSkeleton() {

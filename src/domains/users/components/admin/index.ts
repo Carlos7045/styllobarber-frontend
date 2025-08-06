@@ -1,0 +1,28 @@
+/**
+ * Barrel exports para componentes administrativos
+ */
+
+export { BloqueioHorarioForm } from './BloqueioHorarioForm'
+export { ConfirmDialog } from './ConfirmDialog'
+export { CreateEmployeeForm } from './CreateEmployeeForm'
+export { CriarFuncionarioModal } from './CriarFuncionarioModal'
+export { EspecialidadesModal } from './EspecialidadesModal'
+export { FuncionarioManagement } from './FuncionarioManagement'
+export { HistoricoPrecoModal } from './HistoricoPrecoModal'
+export { HorarioFuncionamentoForm } from './HorarioFuncionamentoForm'
+export { HorariosManager } from './HorariosManager'
+export { NotificacoesManager } from './NotificacoesManager'
+export { NotificationCenter } from './NotificationCenter'
+export { NotificationLogs } from './NotificationLogs'
+export { NotificationSettings } from './NotificationSettings'
+export { NotificationStats } from './NotificationStats'
+export { NovoFuncionarioModal } from './NovoFuncionarioModal'
+export { ScheduledNotifications } from './ScheduledNotifications'
+export { ServicoAnalyticsCard } from './ServicoAnalyticsCard'
+export { ServicoCategoriaManager } from './ServicoCategoriaManager'
+export { ServicoFormModal } from './ServicoFormModal'
+export { SystemStatusCard } from './SystemStatusCard'
+export { TemplateEditor } from './TemplateEditor'
+export { UserEditModal } from './UserEditModal'
+export { UserManagement } from './UserManagement'
+export { CadastroAutomaticoStats } from './CadastroAutomaticoStats'

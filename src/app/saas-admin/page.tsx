@@ -22,7 +22,7 @@ import {
   CardTitle,
   Badge,
   Button
-} from '@/components/ui'
+} from '@/shared/components/ui'
 import { SecurityLogs } from '@/components/saas/SecurityLogs'
 
 export const metadata: Metadata = {

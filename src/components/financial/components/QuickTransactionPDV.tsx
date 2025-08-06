@@ -1,7 +1,7 @@
 // Componente PDV para registrar transações rápidas
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Plus,
@@ -19,11 +19,12 @@ import {
   Minimize2,
   ShoppingCart
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'
-import { usePDVData } from '@/hooks/use-pdv-data'
+import { usePDVData } from '@/shared/hooks/data/use-pdv-data'
 import { ClienteAgendamentoPicker } from './ClienteAgendamentoPicker'
+import { CadastroRapidoCliente } from './CadastroRapidoCliente'
 
 interface ServicoSelecionado {
   id: string
@@ -61,6 +62,7 @@ export const QuickTransactionPDV = ({
   const { servicos, barbeiros, loading: pdvLoading } = usePDVData()
   const [activeTab, setActiveTab] = useState<'ENTRADA' | 'SAIDA'>('ENTRADA')
   const [showClientePicker, setShowClientePicker] = useState(false)
+  const [showCadastroRapido, setShowCadastroRapido] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [servicoQuantidades, setServicoQuantidades] = useState<Record<string, number>>({})
   const [servicosSelecionados, setServicosSelecionados] = useState<ServicoSelecionado[]>([])
@@ -76,6 +78,22 @@ export const QuickTransactionPDV = ({
     agendamentoId: undefined,
     servicosSelecionados: []
   })
+
+  const selectRef = useRef<HTMLSelectElement>(null)
+
+  // Forçar estilo do select após montagem
+  useEffect(() => {
+    if (selectRef.current) {
+      const select = selectRef.current
+      // Garantir que a classe pdv-select seja aplicada
+      select.classList.add('pdv-select')
+      
+      // Debug: verificar se o valor está sendo definido
+      console.log('Select categoria value:', transaction.categoria)
+      console.log('Select element:', select)
+      console.log('Select computed style:', window.getComputedStyle(select))
+    }
+  }, [transaction.categoria])
 
   // Função para calcular totais baseado nos serviços selecionados
   const calcularTotais = (servicos: ServicoSelecionado[]) => {
@@ -157,6 +175,16 @@ export const QuickTransactionPDV = ({
       descricao,
       servicosSelecionados: novosServicos
     }))
+  }
+
+  // Função para lidar com cliente criado no cadastro rápido
+  const handleClienteCriado = (cliente: any) => {
+    setTransaction(prev => ({
+      ...prev,
+      cliente: cliente.nome,
+      observacoes: `Cliente cadastrado automaticamente. ${cliente.senhaTemporaria ? `Senha temporária: ${cliente.senhaTemporaria}` : ''}`
+    }))
+    setShowCadastroRapido(false)
   }
 
   // Função para selecionar agendamento (soma aos serviços existentes)
@@ -348,14 +376,24 @@ export const QuickTransactionPDV = ({
                     Cliente com Agendamento
                   </h4>
                 </div>
-                <Button
-                  variant="primary"
-                  onClick={() => setShowClientePicker(true)}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  <Search className="h-4 w-4 mr-2" />
-                  Buscar Cliente
-                </Button>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="primary"
+                    onClick={() => setShowClientePicker(true)}
+                    className="bg-blue-600 hover:bg-blue-700"
+                  >
+                    <Search className="h-4 w-4 mr-2" />
+                    Buscar Cliente
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowCadastroRapido(true)}
+                    className="border-green-500 text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20"
+                  >
+                    <User className="h-4 w-4 mr-2" />
+                    Novo Cliente
+                  </Button>
+                </div>
               </div>
               
               {transaction.agendamentoId && (
@@ -531,7 +569,7 @@ export const QuickTransactionPDV = ({
                     Valor *
                   </label>
                   <div className="relative">
-                    <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-green-500" />
+                    <DollarSign className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-green-500 pointer-events-none z-30" />
                     <input
                       type="number"
                       step="0.01"
@@ -540,7 +578,7 @@ export const QuickTransactionPDV = ({
                         ...prev,
                         valor: parseFloat(e.target.value) || 0
                       }))}
-                      className="w-full pl-14 pr-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg font-bold shadow-inner"
+                      className="w-full pl-16 pr-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg font-bold shadow-inner"
                       placeholder="0,00"
                     />
                   </div>
@@ -684,7 +722,7 @@ export const QuickTransactionPDV = ({
                       Cliente (opcional)
                     </label>
                     <div className="relative">
-                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500" />
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-purple-500 pointer-events-none z-30" />
                       <input
                         type="text"
                         value={transaction.cliente}
@@ -692,7 +730,7 @@ export const QuickTransactionPDV = ({
                           ...prev,
                           cliente: e.target.value
                         }))}
-                        className="w-full pl-12 pr-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg shadow-inner"
+                        className="w-full pl-14 pr-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg shadow-inner"
                         placeholder="Nome do cliente"
                       />
                     </div>
@@ -702,27 +740,34 @@ export const QuickTransactionPDV = ({
                     <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">
                       Barbeiro
                     </label>
-                    <select
-                      value={transaction.barbeiro}
-                      onChange={(e) => setTransaction(prev => ({
-                        ...prev,
-                        barbeiro: e.target.value
-                      }))}
-                      className="w-full px-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-lg shadow-inner"
-                      disabled={pdvLoading}
-                    >
-                      <option value="">
-                        {pdvLoading ? 'Carregando barbeiros...' : 'Selecionar barbeiro'}
-                      </option>
-                      {barbeiros.map((barbeiro) => (
-                        <option key={barbeiro.id} value={barbeiro.nome}>
-                          {barbeiro.nome}
-                          {barbeiro.especialidades && barbeiro.especialidades.length > 0 && (
-                            ` - ${barbeiro.especialidades.slice(0, 2).join(', ')}`
-                          )}
+                    <div className="relative">
+                      <select
+                        value={transaction.barbeiro}
+                        onChange={(e) => setTransaction(prev => ({
+                          ...prev,
+                          barbeiro: e.target.value
+                        }))}
+                        className="pdv-select"
+                        disabled={pdvLoading}
+                      >
+                        <option value="">
+                          {pdvLoading ? 'Carregando barbeiros...' : 'Selecionar barbeiro'}
                         </option>
-                      ))}
-                    </select>
+                        {barbeiros.map((barbeiro) => (
+                          <option key={barbeiro.id} value={barbeiro.nome}>
+                            {barbeiro.nome}
+                            {barbeiro.especialidades && barbeiro.especialidades.length > 0 && (
+                              ` - ${barbeiro.especialidades.slice(0, 2).join(', ')}`
+                            )}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
                     {barbeiros.length === 0 && !pdvLoading && (
                       <p className="text-xs text-red-500 mt-2 flex items-center space-x-1">
                         <X className="h-3 w-3" />
@@ -813,7 +858,7 @@ export const QuickTransactionPDV = ({
                     Valor *
                   </label>
                   <div className="relative">
-                    <Minus className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-red-500" />
+                    <Minus className="absolute left-4 top-1/2 transform -translate-y-1/2 h-6 w-6 text-red-500 pointer-events-none z-30" />
                     <input
                       type="number"
                       step="0.01"
@@ -822,7 +867,7 @@ export const QuickTransactionPDV = ({
                         ...prev,
                         valor: parseFloat(e.target.value) || 0
                       }))}
-                      className="w-full pl-14 pr-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg font-bold shadow-inner"
+                      className="w-full pl-16 pr-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 text-lg font-bold shadow-inner"
                       placeholder="0,00"
                     />
                   </div>
@@ -855,14 +900,20 @@ export const QuickTransactionPDV = ({
                 <span>Categoria da Despesa</span>
               </h4>
               
-              <select
-                value={transaction.categoria}
-                onChange={(e) => setTransaction(prev => ({
-                  ...prev,
-                  categoria: e.target.value
-                }))}
-                className="w-full px-4 py-4 border-2 border-gray-300 dark:border-secondary-graphite-card/30 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-lg shadow-inner"
-              >
+              <div className="relative">
+                <select
+                  ref={selectRef}
+                  value={transaction.categoria}
+                  onChange={(e) => {
+                    console.log('Categoria selecionada:', e.target.value)
+                    setTransaction(prev => ({
+                      ...prev,
+                      categoria: e.target.value
+                    }))
+                  }}
+                  className="pdv-select"
+
+                >
                 <option value="">Selecionar categoria</option>
                 <option value="Produtos">💄 Produtos</option>
                 <option value="Equipamentos">⚙️ Equipamentos</option>
@@ -872,7 +923,13 @@ export const QuickTransactionPDV = ({
                 <option value="Energia">⚡ Energia</option>
                 <option value="Internet">🌐 Internet</option>
                 <option value="Outros">📦 Outros</option>
-              </select>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
             </div>
 
             {/* Botões de Ação para Saída */}
@@ -993,6 +1050,15 @@ export const QuickTransactionPDV = ({
         <ClienteAgendamentoPicker
           onAgendamentoSelected={handleAgendamentoSelect}
           onClose={() => setShowClientePicker(false)}
+        />
+      )}
+
+      {/* Modal de Cadastro Rápido */}
+      {showCadastroRapido && (
+        <CadastroRapidoCliente
+          isOpen={showCadastroRapido}
+          onClose={() => setShowCadastroRapido(false)}
+          onClienteCriado={handleClienteCriado}
         />
       )}
     </div>

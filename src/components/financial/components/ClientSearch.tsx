@@ -17,12 +17,10 @@ import {
   ChevronDown,
   ChevronUp
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, Button, Badge, Input } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
-import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
+import { useBarberFinancialFilter } from '@/domains/users/hooks/use-barber-permissions'
 
 interface Cliente {
   id: string
@@ -398,27 +396,21 @@ export const ClientSearch = ({
   return (
     <div className={`relative ${className}`}>
       {/* Campo de Busca */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Buscar cliente por nome, telefone ou email..."
-          className="w-full pl-10 pr-10 py-3 border border-gray-300 dark:border-secondary-graphite-card/30 rounded-md bg-white dark:bg-background-dark-card text-gray-900 dark:text-white placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-        
-        {searchTerm && (
-          <Button
-            variant="ghost"
-            size="sm"
+      <Input
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Buscar cliente por nome, telefone ou email..."
+        leftIcon={<Search className="h-4 w-4" />}
+        rightIcon={searchTerm ? (
+          <button
             onClick={limparBusca}
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0"
+            className="hover:bg-gray-100 dark:hover:bg-gray-700 rounded p-1 transition-colors"
           >
             <X className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
+          </button>
+        ) : undefined}
+        className="py-3"
+      />
 
       {/* Resultados da Busca */}
       <AnimatePresence>

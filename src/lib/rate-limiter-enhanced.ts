@@ -3,7 +3,7 @@
  * Implementa múltiplas estratégias de rate limiting para segurança
  */
 
-import { securityLogger } from '@/lib/security-logger'
+import { securityLogger } from '@/lib/monitoring/security-logger'
 
 // Interface para configuração de rate limit
 interface RateLimitConfig {

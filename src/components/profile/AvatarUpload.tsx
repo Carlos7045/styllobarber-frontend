@@ -2,8 +2,8 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { Camera, Upload, Trash2, User, X, Check } from 'lucide-react'
-import { Button } from '@/components/ui'
-import { cn } from '@/lib/utils'
+import { Button } from '@/shared/components/ui'
+import { cn } from '@/shared/utils'
 
 interface AvatarUploadProps {
   currentAvatar?: string

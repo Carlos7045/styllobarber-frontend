@@ -13,12 +13,10 @@ import {
   AlertCircle,
   ChevronRight
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
-import { useBarberFinancialFilter } from '@/hooks/use-barber-permissions'
+import { useBarberFinancialFilter } from '@/domains/users/hooks/use-barber-permissions'
 
 interface Agendamento {
   id: string

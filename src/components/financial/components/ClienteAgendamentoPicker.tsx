@@ -4,10 +4,10 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Scissors } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'
-import { useAgendamentosPendentes } from '@/hooks/use-agendamentos-pendentes'
+import { useAgendamentosPendentes } from '@/domains/appointments/hooks/use-agendamentos-pendentes'
 
 interface AgendamentoPendente {
   id: string

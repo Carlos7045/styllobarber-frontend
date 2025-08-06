@@ -2,11 +2,11 @@ import { render, screen, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { UserProfile } from '@/components/profile/UserProfile'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import { uploadAvatar } from '@/lib/storage'
 
 // Mock do Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     auth: {
       getSession: jest.fn(),

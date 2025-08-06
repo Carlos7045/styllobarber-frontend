@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { useAuth } from '../use-auth'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 
 // Mock do supabase
-jest.mock('@/lib/supabase')
+jest.mock('@/lib/api/supabase')
 const mockSupabase = supabase as jest.Mocked<typeof supabase>
 
 describe('useAuth Hook', () => {

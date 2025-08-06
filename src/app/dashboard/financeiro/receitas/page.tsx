@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Container } from '@/components/layout'
+import { Container } from '@/shared/components/layout'
 import { ReceitasReport } from '@/components/financial/components/ReceitasReport'
 
 export const metadata: Metadata = {

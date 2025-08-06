@@ -14,13 +14,13 @@ import {
   ArrowLeft
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Container } from '@/components/layout'
+import { Button } from '@/shared/components/ui/button'
+import { Card } from '@/shared/components/ui/card'
+import { Badge } from '@/shared/components/ui/badge'
+import { Container } from '@/shared/components/layout'
 import { CashFlowManager } from '@/components/financial/components'
-import { RouteGuard } from '@/components/auth'
-import { useCashFlowData, useCashFlowSettings } from '@/hooks/use-cash-flow-data'
+import { RouteGuard } from '@/domains/auth/components'
+import { useCashFlowData, useCashFlowSettings } from '@/shared/hooks/data/use-cash-flow-data'
 
 const formatCurrency = (value: number) => {
   return new Intl.NumberFormat('pt-BR', {

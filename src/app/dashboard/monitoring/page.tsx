@@ -6,10 +6,10 @@
 'use client'
 
 import type { Metadata } from 'next'
-import { useAuth } from '@/hooks/use-auth'
-import { Container } from '@/components/layout'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { Container } from '@/shared/components/layout'
 import { MonitoringAccess } from '@/components/monitoring/MonitoringAccess'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { AlertTriangle, Shield } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'

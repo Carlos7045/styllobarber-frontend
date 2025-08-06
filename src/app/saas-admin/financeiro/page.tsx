@@ -25,7 +25,7 @@ import {
   CardTitle,
   Button,
   Badge 
-} from '@/components/ui'
+} from '@/shared/components/ui'
 
 export const metadata: Metadata = {
   title: 'Relatórios Financeiros - SaaS Admin',

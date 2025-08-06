@@ -6,7 +6,7 @@
 
 import { useState, useEffect } from 'react'
 import { Bell, Mail, MessageSquare, Smartphone, Check } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
 import { useSettings } from '@/hooks/use-settings'
 import type { NotificationSettings } from '@/types/settings'
 

@@ -8,16 +8,7 @@ const protectedRoutes = [
   '/saas-admin', // Rotas do SaaS Owner
 ]
 
-// Rotas que só podem ser acessadas por usuários não autenticados
-const authRoutes = ['/login', '/cadastro', '/recuperar-senha']
-
-// Rotas públicas que não precisam de verificação
-const publicRoutes = [
-  '/',
-  '/agendamento', // Agendamento público
-  '/termos',
-  '/privacidade',
-]
+// Variáveis removidas - não utilizadas
 
 // Middleware de autenticação com prevenção de loops
 export async function middleware(request: NextRequest) {

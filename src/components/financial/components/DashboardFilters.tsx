@@ -4,8 +4,8 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Calendar, User, Filter, X } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
 import { getMonthRange, getYearRange, generateDateRange } from '../utils'
 import type { DateRange } from '../types'
 

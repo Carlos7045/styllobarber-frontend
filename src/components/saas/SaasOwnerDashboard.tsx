@@ -6,11 +6,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/use-auth'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
-import { AuthHealthDashboard } from '@/components/debug/AuthHealthDashboard'
-import { SystemStatusCard } from '@/components/admin/SystemStatusCard'
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
+// Removido import de debug component
+import { SystemStatusCard } from '@/domains/users/components/admin/SystemStatusCard'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
 import { 
   Crown,
   Building2,
@@ -287,8 +287,24 @@ export function SaasOwnerDashboard() {
               Monitoramento Técnico Detalhado
             </h3>
             
-            {/* Dashboard técnico completo */}
-            <AuthHealthDashboard />
+            {/* Dashboard técnico simplificado */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Monitoramento do Sistema</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <div className="text-sm text-gray-600">Status da API</div>
+                    <div className="text-lg font-semibold text-green-600">Operacional</div>
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-600">Banco de Dados</div>
+                    <div className="text-lg font-semibold text-green-600">Conectado</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       )}

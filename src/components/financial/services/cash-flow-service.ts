@@ -1,5 +1,5 @@
 // Serviço para gerenciamento de fluxo de caixa
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 import type { 
   MovimentacaoFluxoCaixa, 
   FluxoCaixaResumo,

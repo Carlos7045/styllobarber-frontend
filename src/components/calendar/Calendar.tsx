@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, Clock, User } from 'lucide-react'
-import { Button, Card, CardContent, CardHeader } from '@/components/ui'
-import { cn } from '@/lib/utils'
+import { Button, Card, CardContent, CardHeader } from '@/shared/components/ui'
+import { cn } from '@/shared/utils'
 import { 
   formatDate, 
   formatTime, 
@@ -18,7 +18,7 @@ import {
   generateTimeSlots,
   getWeekRange,
   getMonthRange
-} from '@/lib/date-utils'
+} from '@/shared/utils/date-utils'
 import { 
   APPOINTMENT_STATUS_COLORS,
   DEFAULT_CALENDAR_CONFIG

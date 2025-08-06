@@ -22,13 +22,13 @@ import {
   Heart,
   Award,
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card } from '@/shared/components/ui/card'
+import { Button } from '@/shared/components/ui/button'
 import {
   useClientReports,
   type ConfigRelatorioCliente,
   type DateRange,
-} from '@/hooks/use-client-reports'
+} from '@/shared/hooks/data/use-client-reports'
 import { getMonthRange, formatCurrency } from '@/components/financial/utils'
 
 interface ClientReportsCenterProps {

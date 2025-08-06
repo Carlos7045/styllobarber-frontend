@@ -1,10 +1,10 @@
 import { renderHook, act, waitFor } from '@testing-library/react'
 import { ReactNode } from 'react'
 import { AuthProvider, useAuth } from '../AuthContext'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/lib/api/supabase'
 
 // Mock do Supabase
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     auth: {
       getSession: jest.fn(),

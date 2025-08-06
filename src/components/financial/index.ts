@@ -12,7 +12,7 @@ export * from './hooks/use-cash-flow'
 export * from './hooks/use-quick-transactions'
 
 // Hooks de permissões
-export { useBarberPermissions, useBarberFinancialFilter, usePermissionCheck } from '@/hooks/use-barber-permissions'
+export { useBarberPermissions, useBarberFinancialFilter, usePermissionCheck } from '@/domains/users/hooks/use-barber-permissions'
 export * from './components/CommissionConfig'
 export * from './components/CommissionReport'
 export * from './components/ExpenseForm'
@@ -62,4 +62,4 @@ export {
   AdminGuard,
   ConditionalRender,
   useConditionalRender
-} from '@/components/auth/PermissionGuard'
+} from '@/domains/auth/components/PermissionGuard'

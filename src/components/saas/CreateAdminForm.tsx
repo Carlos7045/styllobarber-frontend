@@ -9,10 +9,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Eye, EyeOff, Mail, Lock, User, Phone, Crown, Building } from 'lucide-react'
 
-import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/components/ui'
-import { useAuth, type SignUpData } from '@/hooks/use-auth'
-import { schemaCadastro, type DadosCadastro } from '@/lib/validations'
-import { cn, formatarTelefone } from '@/lib/utils'
+import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
+import { useAuth, type SignUpData } from '@/domains/auth/hooks/use-auth'
+import { schemaCadastro, type DadosCadastro } from '@/shared/utils/validation'
+import { cn, formatarTelefone } from '@/shared/utils'
 
 interface CreateAdminFormProps {
   onSuccess?: (admin: any) => void

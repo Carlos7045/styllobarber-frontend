@@ -5,8 +5,8 @@
 'use client'
 
 import { Bell, Settings, User, LogOut, Crown } from 'lucide-react'
-import { useAuth } from '@/hooks/use-auth'
-import { Button, Badge } from '@/components/ui'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { Button, Badge } from '@/shared/components/ui'
 
 export function SaasAdminHeader() {
   const { user, profile, signOut } = useAuth()

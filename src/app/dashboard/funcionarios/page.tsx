@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
-import { Container } from '@/components/layout'
-import { FuncionarioManagement } from '@/components/admin/FuncionarioManagement'
+import { Container } from '@/shared/components/layout'
+import { FuncionarioManagement } from '@/domains/users/components/admin/FuncionarioManagement'
 
 export const metadata: Metadata = {
   title: 'Gestão de Funcionários - StylloBarber',

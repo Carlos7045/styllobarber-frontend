@@ -1,11 +1,11 @@
 import { renderHook, act } from '@testing-library/react'
 import { useAuthInterceptor } from '../auth-interceptor'
-import { useAuth } from '@/hooks/use-auth'
-import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { supabase } from '@/lib/api/supabase'
 
 // Mock dos hooks e dependências
-jest.mock('@/hooks/use-auth')
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/domains/auth/hooks/use-auth')
+jest.mock('@/lib/api/supabase', () => ({
   supabase: {
     auth: {
       onAuthStateChange: jest.fn(),

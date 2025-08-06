@@ -1,11 +1,11 @@
 'use client'
 
 import React, { useState } from 'react'
-import { useAuth } from '@/hooks/use-auth'
-import { useClientAppointments } from '@/hooks/use-client-appointments'
-import { Container } from '@/components/layout'
-import { Card, CardContent, CardHeader, CardTitle, Button } from '@/components/ui'
-import { NovoAgendamentoModal } from '@/components/client/NovoAgendamentoModal'
+import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { useClientAppointments } from '@/domains/appointments/hooks/use-client-appointments'
+import { Container } from '@/shared/components/layout'
+import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
+import { NovoAgendamentoModal } from '@/domains/users/components/client/NovoAgendamentoModal'
 import { Calendar, Clock, Plus, Scissors, MapPin } from 'lucide-react'
 
 export default function AgendamentosPage() {

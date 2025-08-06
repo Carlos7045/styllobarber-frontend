@@ -17,9 +17,7 @@ import {
     TrendingDown,
     Target
 } from 'lucide-react'
-import { Card } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
+import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { useCashFlowAlerts } from '../hooks/use-cash-flow'
 
@@ -167,7 +165,7 @@ const AlertConfiguration = ({
                             Limite Mínimo de Caixa
                         </label>
                         <div className="relative">
-                            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
                             <input
                                 type="number"
                                 value={localConfig.limiteMinimo}
@@ -243,7 +241,7 @@ const AlertConfiguration = ({
                             Intervalo de Verificação (segundos)
                         </label>
                         <div className="relative">
-                            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none z-10" />
                             <select
                                 value={localConfig.intervaloPadrao}
                                 onChange={(e) => setLocalConfig({
