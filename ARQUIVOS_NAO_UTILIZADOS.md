@@ -8,6 +8,7 @@
 ## 🚨 Dependências Não Utilizadas (20)
 
 ### Dependências de Produção (8)
+
 1. `@hello-pangea/dnd` - Drag and drop
 2. `@hookform/resolvers` - Resolvers para React Hook Form
 3. `@radix-ui/react-alert-dialog` - Componente de diálogo
@@ -18,7 +19,9 @@
 8. `@radix-ui/react-toast` - Componente de toast
 
 ### Dependências Críticas Marcadas como "Não Utilizadas" (12)
+
 ⚠️ **ATENÇÃO**: Estas dependências são utilizadas mas não detectadas corretamente:
+
 1. `@supabase/auth-helpers-nextjs` - **USADO** no middleware
 2. `@supabase/ssr` - **USADO** para SSR
 3. `@tanstack/react-query` - **USADO** para cache
@@ -35,6 +38,7 @@
 ## 📁 Arquivos Não Utilizados por Categoria
 
 ### 🐛 Componentes Debug (25 arquivos) - **REMOÇÃO PRIORITÁRIA**
+
 ```
 src/components/debug/
 ├── AuthDebugPanel.tsx
@@ -65,6 +69,7 @@ src/components/debug/
 ```
 
 ### 🧪 Páginas de Teste (5 arquivos) - **REMOÇÃO PRIORITÁRIA**
+
 ```
 src/app/dashboard/
 ├── debug/page.tsx
@@ -75,7 +80,9 @@ src/app/dashboard/
 ```
 
 ### 📊 Componentes Financeiros (50+ arquivos) - **REVISAR**
+
 Muitos componentes do sistema financeiro não estão sendo utilizados:
+
 ```
 src/components/financial/
 ├── components/ (22 arquivos)
@@ -86,6 +93,7 @@ src/components/financial/
 ```
 
 ### 🔧 Componentes Admin (23 arquivos) - **REVISAR**
+
 ```
 src/components/admin/
 ├── BloqueioHorarioForm.tsx
@@ -114,6 +122,7 @@ src/components/admin/
 ```
 
 ### 🔐 Componentes Auth (12 arquivos) - **REVISAR CUIDADOSAMENTE**
+
 ```
 src/components/auth/
 ├── AuthFeedback.tsx
@@ -132,6 +141,7 @@ src/components/auth/
 ```
 
 ### 📅 Componentes Calendar (4 arquivos) - **REVISAR**
+
 ```
 src/components/calendar/
 ├── Calendar.tsx
@@ -141,6 +151,7 @@ src/components/calendar/
 ```
 
 ### 🎯 Hooks Não Utilizados (32 arquivos) - **REVISAR**
+
 ```
 src/hooks/
 ├── use-admin-agendamentos.ts
@@ -178,6 +189,7 @@ src/hooks/
 ```
 
 ### 📚 Utilitários Lib (25 arquivos) - **REVISAR**
+
 ```
 src/lib/
 ├── alert-system.ts
@@ -212,16 +224,19 @@ src/lib/
 ## 🎯 Plano de Ação Recomendado
 
 ### Fase 1: Remoção Imediata (Segura)
+
 1. **Remover pasta debug completa** (25 arquivos)
 2. **Remover páginas de teste** (5 arquivos)
 3. **Remover arquivos de exemplo** (10+ arquivos)
 
 ### Fase 2: Análise Detalhada (Cuidadosa)
+
 1. **Revisar componentes admin** - Verificar se são usados em rotas específicas
 2. **Revisar hooks** - Alguns podem ser importados dinamicamente
 3. **Revisar componentes auth** - Críticos para segurança
 
 ### Fase 3: Consolidação
+
 1. **Unificar componentes duplicados**
 2. **Consolidar hooks similares**
 3. **Reorganizar estrutura**
@@ -229,11 +244,14 @@ src/lib/
 ## ⚠️ Arquivos que PODEM ser Falsos Positivos
 
 ### Rotas Next.js (48 arquivos)
+
 As páginas do Next.js são carregadas automaticamente pelo roteador, então podem não aparecer como "importadas" mas são utilizadas:
+
 - Todas as páginas em `src/app/`
 - Layouts e componentes de rota
 
 ### Componentes Críticos
+
 - Componentes de autenticação
 - Middleware
 - Contextos
@@ -249,4 +267,4 @@ As páginas do Next.js são carregadas automaticamente pelo roteador, então pod
 
 ---
 
-*Próximo passo: Iniciar remoção dos arquivos de debug e teste*
+_Próximo passo: Iniciar remoção dos arquivos de debug e teste_

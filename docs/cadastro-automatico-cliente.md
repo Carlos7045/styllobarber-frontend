@@ -26,9 +26,11 @@ A funcionalidade de cadastro automático de clientes permite que funcionários d
 ## Componentes Principais
 
 ### 1. CadastroRapidoCliente.tsx
+
 Modal para cadastro rápido de clientes no PDV.
 
 **Funcionalidades:**
+
 - Formulário simplificado com validação
 - Busca automática por clientes similares
 - Definição de senha padrão "bemvindo"
@@ -36,18 +38,22 @@ Modal para cadastro rápido de clientes no PDV.
 - Feedback visual do processo
 
 ### 2. PrimeiroAcessoModal.tsx
+
 Modal que aparece no primeiro acesso do cliente.
 
 **Funcionalidades:**
+
 - Tela de boas-vindas com informações da conta
 - Formulário para alteração de senha
 - Validação de força da senha
 - Opções de reenvio de credenciais
 
 ### 3. ClienteCadastroService.ts
+
 Serviço para gerenciar o cadastro automático.
 
 **Funcionalidades:**
+
 - Validação de dados
 - Verificação de duplicatas
 - Criação de usuário no Supabase Auth
@@ -56,9 +62,11 @@ Serviço para gerenciar o cadastro automático.
 - Logging de operações
 
 ### 4. CadastroAutomaticoStats.tsx
+
 Dashboard com estatísticas de cadastros automáticos.
 
 **Funcionalidades:**
+
 - Total de cadastros por período
 - Taxa de sucesso de envio
 - Ranking de funcionários
@@ -95,28 +103,30 @@ Dashboard com estatísticas de cadastros automáticos.
 ## Integração com Provedores Externos
 
 ### SMS (Exemplo com Twilio)
+
 ```typescript
 const enviarSMS = async (telefone: string, mensagem: string) => {
   const client = twilio(accountSid, authToken)
-  
+
   await client.messages.create({
     body: mensagem,
     from: '+1234567890',
-    to: telefone
+    to: telefone,
   })
 }
 ```
 
 ### Email (Exemplo com SendGrid)
+
 ```typescript
 const enviarEmail = async (email: string, assunto: string, conteudo: string) => {
   const msg = {
     to: email,
     from: 'noreply@styllobarber.com',
     subject: assunto,
-    html: conteudo
+    html: conteudo,
   }
-  
+
   await sgMail.send(msg)
 }
 ```
@@ -182,15 +192,17 @@ const enviarEmail = async (email: string, assunto: string, conteudo: string) => 
 ### Tarefas Periódicas
 
 1. **Reenvio de Credenciais**:
+
    ```typescript
    // Executar diariamente
    await clienteCadastroService.reenviarCredenciaisPendentes()
    ```
 
 2. **Limpeza de Logs**:
+
    ```sql
    -- Manter logs por 1 ano
-   DELETE FROM logs_cadastro_automatico 
+   DELETE FROM logs_cadastro_automatico
    WHERE created_at < NOW() - INTERVAL '1 year';
    ```
 
@@ -198,7 +210,7 @@ const enviarEmail = async (email: string, assunto: string, conteudo: string) => 
    ```typescript
    const stats = await clienteCadastroService.obterEstatisticasCadastros({
      inicio: startOfMonth(new Date()),
-     fim: endOfMonth(new Date())
+     fim: endOfMonth(new Date()),
    })
    ```
 
@@ -225,19 +237,19 @@ const enviarEmail = async (email: string, assunto: string, conteudo: string) => 
 
 ```typescript
 // Verificar cadastros de um funcionário
-SELECT * FROM logs_cadastro_automatico 
+SELECT * FROM logs_cadastro_automatico
 WHERE funcionario_id = 'uuid-funcionario'
 ORDER BY created_at DESC;
 
 // Verificar falhas de envio
-SELECT * FROM logs_envio_credenciais 
+SELECT * FROM logs_envio_credenciais
 WHERE status = 'falha'
 ORDER BY created_at DESC;
 
 // Clientes pendentes de alteração
 SELECT p.nome, p.telefone, p.created_at
 FROM profiles p
-WHERE p.cadastro_automatico = true 
+WHERE p.cadastro_automatico = true
 AND p.senha_alterada = false;
 ```
 

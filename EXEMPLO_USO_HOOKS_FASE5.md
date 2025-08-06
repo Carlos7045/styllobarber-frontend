@@ -50,7 +50,7 @@ function LoginComponent() {
   }
 
   if (isLoading) return <div>Carregando...</div>
-  
+
   return (
     <div>
       {isAuthenticated ? (
@@ -156,7 +156,7 @@ function UserManagement() {
       name: 'João Silva',
       email: 'joao@example.com'
     })
-    
+
     if (newUser) {
       console.log('Usuário criado:', newUser)
     }
@@ -166,7 +166,7 @@ function UserManagement() {
     const updatedUser = await update(id, {
       name: 'João Santos'
     })
-    
+
     if (updatedUser) {
       console.log('Usuário atualizado:', updatedUser)
     }
@@ -179,7 +179,7 @@ function UserManagement() {
     <div>
       <button onClick={handleCreateUser}>Criar Usuário</button>
       <button onClick={refetch}>Atualizar Lista</button>
-      
+
       {users?.map(user => (
         <div key={user.id}>
           <span>{user.name} - {user.email}</span>
@@ -227,27 +227,27 @@ function PaginatedList() {
       <div>
         Mostrando {pageInfo.startItem} - {pageInfo.endItem} de {totalItems}
       </div>
-      
+
       <div className="pagination-controls">
-        <button 
-          onClick={previousPage} 
+        <button
+          onClick={previousPage}
           disabled={!hasPreviousPage}
         >
           Anterior
         </button>
-        
+
         <span>Página {currentPage} de {totalPages}</span>
-        
-        <button 
-          onClick={nextPage} 
+
+        <button
+          onClick={nextPage}
           disabled={!hasNextPage}
         >
           Próxima
         </button>
       </div>
-      
-      <select 
-        value={pageSize} 
+
+      <select
+        value={pageSize}
         onChange={(e) => setPageSize(Number(e.target.value))}
       >
         <option value={10}>10 por página</option>
@@ -306,11 +306,11 @@ function SettingsComponent() {
       <p>Tema atual: {userSettings.theme}</p>
       <p>Idioma: {userSettings.language}</p>
       <p>Notificações: {userSettings.notifications ? 'Ativadas' : 'Desativadas'}</p>
-      
+
       <button onClick={toggleTheme}>
         Alternar Tema
       </button>
-      
+
       <button onClick={resetSettings}>
         Resetar Configurações
       </button>
@@ -326,21 +326,21 @@ import { useThrottle, useThrottleValue } from '@/shared/hooks/utils'
 
 function SearchComponent() {
   const [searchTerm, setSearchTerm] = useState('')
-  
+
   // Throttle de função - para chamadas de API
   const throttledSearch = useThrottle((query: string) => {
     console.log('Buscando por:', query)
     // Fazer chamada para API
     searchAPI(query)
-  }, { 
+  }, {
     delay: 500,
     leading: true,
-    trailing: true 
+    trailing: true
   })
 
   // Throttle de valor - para inputs
-  const throttledSearchTerm = useThrottleValue(searchTerm, { 
-    delay: 300 
+  const throttledSearchTerm = useThrottleValue(searchTerm, {
+    delay: 300
   })
 
   // Executar busca quando o valor throttled mudar
@@ -437,21 +437,21 @@ function DataComponent() {
       <button onClick={handleFetchData} disabled={isLoading}>
         {isLoading ? 'Carregando...' : 'Buscar Dados'}
       </button>
-      
+
       <button onClick={reset}>Resetar</button>
-      
+
       {isError && (
         <div className="error">
           Erro: {error}
         </div>
       )}
-      
+
       {isSuccess && data && (
         <div className="success">
           Dados carregados: {JSON.stringify(data)}
         </div>
       )}
-      
+
       <div>Estado atual: {state}</div>
     </div>
   )
@@ -473,7 +473,7 @@ function SimpleAsyncComponent() {
       <button onClick={handleAction} disabled={isLoading}>
         {isLoading ? 'Executando...' : 'Executar Operação'}
       </button>
-      
+
       {error && <div>Erro: {error}</div>}
       {data && <div>Resultado: {data}</div>}
     </div>
@@ -510,7 +510,7 @@ function PerformanceMonitor() {
       await new Promise(resolve => setTimeout(resolve, 1000))
       return 'Resultado da operação'
     })
-    
+
     console.log(`Operação levou ${duration}ms`)
   }
 
@@ -521,7 +521,7 @@ function PerformanceMonitor() {
   return (
     <div className="performance-monitor">
       <h3>Monitor de Performance</h3>
-      
+
       <div>
         <button onClick={startMonitoring} disabled={isMonitoring}>
           Iniciar Monitoramento
@@ -530,11 +530,11 @@ function PerformanceMonitor() {
           Parar Monitoramento
         </button>
       </div>
-      
+
       <button onClick={handleExpensiveOperation}>
         Executar Operação Pesada
       </button>
-      
+
       <div className="metrics">
         <h4>Web Vitals:</h4>
         <p>FCP: {metrics.fcp?.toFixed(2)}ms</p>
@@ -542,7 +542,7 @@ function PerformanceMonitor() {
         <p>FID: {metrics.fid?.toFixed(2)}ms</p>
         <p>CLS: {metrics.cls?.toFixed(4)}</p>
         <p>TTFB: {metrics.ttfb?.toFixed(2)}ms</p>
-        
+
         {metrics.memoryUsage && (
           <div>
             <h4>Uso de Memória:</h4>
@@ -565,7 +565,7 @@ function SimpleMeasureComponent() {
       const response = await fetch('/api/data')
       return response.json()
     })
-    
+
     console.log('Resultado:', result)
   }
 
@@ -578,7 +578,7 @@ function SimpleMeasureComponent() {
       }
       return sum
     })
-    
+
     console.log('Resultado:', result)
   }
 
@@ -602,8 +602,8 @@ function SimpleMeasureComponent() {
 ### **Exemplo Completo - Dashboard com Todos os Hooks**
 
 ```typescript
-import { 
-  useAuthOptimized, 
+import {
+  useAuthOptimized,
   useSessionManager,
   useCrudBase,
   usePagination,
@@ -679,13 +679,13 @@ function Dashboard() {
     <div className="dashboard">
       <header>
         <h1>Dashboard - {user?.email}</h1>
-        
+
         {needsRefresh && (
           <div className="session-warning">
             ⚠️ Sessão expira em {Math.floor((expiresIn || 0) / 60000)} min
           </div>
         )}
-        
+
         <div className="performance-info">
           LCP: {metrics.lcp?.toFixed(0)}ms
         </div>
@@ -698,7 +698,7 @@ function Dashboard() {
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar..."
         />
-        
+
         <button onClick={handleRefresh} disabled={isLoading}>
           {isLoading ? 'Atualizando...' : 'Atualizar'}
         </button>
@@ -721,18 +721,18 @@ function Dashboard() {
       </div>
 
       <div className="pagination">
-        <button 
+        <button
           onClick={pagination.previousPage}
           disabled={!pagination.hasPreviousPage}
         >
           Anterior
         </button>
-        
+
         <span>
           Página {pagination.currentPage} de {pagination.totalPages}
         </span>
-        
-        <button 
+
+        <button
           onClick={pagination.nextPage}
           disabled={!pagination.hasNextPage}
         >
@@ -749,21 +749,25 @@ function Dashboard() {
 ## 📚 **DICAS DE USO**
 
 ### **1. Performance**
+
 - Use `enableCache: true` no `useAuthOptimized` para melhor performance
 - Configure `delay` apropriado no `useThrottle` (300-500ms para inputs)
 - Use `usePerformance` apenas em desenvolvimento ou com métricas específicas
 
 ### **2. Tipagem**
+
 - Sempre defina interfaces TypeScript para seus dados
 - Use generics nos hooks de dados: `useCrudBase<User>`
 - Configure tipos específicos no `useLocalStorage`
 
 ### **3. Error Handling**
+
 - Sempre configure callbacks `onError` nos hooks
 - Use `useLoadingStates` para operações críticas
 - Implemente fallbacks para quando hooks não são suportados
 
 ### **4. Otimização**
+
 - Combine hooks relacionados no mesmo componente
 - Use `useMemo` e `useCallback` quando necessário
 - Configure `autoRefresh` baseado na criticidade dos dados

@@ -70,35 +70,35 @@ export interface UsePaginationResult extends PaginationState, PaginationActions 
 
 /**
  * Hook para gerenciamento de paginação
- * 
+ *
  * @description
  * Hook reutilizável para paginação de dados com funcionalidades completas
  * incluindo navegação, informações de estado e utilitários.
- * 
+ *
  * @example
  * ```tsx
  * const pagination = usePagination({
  *   pageSize: 20,
  *   totalItems: users.length
  * })
- * 
+ *
  * const paginatedUsers = pagination.paginateData(users)
- * 
+ *
  * return (
  *   <div>
  *     {paginatedUsers.map(user => <UserCard key={user.id} user={user} />)}
- *     
+ *
  *     <div className="pagination">
- *       <button 
+ *       <button
  *         onClick={pagination.previousPage}
  *         disabled={!pagination.hasPrevious}
  *       >
  *         Anterior
  *       </button>
- *       
+ *
  *       <span>{pagination.displayInfo}</span>
- *       
- *       <button 
+ *
+ *       <button
  *         onClick={pagination.nextPage}
  *         disabled={!pagination.hasNext}
  *       >
@@ -146,28 +146,31 @@ export function usePagination(config: PaginationConfig = {}): UsePaginationResul
     if (totalItems === 0) {
       return 'Nenhum item encontrado'
     }
-    
+
     const start = startIndex + 1
     const end = endIndex + 1
-    
+
     return `${start}-${end} de ${totalItems} itens`
   }, [startIndex, endIndex, totalItems])
 
   // Ações
-  const goToPage = useCallback((page: number) => {
-    const validPage = Math.max(1, Math.min(page, totalPages))
-    setCurrentPage(validPage)
-  }, [totalPages])
+  const goToPage = useCallback(
+    (page: number) => {
+      const validPage = Math.max(1, Math.min(page, totalPages))
+      setCurrentPage(validPage)
+    },
+    [totalPages]
+  )
 
   const nextPage = useCallback(() => {
     if (hasNext) {
-      setCurrentPage(prev => prev + 1)
+      setCurrentPage((prev) => prev + 1)
     }
   }, [hasNext])
 
   const previousPage = useCallback(() => {
     if (hasPrevious) {
-      setCurrentPage(prev => prev - 1)
+      setCurrentPage((prev) => prev - 1)
     }
   }, [hasPrevious])
 
@@ -179,27 +182,33 @@ export function usePagination(config: PaginationConfig = {}): UsePaginationResul
     setCurrentPage(totalPages)
   }, [totalPages])
 
-  const handleSetPageSize = useCallback((size: number) => {
-    const newSize = Math.max(1, size)
-    setPageSize(newSize)
-    
-    // Ajustar página atual se necessário
-    const newTotalPages = Math.ceil(totalItems / newSize) || 1
-    if (currentPage > newTotalPages) {
-      setCurrentPage(newTotalPages)
-    }
-  }, [totalItems, currentPage])
+  const handleSetPageSize = useCallback(
+    (size: number) => {
+      const newSize = Math.max(1, size)
+      setPageSize(newSize)
 
-  const handleSetTotalItems = useCallback((total: number) => {
-    const newTotal = Math.max(0, total)
-    setTotalItems(newTotal)
-    
-    // Ajustar página atual se necessário
-    const newTotalPages = Math.ceil(newTotal / pageSize) || 1
-    if (currentPage > newTotalPages) {
-      setCurrentPage(newTotalPages)
-    }
-  }, [pageSize, currentPage])
+      // Ajustar página atual se necessário
+      const newTotalPages = Math.ceil(totalItems / newSize) || 1
+      if (currentPage > newTotalPages) {
+        setCurrentPage(newTotalPages)
+      }
+    },
+    [totalItems, currentPage]
+  )
+
+  const handleSetTotalItems = useCallback(
+    (total: number) => {
+      const newTotal = Math.max(0, total)
+      setTotalItems(newTotal)
+
+      // Ajustar página atual se necessário
+      const newTotalPages = Math.ceil(newTotal / pageSize) || 1
+      if (currentPage > newTotalPages) {
+        setCurrentPage(newTotalPages)
+      }
+    },
+    [pageSize, currentPage]
+  )
 
   const reset = useCallback(() => {
     setCurrentPage(initialPage)
@@ -208,38 +217,44 @@ export function usePagination(config: PaginationConfig = {}): UsePaginationResul
   }, [initialPage, initialPageSize, initialTotalItems])
 
   // Utilitários
-  const paginateData = useCallback(<T>(data: T[]): T[] => {
-    const start = startIndex
-    const end = start + pageSize
-    return data.slice(start, end)
-  }, [startIndex, pageSize])
+  const paginateData = useCallback(
+    <T>(data: T[]): T[] => {
+      const start = startIndex
+      const end = start + pageSize
+      return data.slice(start, end)
+    },
+    [startIndex, pageSize]
+  )
 
-  const getPageRange = useCallback((maxPages: number = 5): number[] => {
-    const range: number[] = []
-    
-    if (totalPages <= maxPages) {
-      // Mostrar todas as páginas
-      for (let i = 1; i <= totalPages; i++) {
-        range.push(i)
+  const getPageRange = useCallback(
+    (maxPages: number = 5): number[] => {
+      const range: number[] = []
+
+      if (totalPages <= maxPages) {
+        // Mostrar todas as páginas
+        for (let i = 1; i <= totalPages; i++) {
+          range.push(i)
+        }
+      } else {
+        // Calcular range centrado na página atual
+        const half = Math.floor(maxPages / 2)
+        let start = Math.max(1, currentPage - half)
+        const end = Math.min(totalPages, start + maxPages - 1)
+
+        // Ajustar se estamos no final
+        if (end - start + 1 < maxPages) {
+          start = Math.max(1, end - maxPages + 1)
+        }
+
+        for (let i = start; i <= end; i++) {
+          range.push(i)
+        }
       }
-    } else {
-      // Calcular range centrado na página atual
-      const half = Math.floor(maxPages / 2)
-      let start = Math.max(1, currentPage - half)
-      let end = Math.min(totalPages, start + maxPages - 1)
-      
-      // Ajustar se estamos no final
-      if (end - start + 1 < maxPages) {
-        start = Math.max(1, end - maxPages + 1)
-      }
-      
-      for (let i = start; i <= end; i++) {
-        range.push(i)
-      }
-    }
-    
-    return range
-  }, [currentPage, totalPages])
+
+      return range
+    },
+    [currentPage, totalPages]
+  )
 
   return {
     // Estado
@@ -252,7 +267,7 @@ export function usePagination(config: PaginationConfig = {}): UsePaginationResul
     hasPrevious,
     hasNext,
     displayInfo,
-    
+
     // Ações
     goToPage,
     nextPage,
@@ -262,7 +277,7 @@ export function usePagination(config: PaginationConfig = {}): UsePaginationResul
     setPageSize: handleSetPageSize,
     setTotalItems: handleSetTotalItems,
     reset,
-    
+
     // Utilitários
     paginateData,
     getPageRange,
