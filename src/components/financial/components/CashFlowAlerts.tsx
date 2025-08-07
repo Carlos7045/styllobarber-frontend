@@ -13,7 +13,7 @@ const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{chil
 
 import { useState, useEffect } from 'react'
 
-import { Bell, Settings, AlertTriangle, CheckCircle, X, Mail, MessageSquare, Clock, DollarSign, TrendingDown, Target, BellOff } from 'lucide-react'
+import { Bell, Settings, AlertTriangle, CheckCircle, X, Mail, MessageSquare, Clock, DollarSign, TrendingDown, Target } from '@/shared/utils/optimized-imports'
 import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { useCashFlowAlerts } from '../hooks/use-cash-flow'

@@ -12,7 +12,7 @@ const motion = {
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw, Calendar, User, Filter, FileText } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw, Calendar, User, Filter, FileText } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { BarberDashboard } from './BarberDashboard'

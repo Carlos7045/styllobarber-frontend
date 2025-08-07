@@ -3,7 +3,7 @@
 // Componente para indicar a origem dos dados (real vs. estimado)
 
 import { Badge } from '@/shared/components/ui'
-import { AlertTriangle, CheckCircle, Clock } from 'lucide-react'
+import { AlertTriangle, CheckCircle, Clock } from '@/shared/utils/optimized-imports'
 
 export type DataSource = 'real' | 'estimated' | 'fallback'
 

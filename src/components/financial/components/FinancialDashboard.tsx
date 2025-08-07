@@ -11,7 +11,7 @@ const motion = {
 
 import { useState, useEffect } from 'react'
 
-import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw } from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { useMetrics } from '../hooks/use-metrics'

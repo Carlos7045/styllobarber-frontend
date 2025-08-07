@@ -11,7 +11,7 @@ const motion = {
 
 import { useState, useEffect } from 'react'
 
-import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Scissors } from 'lucide-react'
+import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Scissors } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'

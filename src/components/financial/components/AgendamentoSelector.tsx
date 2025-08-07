@@ -11,7 +11,7 @@ const motion = {
 
 import { useState, useEffect } from 'react'
 
-import { Calendar, Clock, User, Scissors, DollarSign, Check, AlertCircle, ChevronRight } from 'lucide-react'
+import { Calendar, Clock, User, Scissors, DollarSign, Check, AlertCircle, ChevronRight } from '@/shared/utils/optimized-imports'
 import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'

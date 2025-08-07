@@ -1,22 +1,44 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
-
-const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
 // Componente de controle de fluxo de caixa em tempo real
 
 import { useState } from 'react'
-
-import { TrendingUp, TrendingDown, DollarSign, AlertTriangle, Calendar, Filter, RefreshCw, Eye, EyeOff, Clock, Target, Plus, X, ArrowUpCircle, ArrowDownCircle, Wallet } from 'lucide-react'
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  AlertTriangle, 
+  Calendar, 
+  Filter, 
+  RefreshCw, 
+  Eye, 
+  EyeOff, 
+  Clock, 
+  Target, 
+  Plus, 
+  X, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  Wallet 
+} from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
-import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, Legend, PieChart, Pie, Cell } from '@/shared/utils/optimized-imports'
+import { 
+  ResponsiveContainer, 
+  BarChart, 
+  CartesianGrid, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Bar, 
+  Legend, 
+  PieChart, 
+  Pie, 
+  Cell,
+  motion,
+  AnimatePresence
+} from '@/shared/utils/optimized-imports'
 import { Badge } from '@/shared/components/ui'
 
 import { formatCurrency, formatDate } from '../utils'

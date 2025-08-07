@@ -1,5 +1,5 @@
 import React, { Suspense } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2 } from '@/shared/utils/optimized-imports'
 
 const FinancialSkeleton = ({ height = 'h-64' }: { height?: string }) => (
   <div className={`${height} bg-muted animate-pulse rounded-lg flex items-center justify-center`}>

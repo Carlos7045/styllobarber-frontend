@@ -12,7 +12,7 @@ const motion = {
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { TrendingUp, Download, Filter, Calendar, DollarSign, Users, CreditCard, BarChart3, ArrowLeft } from 'lucide-react'
+import { TrendingUp, Download, Filter, Calendar, DollarSign, Users, CreditCard, BarChart3, ArrowLeft } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { useReceitasReport } from '../hooks/use-reports'

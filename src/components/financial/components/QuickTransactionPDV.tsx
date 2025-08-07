@@ -11,7 +11,7 @@ const motion = {
 
 import { useState, useEffect, useRef } from 'react'
 
-import { Check, CreditCard, DollarSign, Loader2, Maximize2, Minimize2, Minus, Plus, Save, Search, Smartphone, User, X } from 'lucide-react'
+import { Check, CreditCard, DollarSign, Loader2, Minus, Plus, Save, Search, User, X } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'

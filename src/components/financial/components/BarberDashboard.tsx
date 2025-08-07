@@ -11,7 +11,7 @@ const motion = {
 
 import { useState } from 'react'
 
-import { DollarSign, TrendingUp, Users, Calendar, Eye, Clock, Target, Calculator, Award } from 'lucide-react'
+import { DollarSign, TrendingUp, Users, Calendar, Eye, Clock, Target } from '@/shared/utils/optimized-imports'
 import { useRouter } from 'next/navigation'
 import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, Legend } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'

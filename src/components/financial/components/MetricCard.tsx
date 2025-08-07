@@ -10,7 +10,7 @@ const motion = {
 // Componente para cards de métricas financeiras
 
 
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { TrendingUp, TrendingDown } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { formatCurrency, formatPercentage } from '../utils'
 

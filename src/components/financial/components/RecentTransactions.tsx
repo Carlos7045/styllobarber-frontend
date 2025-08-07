@@ -11,7 +11,7 @@ const motion = {
 
 import { useState } from 'react'
 
-import { Clock, DollarSign, TrendingUp, TrendingDown, User, CreditCard, Smartphone, MoreVertical, X, AlertTriangle } from 'lucide-react'
+import { Clock, DollarSign, TrendingUp, TrendingDown, User, CreditCard, MoreVertical, X, AlertTriangle } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { Badge } from '@/shared/components/ui'

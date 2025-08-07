@@ -111,6 +111,10 @@ export {
   Share2,
   Building2,
   Crown,
+  ArrowUpCircle,
+  ArrowDownCircle,
+  Wallet,
+  Target,
 } from 'lucide-react'
 
 // ===== DATE-FNS UTILITIES =====
@@ -200,7 +204,6 @@ export {
   Area,
   Pie,
   Cell,
-  ReferenceLine,
 } from 'recharts'
 
 // ===== FRAMER MOTION =====
@@ -221,7 +224,9 @@ export const motion = {
   button: 'button' as any,
 }
 
-export const AnimatePresence = ({ children }: { children: React.ReactNode }) => children
+export const AnimatePresence = ({ children }: { children: React.ReactNode }) => {
+  return <>{children}</>
+}
 
 // ===== TANSTACK QUERY =====
 // Import específico para React Query

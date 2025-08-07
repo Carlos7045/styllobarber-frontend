@@ -13,7 +13,7 @@ const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{chil
 
 import { useState, useEffect } from 'react'
 
-import { User, Phone, Mail, Save, X, Loader2, Check, AlertCircle, UserPlus, Eye, EyeOff } from 'lucide-react'
+import { User, Phone, Mail, Save, X, Loader2, Check, AlertCircle, UserPlus, Eye, EyeOff } from '@/shared/utils/optimized-imports'
 import { Card, Button, Input, Badge } from '@/shared/components/ui'
 import { useToast } from '@/shared/components/ui'
 import { clienteCadastroService, type NovoClienteData } from '../services/cliente-cadastro-service'

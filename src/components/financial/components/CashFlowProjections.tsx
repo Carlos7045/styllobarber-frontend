@@ -11,7 +11,7 @@ const motion = {
 
 import { useState, useEffect } from 'react'
 
-import { TrendingUp, TrendingDown, Calendar, Target, AlertTriangle, CheckCircle, Clock, BarChart3 } from 'lucide-react'
+import { TrendingUp, TrendingDown, Calendar, Target, AlertTriangle, CheckCircle, Clock, BarChart3 } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, Line } from '@/shared/utils/optimized-imports'

@@ -11,7 +11,7 @@ const motion = {
 
 import { useState } from 'react'
 
-import { Calendar, User, Filter, X } from 'lucide-react'
+import { Calendar, User, Filter, X } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { getMonthRange, getYearRange, generateDateRange } from '../utils'

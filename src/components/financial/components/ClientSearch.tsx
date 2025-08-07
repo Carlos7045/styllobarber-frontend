@@ -13,7 +13,7 @@ const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{chil
 
 import { useState, useEffect, useCallback } from 'react'
 
-import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Mail, Scissors, ChevronDown, ChevronUp } from 'lucide-react'
+import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Mail, Scissors, ChevronDown, ChevronUp } from '@/shared/utils/optimized-imports'
 import { Card, Button, Badge, Input } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
