@@ -1,7 +1,15 @@
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
 import React from 'react'
-import { motion } from 'framer-motion'
+
 
 interface AuthLoadingStateProps {
   message?: string

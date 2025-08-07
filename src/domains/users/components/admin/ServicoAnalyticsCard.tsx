@@ -3,16 +3,7 @@
 import React from 'react'
 import { Card, CardContent } from '@/shared/components/ui'
 import { ServicoAdmin } from '@/domains/users/hooks/use-admin-servicos'
-import {
-  Scissors,
-  TrendingUp,
-  DollarSign,
-  Clock,
-  BarChart3,
-  Users,
-  Target,
-  Award,
-} from 'lucide-react'
+import { Scissors, TrendingUp, DollarSign, Clock, BarChart3, Users, Target } from 'lucide-react'
 import { formatarMoeda } from '@/shared/utils'
 
 interface ServicoAnalyticsCardProps {

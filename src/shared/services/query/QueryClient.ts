@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientConfig } from '@tanstack/react-query'
+import { QueryClient } from '@tanstack/react-query'
 import { errorHandler, ErrorType } from '../base/ErrorHandler'
 
 /**

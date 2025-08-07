@@ -14,7 +14,7 @@ import type {
 
 interface UseReportsOptions {
   autoLoad?: boolean
-  cacheTime?: number
+  gcTime?: number
 }
 
 interface UseReportsReturn {
@@ -48,7 +48,7 @@ interface UseReportsReturn {
 }
 
 export const useReports = (options: UseReportsOptions = {}): UseReportsReturn => {
-  const { autoLoad = false, cacheTime = 5 * 60 * 1000 } = options
+  const { autoLoad = false, gcTime = 5 * 60 * 1000 } = options
 
   // Estados locais
   const [relatorioReceitas, setRelatorioReceitas] = useState<{

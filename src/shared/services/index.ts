@@ -10,6 +10,11 @@ export { ServiceInterceptors, serviceInterceptors } from './base/ServiceIntercep
 // Services específicos
 export { UserService, userService } from './UserService'
 
+// Services de domínios
+export * from '@/domains/appointments/services'
+export * from '@/domains/auth/services'
+export * from '@/domains/users/services'
+
 // Re-export types
 export type {
   ServiceConfig,

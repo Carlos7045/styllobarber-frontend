@@ -5,7 +5,7 @@ import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useClientAppointments } from '@/domains/appointments/hooks/use-client-appointments'
 import { Container } from '@/shared/components/layout'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { NovoAgendamentoModal } from '@/domains/users/components/client/NovoAgendamentoModal'
+import { LazyNovoAgendamentoModal, LazyModalWrapper } from '@/shared/components/lazy'
 import { Calendar, Clock, Plus, Scissors, MapPin } from 'lucide-react'
 
 export default function AgendamentosPage() {
@@ -223,7 +223,7 @@ export default function AgendamentosPage() {
         </Card>
 
         {/* Modais */}
-        <NovoAgendamentoModal
+        <LazyNovoAgendamentoModal
           isOpen={isNovoAgendamentoOpen}
           onClose={() => setIsNovoAgendamentoOpen(false)}
           onSuccess={handleAgendamentoSuccess}

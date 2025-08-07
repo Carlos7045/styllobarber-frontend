@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback } from 'react'
-import { Camera, Upload, Trash2, User, X, Check } from 'lucide-react'
+import { Camera, Check, Trash2, Upload, User, X } from 'lucide-react'
 import { Button } from '@/shared/components/ui'
 import { cn } from '@/shared/utils'
 

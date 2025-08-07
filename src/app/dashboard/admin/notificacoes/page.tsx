@@ -2,13 +2,7 @@
 
 import { Container } from '@/shared/components/layout'
 import { Card, CardContent } from '@/shared/components/ui'
-import { 
-  Bell, 
-  CheckCircle,
-  XCircle,
-  BarChart3,
-  FileText
-} from 'lucide-react'
+import { Bell, CheckCircle, XCircle, BarChart3, FileText } from 'lucide-react'
 import { NotificacoesManager } from '@/domains/users/components/admin/NotificacoesManager'
 
 /**

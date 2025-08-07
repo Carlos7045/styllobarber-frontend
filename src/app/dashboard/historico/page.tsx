@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Container } from '@/shared/components/layout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { History, Calendar } from 'lucide-react'
+import { Calendar, History } from 'lucide-react'
 
 export const metadata: Metadata = {
   title: 'Histórico - StylloBarber',

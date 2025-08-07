@@ -1,5 +1,6 @@
-// Componente para indicar a origem dos dados (real vs. estimado)
+
 'use client'
+// Componente para indicar a origem dos dados (real vs. estimado)
 
 import { Badge } from '@/shared/components/ui'
 import { AlertTriangle, CheckCircle, Clock } from 'lucide-react'

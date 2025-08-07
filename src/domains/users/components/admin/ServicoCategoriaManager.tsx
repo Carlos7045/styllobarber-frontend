@@ -5,7 +5,7 @@ import { SimpleModal, SimpleModalContent, SimpleModalHeader, SimpleModalTitle, S
 import { Button, Input } from '@/shared/components/ui'
 import { useAdminServicos } from '@/domains/users/hooks/use-admin-servicos'
 import { supabase } from '@/lib/api/supabase'
-import { Tag, Plus, Edit, Trash2, Check, X, Hash, Palette } from 'lucide-react'
+import { Plus, Edit, Trash2, Check, X, Palette } from 'lucide-react'
 
 interface Categoria {
   nome: string

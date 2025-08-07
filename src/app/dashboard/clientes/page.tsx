@@ -1,28 +1,16 @@
+
+'use client'
 /**
  * Página de Gestão de Clientes
  * Admins veem todos os clientes, barbeiros veem apenas seus clientes
  */
 
-'use client'
 
 import { useState, useCallback } from 'react'
-import {
-  Users,
-  Plus,
-  Search,
-  Filter,
-  Calendar,
-  Phone,
-  Mail,
-  Star,
-  DollarSign,
-  Edit,
-  Eye,
-  UserPlus,
-} from 'lucide-react'
+import { Users, Plus, Search, Filter, Calendar, Phone, Mail, Star, DollarSign, Edit, Eye, UserPlus } from 'lucide-react'
 import { Button, Badge } from '@/shared/components/ui'
 import { Container } from '@/shared/components/layout'
-import { RouteGuard, PermissionGuard } from '@/domains/auth/components'
+import { RouteGuard, PermissionGuard, PermissionGate } from '@/domains/auth/components'
 import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
 import { useBarberClients } from '@/domains/users/hooks/use-barber-clients'
 import { useAdminClientes } from '@/domains/users/hooks/use-admin-clientes'

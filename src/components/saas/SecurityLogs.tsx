@@ -1,19 +1,16 @@
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
 import React, { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  Shield, 
-  AlertTriangle, 
-  CheckCircle, 
-  XCircle, 
-  Clock, 
-  User, 
-  MapPin,
-  Download,
-  Filter,
-  RefreshCw
-} from 'lucide-react'
+
+import { Shield, AlertTriangle, CheckCircle, XCircle, Clock, User, MapPin, Download, Filter, RefreshCw } from 'lucide-react'
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { securityLogger, type SecurityLogEntry, type SecurityEventType } from '@/lib/monitoring/security-logger'
 

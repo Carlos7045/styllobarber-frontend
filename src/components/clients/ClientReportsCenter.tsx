@@ -1,27 +1,18 @@
-// Centro de relatórios de clientes
+
 'use client'
+
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Centro de relatórios de clientes
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import {
-  FileText,
-  Download,
-  Filter,
-  Calendar,
-  Users,
-  TrendingUp,
-  UserCheck,
-  Target,
-  BarChart3,
-  FileSpreadsheet,
-  FileImage,
-  ArrowLeft,
-  RefreshCw,
-  Star,
-  Heart,
-  Award,
-} from 'lucide-react'
+
+import { FileText, Download, Filter, Calendar, Users, TrendingUp, UserCheck, Target, BarChart3, ArrowLeft, RefreshCw, Star, Heart, FileSpreadsheet, FileImage } from 'lucide-react'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
 import {
@@ -469,7 +460,7 @@ export const ClientReportsCenter = ({ className = '' }: ClientReportsCenterProps
                   <tbody className="divide-y divide-gray-200 bg-white dark:divide-secondary-graphite-card/30 dark:bg-secondary-graphite-light">
                     {dadosAtual.dados
                       .slice(0, 10)
-                      .map((item: Record<string, unknown>, index: number) => (
+                      .map((item: any, index: number) => (
                         <tr
                           key={index}
                           className="transition-colors duration-200 hover:bg-gray-50 dark:hover:bg-secondary-graphite-card/30"

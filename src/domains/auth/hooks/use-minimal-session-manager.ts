@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useAuth } from './use-auth'
 
 interface MinimalSessionState {
@@ -17,8 +17,8 @@ export function useMinimalSessionManager() {
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Função simples para verificar sessão
-  const checkSession = () => {
+  // Função memoizada para verificar sessão (evita dependência circular)
+  const checkSession = useCallback(() => {
     if (loading) return
 
     if (!session?.access_token || !session?.expires_at) {
@@ -37,25 +37,32 @@ export function useMinimalSessionManager() {
       isValid,
       expiresAt: session.expires_at,
     })
-  }
+  }, [session?.access_token, session?.expires_at, loading])
 
-  // Efeito simples com dependência mínima
+  // Efeito otimizado com dependências estáveis
   useEffect(() => {
     checkSession()
 
-    // Verificar a cada 2 minutos
+    // Limpar interval anterior
     if (intervalRef.current) {
       clearInterval(intervalRef.current)
     }
 
-    intervalRef.current = setInterval(checkSession, 120000) // 2 minutos
+    // Verificar a cada 2 minutos (menos agressivo)
+    intervalRef.current = setInterval(checkSession, 120000)
 
     return () => {
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
     }
-  }, [session?.access_token, loading, checkSession])
+  }, [checkSession])
+
+  // Função de refresh memoizada
+  const forceRefresh = useCallback(async () => {
+    checkSession()
+    return sessionState.isValid
+  }, [checkSession, sessionState.isValid])
 
   return {
     isSessionValid: sessionState.isValid,
@@ -63,9 +70,6 @@ export function useMinimalSessionManager() {
     timeUntilExpiry: sessionState.expiresAt
       ? Math.max(0, sessionState.expiresAt * 1000 - Date.now())
       : null,
-    forceRefresh: async () => {
-      checkSession()
-      return sessionState.isValid
-    },
+    forceRefresh,
   }
 }

@@ -1,8 +1,16 @@
-// Componente para filtros do dashboard financeiro
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componente para filtros do dashboard financeiro
+
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+
 import { Calendar, User, Filter, X } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'

@@ -1,3 +1,5 @@
+import { Link as LinkIcon } from 'lucide-react'
+
 import { Suspense } from 'react'
 import Link from 'next/link'
 import { Container, Section } from '@/shared/components/layout'

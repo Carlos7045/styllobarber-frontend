@@ -7,6 +7,14 @@ export { useDebounce } from './use-debounce'
 export { useErrorRecovery } from './use-error-recovery'
 export { useErrorToast } from './use-error-toast'
 
+// Error handling hooks
+export { 
+  useErrorHandler,
+  useSimpleErrorHandler,
+  useFormErrorHandler,
+  useApiErrorHandler
+} from './use-error-handler'
+
 // Novos hooks utilitários otimizados
 export { 
   useLocalStorage,
@@ -29,6 +37,10 @@ export {
 } from './use-performance'
 
 // Re-export types
+export type {
+  UseErrorHandlerConfig
+} from './use-error-handler'
+
 export type {
   UseLocalStorageConfig
 } from './use-local-storage'

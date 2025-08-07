@@ -4,25 +4,7 @@ import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cva, type VariantProps } from 'class-variance-authority'
-import {
-  Calendar,
-  Users,
-  Scissors,
-  UserCheck,
-  Clock,
-  DollarSign,
-  BarChart3,
-  Settings,
-  Menu,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  Sun,
-  Moon,
-  Home,
-  User,
-  Activity,
-} from 'lucide-react'
+import { Activity, BarChart3, Calendar, ChevronLeft, ChevronRight, Clock, DollarSign, Home, Link as LinkIcon, Menu, Moon, Scissors, Settings, Sun, User, UserCheck, Users, X } from 'lucide-react'
 
 import { cn } from '@/shared/utils'
 import { Button } from '@/shared/components/ui'

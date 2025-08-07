@@ -1,16 +1,18 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { Sidebar, useSidebar } from '@/shared/components/layout/sidebar'
 import { Header, HeaderContent } from '@/shared/components/layout/header'
 import { Container } from '@/shared/components/layout'
 import { UserMenu } from '@/shared/components/layout/UserMenu'
 import { RouteGuard } from '@/domains/auth/components'
 import { ToastProvider } from '@/shared/components/ui'
+import { ErrorBoundary } from '@/shared/components/feedback'
 // Debug components removidos - problema resolvido!
 // import { SessionProvider } from '@/domains/auth/components/SessionProvider' // Removido temporariamente
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { cn } from '@/shared/utils'
+import { usePreloadComponents } from '@/shared/hooks/use-dynamic-import'
 
 // Componente de loading para o dashboard
 function DashboardSkeleton() {
@@ -57,9 +59,18 @@ function DashboardSkeleton() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <RouteGuard requiredRoles={['admin', 'barber', 'client']}>
-      <ToastProvider>
-        <DashboardContent>{children}</DashboardContent>
-      </ToastProvider>
+      <ErrorBoundary
+        enableRetry={true}
+        enableReporting={true}
+        showDetails={process.env.NODE_ENV === 'development'}
+        onError={(error, errorInfo) => {
+          console.error('Dashboard Error:', error, errorInfo)
+        }}
+      >
+        <ToastProvider>
+          <DashboardContent>{children}</DashboardContent>
+        </ToastProvider>
+      </ErrorBoundary>
     </RouteGuard>
   )
 }
@@ -71,6 +82,27 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
   // Determinar role do usuário
   const userRole = profile?.role || user?.user_metadata?.role || 'client' // Default para client, não admin
+
+  // Preload de componentes críticos baseado no role do usuário
+  const criticalImports = [
+    () => import('@/components/financial/components/FinancialDashboardSimple'),
+    () => import('@/domains/users/components/client/NovoAgendamentoModal'),
+    () => import('@/components/calendar/Calendar'),
+  ]
+
+  const adminImports = [
+    () => import('@/components/financial/components/ReportsCenter'),
+    () => import('@/domains/users/components/admin/ServicoFormModal'),
+    () => import('@/domains/users/components/admin/NovoFuncionarioModal'),
+  ]
+
+  // Preload baseado no role
+  usePreloadComponents(
+    userRole === 'admin' || userRole === 'barber' 
+      ? [...criticalImports, ...adminImports]
+      : criticalImports,
+    2000 // 2 segundos após o carregamento
+  )
 
   console.log('🏠 Dashboard Layout - Role do usuário:', {
     userRole,
@@ -123,25 +155,33 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-background-secondary dark:bg-background-dark">
-          <Suspense
-            fallback={
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div className="h-8 w-64 animate-pulse rounded bg-neutral-light-gray" />
-                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    {Array.from({ length: 6 }).map((_, index) => (
-                      <div
-                        key={index}
-                        className="h-32 animate-pulse rounded-lg bg-neutral-light-gray"
-                      />
-                    ))}
+          <ErrorBoundary
+            enableRetry={true}
+            showDetails={process.env.NODE_ENV === 'development'}
+            onError={(error, errorInfo) => {
+              console.error('Dashboard Page Error:', error, errorInfo)
+            }}
+          >
+            <Suspense
+              fallback={
+                <div className="p-6">
+                  <div className="space-y-4">
+                    <div className="h-8 w-64 animate-pulse rounded bg-neutral-light-gray" />
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                      {Array.from({ length: 6 }).map((_, index) => (
+                        <div
+                          key={index}
+                          className="h-32 animate-pulse rounded-lg bg-neutral-light-gray"
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            }
-          >
-            {children}
-          </Suspense>
+              }
+            >
+              {children}
+            </Suspense>
+          </ErrorBoundary>
         </main>
       </div>
     </div>

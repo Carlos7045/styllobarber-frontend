@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Error Boundary robusto com integração completa do sistema de erros
  * Captura erros não tratados e fornece interface de recuperação
  */
 
-'use client'
 
 import React, { Component, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'

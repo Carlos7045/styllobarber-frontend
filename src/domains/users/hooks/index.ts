@@ -18,3 +18,11 @@ export { useBarberPermissions } from './use-barber-permissions'
 // Profile hooks
 export { useProfileSync } from './use-profile-sync'
 export { useFuncionariosEspecialidades } from './use-funcionarios-especialidades-simple'
+
+// React Query hooks
+export { 
+  useUserQueries,
+  useUser,
+  useUsers,
+  useActiveUsersByRole
+} from './use-user-queries'

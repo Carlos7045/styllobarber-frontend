@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Componente que detecta automaticamente o acesso de monitoramento
  * Mostra o dashboard apropriado baseado no usuário logado
  */
 
-'use client'
 
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
@@ -12,7 +13,7 @@ import { SystemStatusCard } from '@/domains/users/components/admin/SystemStatusC
 // Removido import de debug component
 import { WelcomeNotification } from '@/components/monitoring/WelcomeNotification'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { Crown, Shield, Code, AlertTriangle } from 'lucide-react'
+import { Crown, Shield, AlertTriangle } from 'lucide-react'
 
 export function MonitoringAccess() {
   const { profile, user } = useAuth()

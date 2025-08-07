@@ -1,19 +1,18 @@
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
+const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
+
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
-  Info, 
-  X, 
-  Mail,
-  Key,
-  User,
-  Shield,
-  Clock
-} from 'lucide-react'
+
+import { CheckCircle, XCircle, AlertTriangle, Info, X, Mail, Key, User, Shield, Clock } from 'lucide-react'
 
 // Tipos de feedback
 export type FeedbackType = 'success' | 'error' | 'warning' | 'info' | 'loading'

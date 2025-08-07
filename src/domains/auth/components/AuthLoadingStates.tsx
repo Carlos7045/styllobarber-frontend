@@ -1,6 +1,11 @@
 'use client'
 
-import { motion } from 'framer-motion'
+// import { motion } from 'framer-motion'
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
 import { Loader2, CheckCircle, XCircle, AlertCircle, Key, User, Shield } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui'
 

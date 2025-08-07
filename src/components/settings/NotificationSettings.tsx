@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Componente para configurações de notificação
  */
 
-'use client'
 
 import { useState, useEffect } from 'react'
 import { Bell, Mail, MessageSquare, Smartphone, Check } from 'lucide-react'

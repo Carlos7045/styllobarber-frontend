@@ -11,7 +11,7 @@ interface CalendarStatsProps {
   className?: string
 }
 
-export function CalendarStatsComponent({ stats, loading = false, className }: CalendarStatsProps) {
+export function CalendarStats({ stats, loading = false, className }: CalendarStatsProps) {
   if (loading) {
     return (
       <div className={`grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 ${className}`}>

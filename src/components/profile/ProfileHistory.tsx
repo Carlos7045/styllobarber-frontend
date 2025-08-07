@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { History, Clock, User, Phone, Calendar, Image, RefreshCw } from 'lucide-react'
+import { Calendar, Clock, Image, Phone, RefreshCw, User } from 'lucide-react'
 
 interface ProfileChange {
   id: string

@@ -1,5 +1,6 @@
-// Hook para gerenciar clientes e agendamentos para o PDV
+
 'use client'
+// Hook para gerenciar clientes e agendamentos para o PDV
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/api/supabase'

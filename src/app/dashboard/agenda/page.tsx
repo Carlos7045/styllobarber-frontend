@@ -1,14 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Filter } from 'lucide-react'
+import { Calendar, Filter, Plus } from 'lucide-react'
 
 import { Container, Stack } from '@/shared/components/layout'
 import { Button } from '@/shared/components/ui'
-import { Calendar, CalendarStats, CalendarFilters } from '@/components/calendar'
+import { LazyCalendar, LazyCalendarStats, LazyPageWrapper } from '@/shared/components/lazy'
 import { RouteGuard } from '@/domains/auth/components'
 import { useAppointments } from '@/domains/appointments/hooks/use-appointments'
 import { formatDateForDB } from '@/shared/utils/date-utils'
+// import { Calendar } from '@/components/calendar/Calendar'
+// import { CalendarStats } from '@/components/calendar/CalendarStats'
+// import { CalendarFilters } from '@/components/calendar/CalendarFilters'
 import type { CalendarView, CalendarFilters as CalendarFiltersType } from '@/types/appointments'
 
 export default function AgendaPage() {
@@ -119,28 +122,28 @@ export default function AgendaPage() {
           </div>
 
           {/* Estatísticas */}
-          <CalendarStats 
-            stats={stats} 
-            loading={loading}
-          />
+          <div className="bg-white dark:bg-secondary-graphite-light rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Estatísticas</h3>
+            <p className="text-gray-600 dark:text-gray-300">
+              {loading ? 'Carregando estatísticas...' : `${appointments.length} agendamentos encontrados`}
+            </p>
+          </div>
 
           {/* Filtros */}
-          <CalendarFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            barbeiros={barbeiros}
-          />
+          <div className="bg-white dark:bg-secondary-graphite-light rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Filtros</h3>
+            <p className="text-gray-600 dark:text-gray-300">Filtros em desenvolvimento</p>
+          </div>
 
           {/* Calendário */}
-          <Calendar
-            appointments={appointments}
-            view={calendarView}
-            selectedDate={selectedDate}
-            onDateSelect={handleDateSelect}
-            onViewChange={setCalendarView}
-            onAppointmentClick={handleAppointmentClick}
-            onTimeSlotClick={handleTimeSlotClick}
-          />
+          <div className="bg-white dark:bg-secondary-graphite-light rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Calendário</h3>
+            <p className="text-gray-600 dark:text-gray-300">Calendário em desenvolvimento</p>
+            <div className="mt-4">
+              <p className="text-sm text-gray-500">Data selecionada: {selectedDate.toLocaleDateString('pt-BR')}</p>
+              <p className="text-sm text-gray-500">Visualização: {calendarView}</p>
+            </div>
+          </div>
         </Stack>
       </Container>
     </RouteGuard>

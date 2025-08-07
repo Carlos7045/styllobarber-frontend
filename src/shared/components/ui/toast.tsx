@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, createContext, useContext, ReactNode } from 'react'
+import { useState, useEffect, createContext, useContext, ReactNode, memo, useCallback } from 'react'
 import { CheckCircle, AlertTriangle, XCircle, Info, X } from 'lucide-react'
 import { cn } from '@/shared/utils'
 
@@ -106,8 +106,8 @@ function ToastContainer() {
   )
 }
 
-// Item individual do toast
-function ToastItem({ toast }: { toast: Toast }) {
+// Item individual do toast - Memoizado para performance
+const ToastItem = memo(({ toast }: { toast: Toast }) => {
   const { removeToast } = useToast()
   const [isVisible, setIsVisible] = useState(false)
 
@@ -196,7 +196,15 @@ function ToastItem({ toast }: { toast: Toast }) {
       </div>
     </div>
   )
-}
+}, (prevProps, nextProps) => {
+  // Comparação customizada para evitar re-renders desnecessários
+  return (
+    prevProps.toast.id === nextProps.toast.id &&
+    prevProps.toast.type === nextProps.toast.type &&
+    prevProps.toast.title === nextProps.toast.title &&
+    prevProps.toast.message === nextProps.toast.message
+  )
+})
 
 // Componente de toast simples para compatibilidade
 export function SimpleToast() {

@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Dashboard específico para o dono do SaaS
  * Visão completa de todos os clientes e infraestrutura
  */
 
-'use client'
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
@@ -11,18 +12,7 @@ import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 // Removido import de debug component
 import { SystemStatusCard } from '@/domains/users/components/admin/SystemStatusCard'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { 
-  Crown,
-  Building2,
-  Users,
-  DollarSign,
-  TrendingUp,
-  AlertTriangle,
-  Shield,
-  Server,
-  Database,
-  Globe
-} from 'lucide-react'
+import { Crown, Building2, Users, DollarSign, TrendingUp, AlertTriangle, Shield, Database, Globe } from 'lucide-react'
 
 interface SaasMetrics {
   totalClients: number

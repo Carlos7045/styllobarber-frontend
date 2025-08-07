@@ -1,22 +1,17 @@
-// Modal para primeiro acesso de clientes cadastrados automaticamente
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Modal para primeiro acesso de clientes cadastrados automaticamente
+
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  Key,
-  Eye,
-  EyeOff,
-  User,
-  Calendar,
-  Phone,
-  Mail,
-  Shield,
-  LogOut,
-  RefreshCw,
-  AlertCircle,
-  CheckCircle
-} from 'lucide-react'
+
+import { Key, Eye, EyeOff, User, Calendar, Phone, Mail, Shield, LogOut, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react'
 import { Card, Button, Input } from '@/shared/components/ui'
 import { usePrimeiroAcesso } from '../hooks/use-primeiro-acesso'
 import { formatDate } from '@/shared/utils/date-utils'

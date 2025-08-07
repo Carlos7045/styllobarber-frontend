@@ -1,37 +1,23 @@
-// Componente para relatório de receitas
+
 'use client'
+
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componente para relatório de receitas
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { 
-  TrendingUp, 
-  Download, 
-  Filter,
-  Calendar,
-  DollarSign,
-  Users,
-  CreditCard,
-  BarChart3,
-  ArrowLeft
-} from 'lucide-react'
+
+import { TrendingUp, Download, Filter, Calendar, DollarSign, Users, CreditCard, BarChart3, ArrowLeft } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { useReceitasReport } from '../hooks/use-reports'
 import { formatCurrency, formatDate, getMonthRange } from '../utils'
-import { 
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts'
+
 import type { ConfigRelatorio, DateRange } from '../types'
 
 interface ReceitasReportProps {

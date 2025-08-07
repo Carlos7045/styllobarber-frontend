@@ -23,13 +23,18 @@ const nextConfig: NextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
   
-  // Configurações experimentais
+  // Configurações experimentais para otimização
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    optimizePackageImports: [
+      'lucide-react',
+      'date-fns',
+      '@tanstack/react-query',
+      'zustand'
+    ],
   },
   
-  // Configurações de webpack para resolver problemas com pacotes ES modules
-  webpack: (config, { isServer }) => {
+  // Configurações de webpack otimizadas
+  webpack: (config, { isServer, dev }) => {
     // Resolver problemas com o pacote jose
     if (!isServer) {
       config.resolve.fallback = {
@@ -46,6 +51,71 @@ const nextConfig: NextConfig = {
       'utf-8-validate': 'commonjs utf-8-validate',
       'bufferutil': 'commonjs bufferutil',
     })
+
+    // Otimizações de bundle splitting apenas em produção
+    if (!dev && !isServer) {
+      config.optimization = {
+        ...config.optimization,
+        splitChunks: {
+          chunks: 'all',
+          cacheGroups: {
+            // Vendor chunk para bibliotecas principais
+            vendor: {
+              test: /[\\/]node_modules[\\/]/,
+              name: 'vendors',
+              chunks: 'all',
+              priority: 10,
+              enforce: true,
+            },
+            // Chunk separado para lucide-react
+            lucide: {
+              test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+              name: 'lucide-icons',
+              chunks: 'all',
+              priority: 20,
+              enforce: true,
+            },
+            // Chunk separado para date-fns
+            dateFns: {
+              test: /[\\/]node_modules[\\/]date-fns[\\/]/,
+              name: 'date-utils',
+              chunks: 'all',
+              priority: 20,
+              enforce: true,
+            },
+            // Chunk separado para recharts
+            recharts: {
+              test: /[\\/]node_modules[\\/]recharts[\\/]/,
+              name: 'charts',
+              chunks: 'all',
+              priority: 20,
+              enforce: true,
+            },
+            // Chunk separado para framer-motion
+            framerMotion: {
+              test: /[\\/]node_modules[\\/]framer-motion[\\/]/,
+              name: 'animations',
+              chunks: 'all',
+              priority: 20,
+              enforce: true,
+            },
+            // Chunk comum para código compartilhado
+            common: {
+              name: 'common',
+              minChunks: 2,
+              chunks: 'all',
+              priority: 5,
+              reuseExistingChunk: true,
+              enforce: true,
+            },
+          },
+        },
+      }
+
+      // Tree shaking mais agressivo
+      config.optimization.usedExports = true
+      config.optimization.sideEffects = false
+    }
     
     return config
   },

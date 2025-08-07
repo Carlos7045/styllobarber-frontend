@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Componente para proteção de rotas e componentes baseado em permissões
  * Substitui verificações manuais de role por um sistema centralizado
  */
 
-'use client'
 
 import React from 'react'
 import { usePermissions, useRoutePermissions } from '@/domains/auth/hooks/use-permissions'

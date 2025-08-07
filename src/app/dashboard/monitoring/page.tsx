@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Página de monitoramento - Carlos Henrique Pereira Salgado
  * Dashboard completo para desenvolvedor e dono do SaaS
  */
 
-'use client'
 
 import type { Metadata } from 'next'
 import { useAuth } from '@/domains/auth/hooks/use-auth'

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Mail, ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Link as LinkIcon, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { z } from 'zod'
 

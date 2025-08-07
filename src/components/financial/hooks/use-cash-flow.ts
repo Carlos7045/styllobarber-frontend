@@ -1,5 +1,6 @@
-// Hook personalizado para gerenciamento de fluxo de caixa
+
 'use client'
+// Hook personalizado para gerenciamento de fluxo de caixa
 
 import { useState, useEffect, useCallback } from 'react'
 import { CashFlowService } from '../services/cash-flow-service'

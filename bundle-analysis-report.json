@@ -1,0 +1,535 @@
+{
+  "timestamp": "2025-08-06T22:50:35.687Z",
+  "summary": {
+    "totalChunks": 20,
+    "totalPages": 0,
+    "totalSizeBytes": 82562436,
+    "totalSizeMB": 78.73767471313477,
+    "totalDependencies": 51
+  },
+  "chunks": [
+    {
+      "name": "app\\dashboard\\servicos\\page.js",
+      "size": 11046405,
+      "sizeKB": 10788,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\dashboard\\servicos\\page.js"
+    },
+    {
+      "name": "app\\dashboard\\layout.js",
+      "size": 7933467,
+      "sizeKB": 7748,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\dashboard\\layout.js"
+    },
+    {
+      "name": "app\\dashboard\\usuarios\\page.js",
+      "size": 7697414,
+      "sizeKB": 7517,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\dashboard\\usuarios\\page.js"
+    },
+    {
+      "name": "app\\dashboard\\funcionarios\\page.js",
+      "size": 7653225,
+      "sizeKB": 7474,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\dashboard\\funcionarios\\page.js"
+    },
+    {
+      "name": "app\\(auth)\\login\\page.js",
+      "size": 7525416,
+      "sizeKB": 7349,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\(auth)\\login\\page.js"
+    },
+    {
+      "name": "main-app.js",
+      "size": 7221921,
+      "sizeKB": 7053,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\main-app.js"
+    },
+    {
+      "name": "app\\dashboard\\page.js",
+      "size": 7062596,
+      "sizeKB": 6897,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\dashboard\\page.js"
+    },
+    {
+      "name": "app\\page.js",
+      "size": 6696349,
+      "sizeKB": 6539,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\page.js"
+    },
+    {
+      "name": "app\\(auth)\\layout.js",
+      "size": 6680334,
+      "sizeKB": 6524,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\(auth)\\layout.js"
+    },
+    {
+      "name": "app\\layout.js",
+      "size": 6573572,
+      "sizeKB": 6420,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app\\layout.js"
+    },
+    {
+      "name": "_app-pages-browser_src_components_financial_components_FinancialDashboardSimple_tsx.js",
+      "size": 4888786,
+      "sizeKB": 4774,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_src_components_financial_components_FinancialDashboardSimple_tsx.js"
+    },
+    {
+      "name": "_app-pages-browser_src_domains_users_components_client_NovoAgendamentoModal_tsx.js",
+      "size": 323795,
+      "sizeKB": 316,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_src_domains_users_components_client_NovoAgendamentoModal_tsx.js"
+    },
+    {
+      "name": "_app-pages-browser_src_components_financial_components_ReportsCenter_tsx.js",
+      "size": 302605,
+      "sizeKB": 296,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_src_components_financial_components_ReportsCenter_tsx.js"
+    },
+    {
+      "name": "app-pages-internals.js",
+      "size": 273392,
+      "sizeKB": 267,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\app-pages-internals.js"
+    },
+    {
+      "name": "_app-pages-browser_src_domains_users_components_admin_ServicoFormModal_tsx.js",
+      "size": 166268,
+      "sizeKB": 162,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_src_domains_users_components_admin_ServicoFormModal_tsx.js"
+    },
+    {
+      "name": "_app-pages-browser_src_domains_users_components_admin_NovoFuncionarioModal_tsx.js",
+      "size": 165239,
+      "sizeKB": 161,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_src_domains_users_components_admin_NovoFuncionarioModal_tsx.js"
+    },
+    {
+      "name": "webpack.js",
+      "size": 141135,
+      "sizeKB": 138,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\webpack.js"
+    },
+    {
+      "name": "polyfills.js",
+      "size": 112594,
+      "sizeKB": 110,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\polyfills.js"
+    },
+    {
+      "name": "_app-pages-browser_src_components_calendar_Calendar_tsx.js",
+      "size": 91514,
+      "sizeKB": 89,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_src_components_calendar_Calendar_tsx.js"
+    },
+    {
+      "name": "_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js",
+      "size": 6409,
+      "sizeKB": 6,
+      "path": "C:\\Users\\Micro\\Documents\\Pasta dev\\styllobarber-frontend\\.next\\static\\chunks\\_app-pages-browser_node_modules_next_dist_client_dev_noop-turbopack-hmr_js.js"
+    }
+  ],
+  "pages": [],
+  "dependencies": {
+    "@hello-pangea/dnd": {
+      "version": "^18.0.1",
+      "size": 1263171,
+      "sizeKB": 1234,
+      "description": "Beautiful and accessible drag and drop for lists with React",
+      "isDevDependency": false
+    },
+    "@hookform/resolvers": {
+      "version": "^5.2.0",
+      "size": 989238,
+      "sizeKB": 966,
+      "description": "React Hook Form validation resolvers: Yup, Joi, Superstruct, Zod, Vest, Class Validator, io-ts, Nope, computed-types, TypeBox, arktype, Typanion, Effect-TS and VineJS",
+      "isDevDependency": false
+    },
+    "@radix-ui/react-alert-dialog": {
+      "version": "^1.1.14",
+      "size": 78231,
+      "sizeKB": 76,
+      "description": "",
+      "isDevDependency": false
+    },
+    "@radix-ui/react-dialog": {
+      "version": "^1.1.14",
+      "size": 101511,
+      "sizeKB": 99,
+      "description": "",
+      "isDevDependency": false
+    },
+    "@radix-ui/react-dropdown-menu": {
+      "version": "^2.1.15",
+      "size": 107091,
+      "sizeKB": 105,
+      "description": "",
+      "isDevDependency": false
+    },
+    "@radix-ui/react-slot": {
+      "version": "^1.2.3",
+      "size": 32260,
+      "sizeKB": 32,
+      "description": "",
+      "isDevDependency": false
+    },
+    "@radix-ui/react-tabs": {
+      "version": "^1.1.12",
+      "size": 51895,
+      "sizeKB": 51,
+      "description": "",
+      "isDevDependency": false
+    },
+    "@radix-ui/react-toast": {
+      "version": "^1.2.14",
+      "size": 180917,
+      "sizeKB": 177,
+      "description": "",
+      "isDevDependency": false
+    },
+    "@supabase/auth-helpers-nextjs": {
+      "version": "^0.10.0",
+      "size": 91094,
+      "sizeKB": 89,
+      "description": "A collection of framework specific Auth utilities for working with Supabase.",
+      "isDevDependency": false
+    },
+    "@supabase/ssr": {
+      "version": "^0.6.1",
+      "size": 223573,
+      "sizeKB": 218,
+      "description": "Use the Supabase JavaScript library in popular server-side rendering (SSR) frameworks.",
+      "isDevDependency": false
+    },
+    "@supabase/supabase-js": {
+      "version": "^2.52.1",
+      "size": 258691,
+      "sizeKB": 253,
+      "description": "Isomorphic Javascript client for Supabase",
+      "isDevDependency": false
+    },
+    "@tanstack/react-query": {
+      "version": "^5.83.0",
+      "size": 728716,
+      "sizeKB": 712,
+      "description": "Hooks for managing, caching and syncing asynchronous and remote data in React",
+      "isDevDependency": false
+    },
+    "class-variance-authority": {
+      "version": "^0.7.1",
+      "size": 22073,
+      "sizeKB": 22,
+      "description": "Class Variance Authority 🧬",
+      "isDevDependency": false
+    },
+    "clsx": {
+      "version": "^2.1.1",
+      "size": 8555,
+      "sizeKB": 8,
+      "description": "A tiny (239B) utility for constructing className strings conditionally.",
+      "isDevDependency": false
+    },
+    "date-fns": {
+      "version": "^4.1.0",
+      "size": 22601076,
+      "sizeKB": 22071,
+      "description": "Modern JavaScript date utility library",
+      "isDevDependency": false
+    },
+    "framer-motion": {
+      "version": "^12.23.9",
+      "size": 2310671,
+      "sizeKB": 2257,
+      "description": "A simple and powerful JavaScript animation library",
+      "isDevDependency": false
+    },
+    "lucide-react": {
+      "version": "^0.525.0",
+      "size": 33990289,
+      "sizeKB": 33194,
+      "description": "A Lucide icon library package for React applications.",
+      "isDevDependency": false
+    },
+    "next": {
+      "version": "15.4.4",
+      "size": 134271264,
+      "sizeKB": 131124,
+      "description": "The React Framework",
+      "isDevDependency": false
+    },
+    "react": {
+      "version": "19.1.0",
+      "size": 167000,
+      "sizeKB": 163,
+      "description": "React is a JavaScript library for building user interfaces.",
+      "isDevDependency": false
+    },
+    "react-dom": {
+      "version": "19.1.0",
+      "size": 6552660,
+      "sizeKB": 6399,
+      "description": "React package for working with the DOM.",
+      "isDevDependency": false
+    },
+    "react-hook-form": {
+      "version": "^7.61.1",
+      "size": 1155439,
+      "sizeKB": 1128,
+      "description": "Performant, flexible and extensible forms library for React Hooks",
+      "isDevDependency": false
+    },
+    "recharts": {
+      "version": "^3.1.0",
+      "size": 5321777,
+      "sizeKB": 5197,
+      "description": "React charts",
+      "isDevDependency": false
+    },
+    "tailwind-merge": {
+      "version": "^3.3.1",
+      "size": 898277,
+      "sizeKB": 877,
+      "description": "Merge Tailwind CSS classes without style conflicts",
+      "isDevDependency": false
+    },
+    "web-vitals": {
+      "version": "^5.1.0",
+      "size": 380563,
+      "sizeKB": 372,
+      "description": "Easily measure performance metrics in JavaScript",
+      "isDevDependency": false
+    },
+    "zod": {
+      "version": "^4.0.10",
+      "size": 3671107,
+      "sizeKB": 3585,
+      "description": "TypeScript-first schema declaration and validation library with static type inference",
+      "isDevDependency": false
+    },
+    "zustand": {
+      "version": "^5.0.6",
+      "size": 91789,
+      "sizeKB": 90,
+      "description": "🐻 Bear necessities for state management in React",
+      "isDevDependency": false
+    },
+    "@axe-core/playwright": {
+      "version": "^4.10.2",
+      "size": 51411,
+      "sizeKB": 50,
+      "description": "Provides a method to inject and analyze web pages using axe",
+      "isDevDependency": true
+    },
+    "@eslint/eslintrc": {
+      "version": "^3",
+      "size": 690806,
+      "sizeKB": 675,
+      "description": "The legacy ESLintRC config file format for ESLint",
+      "isDevDependency": true
+    },
+    "@eslint/mcp": {
+      "version": "^0.1.0",
+      "size": 3614762,
+      "sizeKB": 3530,
+      "description": "MCP server for ESLint",
+      "isDevDependency": true
+    },
+    "@playwright/test": {
+      "version": "^1.54.1",
+      "size": 25385,
+      "sizeKB": 25,
+      "description": "A high-level API to automate web browsers",
+      "isDevDependency": true
+    },
+    "@testing-library/jest-dom": {
+      "version": "^6.6.3",
+      "size": 588851,
+      "sizeKB": 575,
+      "description": "Custom jest matchers to test the state of the DOM",
+      "isDevDependency": true
+    },
+    "@testing-library/react": {
+      "version": "^16.3.0",
+      "size": 341724,
+      "sizeKB": 334,
+      "description": "Simple and complete React DOM testing utilities that encourage good testing practices.",
+      "isDevDependency": true
+    },
+    "@testing-library/user-event": {
+      "version": "^14.6.1",
+      "size": 437874,
+      "sizeKB": 428,
+      "description": "Fire events the same way the user does",
+      "isDevDependency": true
+    },
+    "@types/jest": {
+      "version": "^30.0.0",
+      "size": 177018,
+      "sizeKB": 173,
+      "description": "TypeScript definitions for jest",
+      "isDevDependency": true
+    },
+    "@types/node": {
+      "version": "^20.19.9",
+      "size": 2274619,
+      "sizeKB": 2221,
+      "description": "TypeScript definitions for node",
+      "isDevDependency": true
+    },
+    "@types/react": {
+      "version": "^19.1.8",
+      "size": 806086,
+      "sizeKB": 787,
+      "description": "TypeScript definitions for react",
+      "isDevDependency": true
+    },
+    "@types/react-dom": {
+      "version": "^19.1.6",
+      "size": 24231,
+      "sizeKB": 24,
+      "description": "TypeScript definitions for react-dom",
+      "isDevDependency": true
+    },
+    "@types/recharts": {
+      "version": "^1.8.29",
+      "size": 189119,
+      "sizeKB": 185,
+      "description": "TypeScript definitions for recharts",
+      "isDevDependency": true
+    },
+    "autoprefixer": {
+      "version": "^10.4.21",
+      "size": 199184,
+      "sizeKB": 195,
+      "description": "Parse CSS and add vendor prefixes to CSS rules using values from the Can I Use website",
+      "isDevDependency": true
+    },
+    "eslint": {
+      "version": "^9",
+      "size": 2952715,
+      "sizeKB": 2884,
+      "description": "An AST-based pattern checker for JavaScript.",
+      "isDevDependency": true
+    },
+    "eslint-config-next": {
+      "version": "15.4.4",
+      "size": 5017,
+      "sizeKB": 5,
+      "description": "ESLint configuration used by Next.js.",
+      "isDevDependency": true
+    },
+    "eslint-config-prettier": {
+      "version": "^10.1.8",
+      "size": 59021,
+      "sizeKB": 58,
+      "description": "Turns off all rules that are unnecessary or might conflict with Prettier.",
+      "isDevDependency": true
+    },
+    "husky": {
+      "version": "^9.1.7",
+      "size": 4041,
+      "sizeKB": 4,
+      "description": "Modern native Git hooks",
+      "isDevDependency": true
+    },
+    "jest": {
+      "version": "^30.0.5",
+      "size": 6322,
+      "sizeKB": 6,
+      "description": "Delightful JavaScript Testing.",
+      "isDevDependency": true
+    },
+    "jest-environment-jsdom": {
+      "version": "^30.0.5",
+      "size": 5445,
+      "sizeKB": 5,
+      "description": "",
+      "isDevDependency": true
+    },
+    "lint-staged": {
+      "version": "^16.1.2",
+      "size": 180432,
+      "sizeKB": 176,
+      "description": "Lint files staged by git",
+      "isDevDependency": true
+    },
+    "postcss": {
+      "version": "^8.5.6",
+      "size": 204337,
+      "sizeKB": 200,
+      "description": "Tool for transforming styles with JS plugins",
+      "isDevDependency": true
+    },
+    "prettier": {
+      "version": "^3.6.2",
+      "size": 8458264,
+      "sizeKB": 8260,
+      "description": "Prettier is an opinionated code formatter",
+      "isDevDependency": true
+    },
+    "prettier-plugin-tailwindcss": {
+      "version": "^0.6.14",
+      "size": 4385451,
+      "sizeKB": 4283,
+      "description": "A Prettier plugin for sorting Tailwind CSS classes.",
+      "isDevDependency": true
+    },
+    "tailwindcss": {
+      "version": "^3.4.17",
+      "size": 7871238,
+      "sizeKB": 7687,
+      "description": "A utility-first CSS framework for rapidly building custom user interfaces.",
+      "isDevDependency": true
+    },
+    "typescript": {
+      "version": "^5",
+      "size": 22867703,
+      "sizeKB": 22332,
+      "description": "TypeScript is a language for application scale JavaScript development",
+      "isDevDependency": true
+    }
+  },
+  "recommendations": [
+    {
+      "type": "warning",
+      "category": "Bundle Size",
+      "title": "Chunks muito grandes detectados",
+      "description": "11 chunk(s) maiores que 500KB encontrados",
+      "items": [
+        "app\\dashboard\\servicos\\page.js: 10788KB",
+        "app\\dashboard\\layout.js: 7748KB",
+        "app\\dashboard\\usuarios\\page.js: 7517KB",
+        "app\\dashboard\\funcionarios\\page.js: 7474KB",
+        "app\\(auth)\\login\\page.js: 7349KB",
+        "main-app.js: 7053KB",
+        "app\\dashboard\\page.js: 6897KB",
+        "app\\page.js: 6539KB",
+        "app\\(auth)\\layout.js: 6524KB",
+        "app\\layout.js: 6420KB",
+        "_app-pages-browser_src_components_financial_components_FinancialDashboardSimple_tsx.js: 4774KB"
+      ],
+      "solution": "Considere implementar code splitting ou lazy loading"
+    },
+    {
+      "type": "info",
+      "category": "Dependencies",
+      "title": "Dependências pesadas identificadas",
+      "description": "Dependências que podem impactar o bundle size",
+      "items": [
+        "next: 131124KB",
+        "lucide-react: 33194KB",
+        "date-fns: 22071KB",
+        "react-dom: 6399KB",
+        "recharts: 5197KB"
+      ],
+      "solution": "Verifique se todas são necessárias ou se há alternativas mais leves"
+    },
+    {
+      "type": "warning",
+      "category": "Overall",
+      "title": "Bundle total muito grande",
+      "description": "Bundle total: 78.74MB",
+      "solution": "Implemente tree shaking, code splitting e remova dependências desnecessárias"
+    }
+  ]
+}

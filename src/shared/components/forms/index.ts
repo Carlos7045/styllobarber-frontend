@@ -24,6 +24,13 @@ export { LoginForm, LoginFormSkeleton } from './auth/login-form'
 export { SignUpForm, SignUpFormSkeleton } from './auth/signup-form'
 export { ResetPasswordForm } from './auth/reset-password-form'
 
+// Error handling
+export { 
+  FormErrorBoundary, 
+  withFormErrorBoundary, 
+  useFormErrorBoundary 
+} from './FormErrorBoundary'
+
 // Re-export types
 export type { FormProps } from './form'
 export type { FormFieldProps } from './form-field'

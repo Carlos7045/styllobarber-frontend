@@ -3,5 +3,5 @@
  */
 
 export { Calendar } from './Calendar'
-export { CalendarStatsComponent as CalendarStats } from './CalendarStats'
-export { CalendarFiltersComponent as CalendarFilters } from './CalendarFilters'
+export { CalendarStats } from './CalendarStats'
+export { CalendarFilters } from './CalendarFilters'

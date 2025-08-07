@@ -14,7 +14,7 @@ interface CalendarFiltersProps {
   className?: string
 }
 
-export function CalendarFiltersComponent({
+export function CalendarFilters({
   filters,
   onFiltersChange,
   barbeiros = [],
@@ -166,7 +166,7 @@ export function CalendarFiltersComponent({
               </label>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 <Button
-                  variant={!localFilters.barbeiro_id ? 'default' : 'outline'}
+                  variant={!localFilters.barbeiro_id ? 'primary' : 'outline'}
                   size="sm"
                   onClick={() => setLocalFilters(prev => ({ ...prev, barbeiro_id: undefined }))}
                   className={`justify-start font-semibold px-4 py-2 rounded-lg transition-all duration-300 ${
@@ -180,7 +180,7 @@ export function CalendarFiltersComponent({
                 {barbeiros.map((barbeiro) => (
                   <Button
                     key={barbeiro.id}
-                    variant={localFilters.barbeiro_id === barbeiro.id ? 'default' : 'outline'}
+                    variant={localFilters.barbeiro_id === barbeiro.id ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => setLocalFilters(prev => ({ ...prev, barbeiro_id: barbeiro.id }))}
                     className={`justify-start font-semibold px-4 py-2 rounded-lg transition-all duration-300 ${
@@ -204,7 +204,7 @@ export function CalendarFiltersComponent({
                 {(Object.keys(APPOINTMENT_STATUS_LABELS) as AppointmentStatus[]).map((status) => (
                   <Button
                     key={status}
-                    variant={(localFilters.status || []).includes(status) ? 'default' : 'outline'}
+                    variant={(localFilters.status || []).includes(status) ? 'primary' : 'outline'}
                     size="sm"
                     onClick={() => toggleStatus(status)}
                     className={`justify-start font-semibold px-4 py-2 rounded-lg transition-all duration-300 ${

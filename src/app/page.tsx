@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Button, Card, CardContent, CardHeader, CardTitle, Badge } from '@/shared/components/ui'
 import { Container, Section, Grid, Header, HeaderContent, HeaderLogo } from '@/shared/components/layout'
-import { Calendar, Users, BarChart3 } from 'lucide-react'
+import { BarChart3, Calendar, Users } from 'lucide-react'
 
 export default function Home() {
   return (

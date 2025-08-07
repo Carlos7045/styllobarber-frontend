@@ -1,10 +1,11 @@
+
+'use client'
 /**
  * COMPONENTE LEGACY - PRECISA SER REFATORADO
  * Este componente está usando imports antigos e precisa ser atualizado
  * para usar os novos componentes de formulário.
  */
 
-'use client'
 
 import { 
   Button, 
@@ -18,20 +19,7 @@ import {
   Badge,
   Textarea
 } from '@/shared/components/ui'
-import {
-  User,
-  Mail,
-  Phone,
-  MapPin,
-  Calendar,
-  Briefcase,
-  DollarSign,
-  Plus,
-  X,
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-} from 'lucide-react'
+import { AlertCircle, Briefcase, Calendar, CheckCircle, DollarSign, Loader2, Mail, MapPin, Phone, Plus, User, X } from 'lucide-react'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui'
 import { useForm } from '@/shared/hooks/ui/use-form'
 import { z } from 'zod'

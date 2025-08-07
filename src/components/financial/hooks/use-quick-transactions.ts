@@ -1,5 +1,6 @@
-// Hook para gerenciar transações rápidas do PDV
+
 'use client'
+// Hook para gerenciar transações rápidas do PDV
 
 import { useState, useCallback, useEffect } from 'react'
 import { supabase } from '@/lib/api/supabase'

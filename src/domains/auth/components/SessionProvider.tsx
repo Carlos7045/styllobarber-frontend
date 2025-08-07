@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react'
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 
 import { useMinimalSessionManager } from '../hooks/use-minimal-session-manager'
@@ -26,6 +26,19 @@ interface SessionProviderProps {
   checkInterval?: number // em ms
 }
 
+// Função utilitária estável para formatar tempo (fora do componente)
+const formatTimeUntilExpiry = (ms: number | null): string => {
+  if (!ms) return 'Desconhecido'
+  
+  const minutes = Math.floor(ms / 60000)
+  const seconds = Math.floor((ms % 60000) / 1000)
+  
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`
+  }
+  return `${seconds}s`
+}
+
 export function SessionProvider({
   children,
   showStatusIndicator = true,
@@ -45,20 +58,7 @@ export function SessionProvider({
     forceRefresh,
   } = useMinimalSessionManager()
 
-  // Função para formatar tempo
-  const formatTimeUntilExpiry = (ms: number | null): string => {
-    if (!ms) return 'Desconhecido'
-    
-    const minutes = Math.floor(ms / 60000)
-    const seconds = Math.floor((ms % 60000) / 1000)
-    
-    if (minutes > 0) {
-      return `${minutes}m ${seconds}s`
-    }
-    return `${seconds}s`
-  }
-
-  // Verificar se deve mostrar aviso de sessão (com debounce)
+  // Verificar se deve mostrar aviso de sessão (otimizado)
   useEffect(() => {
     if (timeUntilExpiry && timeUntilExpiry <= warningThreshold && isSessionValid) {
       const message = `Sua sessão expira em ${formatTimeUntilExpiry(timeUntilExpiry)}`
@@ -67,16 +67,16 @@ export function SessionProvider({
     } else if (showSessionWarning) {
       setShowSessionWarning(false)
     }
-  }, [timeUntilExpiry, warningThreshold, isSessionValid, formatTimeUntilExpiry, showSessionWarning])
+  }, [timeUntilExpiry, warningThreshold, isSessionValid, showSessionWarning])
 
   // AuthInterceptor removido temporariamente para evitar conflitos
 
-  // Função para dispensar aviso
-  const dismissWarning = () => {
+  // Função para dispensar aviso (memoizada para estabilidade)
+  const dismissWarning = useCallback(() => {
     setShowSessionWarning(false)
-  }
+  }, [])
 
-  // Valor do contexto (memoizado para estabilidade)
+  // Valor do contexto (memoizado com dependências estáveis)
   const contextValue: SessionContextType = useMemo(() => ({
     showSessionWarning,
     dismissWarning,
@@ -110,14 +110,8 @@ export function SessionProvider({
           <SessionWarningModal
             message={warningMessage}
             onDismiss={dismissWarning}
-            onRefresh={async () => {
-              const success = await forceRefresh()
-              if (success) {
-                dismissWarning()
-              }
-            }}
+            onRefresh={forceRefresh}
             timeLeft={timeUntilExpiry}
-            formatTime={formatTimeUntilExpiry}
           />
         )}
       </SessionContext.Provider>
@@ -125,32 +119,33 @@ export function SessionProvider({
   )
 }
 
-// Modal de aviso de sessão
+// Modal de aviso de sessão (memoizado para performance)
 interface SessionWarningModalProps {
   message: string
   onDismiss: () => void
-  onRefresh: () => Promise<void>
+  onRefresh: () => Promise<boolean>
   timeLeft: number | null
-  formatTime: (ms: number | null) => string
 }
 
-function SessionWarningModal({
+const SessionWarningModal = React.memo(function SessionWarningModal({
   message,
   onDismiss,
   onRefresh,
   timeLeft,
-  formatTime,
 }: SessionWarningModalProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true)
     try {
-      await onRefresh()
+      const success = await onRefresh()
+      if (success) {
+        onDismiss()
+      }
     } finally {
       setIsRefreshing(false)
     }
-  }
+  }, [onRefresh, onDismiss])
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
@@ -167,7 +162,7 @@ function SessionWarningModal({
             </h3>
             {timeLeft && (
               <p className="text-sm text-text-muted">
-                Tempo restante: {formatTime(timeLeft)}
+                Tempo restante: {formatTimeUntilExpiry(timeLeft)}
               </p>
             )}
           </div>
@@ -196,7 +191,7 @@ function SessionWarningModal({
       </div>
     </div>
   )
-}
+})
 
 // Hook para usar o contexto de sessão
 export function useSession() {
@@ -207,8 +202,12 @@ export function useSession() {
   return context
 }
 
-// Componente para mostrar status da sessão em qualquer lugar
-export function SessionIndicator({ className }: { className?: string }) {
+// Componente para mostrar status da sessão em qualquer lugar (memoizado)
+export const SessionIndicator = React.memo(function SessionIndicator({ 
+  className 
+}: { 
+  className?: string 
+}) {
   const { isSessionValid, sessionTimeLeft } = useSession()
   
   if (!isSessionValid) {
@@ -243,4 +242,4 @@ export function SessionIndicator({ className }: { className?: string }) {
       <span className="text-sm">Sessão ativa</span>
     </div>
   )
-}
+})

@@ -3,7 +3,7 @@
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useProfileSync } from '@/domains/users/hooks/use-profile-sync'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { User, CheckCircle, AlertTriangle, Calendar, Phone, Mail, Image } from 'lucide-react'
+import { User, CheckCircle, AlertTriangle, Calendar, Phone, Mail } from 'lucide-react'
 
 export function ProfileSummary() {
   const { user, profile, loading } = useAuth()

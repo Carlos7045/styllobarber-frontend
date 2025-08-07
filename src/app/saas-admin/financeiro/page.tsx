@@ -4,19 +4,7 @@
  */
 
 import { Metadata } from 'next'
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown,
-  Calendar,
-  CreditCard,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Download,
-  Filter,
-  Building2
-} from 'lucide-react'
+import { DollarSign, TrendingUp, TrendingDown, Calendar, CreditCard, AlertTriangle, CheckCircle, Clock, Download, Filter, Building2 } from 'lucide-react'
 
 import { 
   Card, 

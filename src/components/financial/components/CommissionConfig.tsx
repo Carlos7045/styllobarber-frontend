@@ -1,10 +1,12 @@
-// Componente para configuração de comissões
 
 'use client'
+// Componente para configuração de comissões
+
 
 import React, { useState, useEffect } from 'react'
 import { useCommission } from '../hooks/use-commission'
-import { ComissaoConfig } from '../types'
+// import { ComissaoConfig } from '../types' // Tipo removido
+type ComissaoConfig = any // Tipo temporário
 import { formatCurrency, formatPercentage } from '../utils'
 
 interface CommissionConfigProps {

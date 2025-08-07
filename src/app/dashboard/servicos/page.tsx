@@ -3,30 +3,12 @@
 import React, { useState } from 'react'
 import { Container } from '@/shared/components/layout'
 import { Card, CardContent, CardHeader, CardTitle, Button, Badge } from '@/shared/components/ui'
-import { NovoAgendamentoModal } from '@/domains/users/components/client/NovoAgendamentoModal'
-import { ServicoFormModal } from '@/domains/users/components/admin/ServicoFormModal'
+import { LazyNovoAgendamentoModal, LazyServicoFormModal, LazyModalWrapper } from '@/shared/components/lazy'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { usePermissions, PERMISSIONS } from '@/domains/auth/hooks/use-permissions'
 import { useAdminServicos, type ServicoAdmin } from '@/domains/users/hooks/use-admin-servicos'
 import { useServices } from '@/shared/hooks/data/use-services'
-import {
-  Scissors,
-  Plus,
-  Edit,
-  Trash2,
-  Calendar,
-  BarChart3,
-  History,
-  GripVertical,
-  Filter,
-  Eye,
-  EyeOff,
-  Search,
-  Clock,
-  DollarSign,
-  Users,
-  Star,
-} from 'lucide-react'
+import { Scissors, Plus, Edit, Trash2, Calendar, BarChart3, Filter, Eye, EyeOff, Search, Clock, DollarSign, Users, Star, GripVertical, History } from 'lucide-react'
 import { formatarMoeda } from '@/shared/utils'
 import {
   ServicoAnalyticsCard,
@@ -699,7 +681,7 @@ export default function ServicosPage() {
       </Container>
 
       {/* Modais */}
-      <NovoAgendamentoModal
+      <LazyNovoAgendamentoModal
         isOpen={isAgendamentoOpen}
         onClose={() => setIsAgendamentoOpen(false)}
         onSuccess={handleAgendamentoSuccess}
@@ -708,7 +690,7 @@ export default function ServicosPage() {
 
       {/* Modal de formulário de serviço - apenas para admins */}
       {isAdmin && (
-        <ServicoFormModal
+        <LazyServicoFormModal
           isOpen={isServicoFormOpen}
           onClose={() => {
             setIsServicoFormOpen(false)

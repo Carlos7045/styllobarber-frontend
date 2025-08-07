@@ -16,18 +16,18 @@ import { FullPageLoading } from '@/domains/auth/components/AuthLoadingState'
 
 export default function UsuariosPage() {
   const router = useRouter()
-  const { isBarber, isAdmin, loading } = useBarberPermissions()
+  const { isBarber, isAdmin } = useBarberPermissions()
 
   useEffect(() => {
     // Se for barbeiro, redirecionar para a página de clientes
-    if (!loading && isBarber && !isAdmin) {
+    if (isBarber && !isAdmin) {
       router.replace('/dashboard/clientes')
       return
     }
-  }, [isBarber, isAdmin, loading, router])
+  }, [isBarber, isAdmin, router])
 
   // Mostrar loading enquanto verifica permissões
-  if (loading) {
+  if (false) {
     return <FullPageLoading />
   }
 

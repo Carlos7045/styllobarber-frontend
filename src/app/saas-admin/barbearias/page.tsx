@@ -3,22 +3,7 @@
  * Apenas SaaS Owner pode acessar
  */
 
-import { Metadata } from 'next'
-import { 
-  Building2, 
-  Plus, 
-  Search, 
-  Filter,
-  DollarSign,
-  Users,
-  Calendar,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Edit,
-  Trash2,
-  Eye
-} from 'lucide-react'
+import { Building2, Plus, Search, Filter, DollarSign, Users, Calendar, AlertTriangle, CheckCircle, Clock, Edit, Trash2, Eye } from 'lucide-react'
 
 import { 
   Card, 
@@ -29,11 +14,6 @@ import {
   Input,
   Badge 
 } from '@/shared/components/ui'
-
-export const metadata: Metadata = {
-  title: 'Gestão de Barbearias - SaaS Admin',
-  description: 'Gerencie todas as barbearias clientes do SaaS',
-}
 
 // Dados mockados das barbearias
 const barbearias = [

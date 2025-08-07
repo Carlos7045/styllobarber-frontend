@@ -4,23 +4,7 @@
  */
 
 import { Metadata } from 'next'
-import { 
-  Crown, 
-  Plus, 
-  Search, 
-  Filter,
-  Building2,
-  Mail,
-  Phone,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Edit,
-  Trash2,
-  Eye,
-  UserPlus
-} from 'lucide-react'
+import { Crown, Plus, Search, Filter, Building2, Mail, Phone, Calendar, CheckCircle, XCircle, AlertTriangle, Edit, Trash2, Eye, UserPlus } from 'lucide-react'
 
 import { 
   Card, 

@@ -1,22 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Search, 
-  Filter, 
-  Download, 
-  RefreshCw, 
-  Mail, 
-  MessageSquare, 
-  Bell, 
-  Smartphone,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
-  Eye,
-  X
-} from 'lucide-react'
+import { Search, Filter, Download, RefreshCw, Mail, MessageSquare, Bell, Smartphone, CheckCircle, XCircle, Clock, AlertTriangle, Eye, X } from 'lucide-react'
 
 import { useAdminNotificacoes } from '@/domains/users/hooks/use-admin-notificacoes'
 import { Button, Input, Card, CardContent } from '@/shared/components/ui'

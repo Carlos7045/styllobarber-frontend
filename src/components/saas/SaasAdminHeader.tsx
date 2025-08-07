@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Header do painel administrativo do SaaS Owner
  */
 
-'use client'
 
 import { Bell, Settings, User, LogOut, Crown } from 'lucide-react'
 import { useAuth } from '@/domains/auth/hooks/use-auth'

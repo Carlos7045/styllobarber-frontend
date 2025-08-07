@@ -1,12 +1,13 @@
+
+'use client'
 /**
  * Badge que aparece no item de monitoramento para indicar acesso especial
  */
 
-'use client'
 
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
-import { Crown, Code } from 'lucide-react'
+import { Crown } from 'lucide-react'
 
 export function MonitoringBadge() {
   const { profile } = useAuth()

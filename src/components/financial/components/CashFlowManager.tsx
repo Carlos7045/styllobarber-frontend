@@ -1,42 +1,24 @@
-// Componente de controle de fluxo de caixa em tempo real
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
+const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
+// Componente de controle de fluxo de caixa em tempo real
+
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  AlertTriangle,
-  Calendar,
-  Filter,
-  RefreshCw,
-  Eye,
-  EyeOff,
-  ArrowUpCircle,
-  ArrowDownCircle,
-  Wallet,
-  Clock,
-  Target,
-  Plus,
-  X
-} from 'lucide-react'
+
+import { TrendingUp, TrendingDown, DollarSign, AlertTriangle, Calendar, Filter, RefreshCw, Eye, EyeOff, Clock, Target, Plus, X, ArrowUpCircle, ArrowDownCircle, Wallet } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
+import { ResponsiveContainer, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Bar, Legend, PieChart, Pie, Cell } from '@/shared/utils/optimized-imports'
 import { Badge } from '@/shared/components/ui'
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts'
+
 import { formatCurrency, formatDate } from '../utils'
 import type {
   MovimentacaoFluxoCaixa
@@ -521,7 +503,7 @@ export const CashFlowManager = ({ className = '' }: CashFlowManagerProps) => {
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e: any) => e.stopPropagation()}
               className="bg-white dark:bg-secondary-graphite-card rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto"
             >
               <div className="sticky top-0 bg-white dark:bg-secondary-graphite-card border-b border-gray-200 dark:border-secondary-graphite-card/30 p-4 flex items-center justify-between">

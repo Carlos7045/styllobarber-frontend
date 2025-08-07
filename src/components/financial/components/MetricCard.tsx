@@ -1,8 +1,16 @@
-// Componente para cards de métricas financeiras
+
 'use client'
 
-import { motion } from 'framer-motion'
-import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react'
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componente para cards de métricas financeiras
+
+
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { formatCurrency, formatPercentage } from '../utils'
 

@@ -3,17 +3,7 @@
  * Visão geral de todas as métricas do sistema
  */
 
-import { Metadata } from 'next'
-import { 
-  Building2, 
-  Crown, 
-  DollarSign, 
-  Users, 
-  TrendingUp, 
-  AlertTriangle,
-  CheckCircle,
-  Clock
-} from 'lucide-react'
+import { Building2, Crown, DollarSign, Users, TrendingUp, AlertTriangle, CheckCircle, Clock } from 'lucide-react'
 
 import { 
   Card, 
@@ -24,11 +14,6 @@ import {
   Button
 } from '@/shared/components/ui'
 import { SecurityLogs } from '@/components/saas/SecurityLogs'
-
-export const metadata: Metadata = {
-  title: 'Dashboard SaaS - StylloBarber',
-  description: 'Painel administrativo do SaaS Owner',
-}
 
 // Dados mockados para demonstração
 const dashboardData = {

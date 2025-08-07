@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Componente para configurações de aparência
  */
 
-'use client'
 
 import { useState, useEffect } from 'react'
 import { Palette, Sun, Moon, Monitor, Globe, Type, Zap, Check, Eye } from 'lucide-react'

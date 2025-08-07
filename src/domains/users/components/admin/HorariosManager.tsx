@@ -5,17 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui
 import { Button } from '@/shared/components/ui'
 import { Badge } from '@/shared/components/ui'
 import { useToast } from '@/shared/components/ui'
-import {
-  Clock,
-  Plus,
-  Edit,
-  Trash2,
-  Calendar,
-  AlertCircle,
-  CheckCircle,
-  XCircle,
-  User,
-} from 'lucide-react'
+import { Clock, Plus, Edit, Trash2, Calendar, AlertCircle, CheckCircle, XCircle, User } from 'lucide-react'
 import { useAdminHorarios, HorarioFuncionamento, BloqueioHorario } from '@/domains/users/hooks/use-admin-horarios'
 import { HorarioFuncionamentoForm } from './HorarioFuncionamentoForm'
 import { BloqueioHorarioForm } from './BloqueioHorarioForm'
