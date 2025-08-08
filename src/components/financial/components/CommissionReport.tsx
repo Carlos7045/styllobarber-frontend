@@ -1,6 +1,7 @@
-// Componente para relatórios de comissão
 
 'use client'
+// Componente para relatórios de comissão
+
 
 import React, { useState } from 'react'
 import { useBarbeiroCommissions } from '../hooks/use-commission'

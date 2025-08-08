@@ -1,8 +1,16 @@
+
 'use client'
+
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
 
 import React, { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+
 import { Crown, User, Mail, Lock, Phone, CheckCircle, AlertCircle } from 'lucide-react'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { AuthFeedback, useAuthFeedback } from '@/domains/auth/components/AuthFeedback'

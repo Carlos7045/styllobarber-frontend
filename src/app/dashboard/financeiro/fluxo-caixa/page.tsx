@@ -1,24 +1,23 @@
-// Página de controle de fluxo de caixa
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Página de controle de fluxo de caixa
+
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  Settings,
-  Download,
-  Bell,
-  TrendingUp,
-  AlertTriangle,
-  Calendar,
-  DollarSign,
-  ArrowLeft
-} from 'lucide-react'
+
+import { Settings, Download, Bell, TrendingUp, AlertTriangle, Calendar, DollarSign, ArrowLeft } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/shared/components/ui/button'
 import { Card } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { Container } from '@/shared/components/layout'
-import { CashFlowManager } from '@/components/financial/components'
+import { LazyCashFlowManager, LazyPageWrapper } from '@/shared/components/lazy'
 import { RouteGuard } from '@/domains/auth/components'
 import { useCashFlowData, useCashFlowSettings } from '@/shared/hooks/data/use-cash-flow-data'
 
@@ -405,7 +404,9 @@ export default function FluxoCaixaPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
         >
-          <CashFlowManager />
+          <LazyPageWrapper title="Fluxo de Caixa">
+            <LazyCashFlowManager />
+          </LazyPageWrapper>
         </motion.div>
         </div>
       </Container>

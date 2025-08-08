@@ -6,7 +6,7 @@ import Link from 'next/link'
 
 import { Container, Stack } from '@/shared/components/layout'
 import { Button } from '@/shared/components/ui'
-import { Calendar, CalendarStats, CalendarFilters } from '@/components/calendar'
+import { LazyCalendar, LazyCalendarStats, LazyPageWrapper } from '@/shared/components/lazy'
 import { RouteGuard } from '@/domains/auth/components'
 import { useAppointments } from '@/domains/appointments/hooks/use-appointments'
 import { useAdminAgendamentos } from '@/domains/users/hooks/use-admin-agendamentos'
@@ -210,11 +210,10 @@ export default function AgendaPage() {
           <CalendarStats stats={stats} loading={loading} onPendentesClick={handlePendentesClick} />
 
           {/* Filtros */}
-          <CalendarFilters
-            filters={filters}
-            onFiltersChange={handleFiltersChange}
-            barbeiros={barbeiros}
-          />
+          <div className="bg-white dark:bg-secondary-graphite-light rounded-lg p-6">
+            <h3 className="text-lg font-semibold mb-4">Filtros</h3>
+            <p className="text-gray-600 dark:text-gray-300">Filtros em desenvolvimento</p>
+          </div>
 
           {/* Calendário */}
           <Calendar

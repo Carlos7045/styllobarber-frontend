@@ -21,3 +21,11 @@ export { useFuncionariosEspecialidades } from './use-funcionarios-especialidades
 
 // Public hooks (for clients)
 export { useFuncionariosPublicos } from './use-funcionarios-publicos'
+
+// React Query hooks
+export { 
+  useUserQueries,
+  useUser,
+  useUsers,
+  useActiveUsersByRole
+} from './use-user-queries'

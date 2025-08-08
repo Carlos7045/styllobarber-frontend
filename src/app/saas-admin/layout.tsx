@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Layout para o painel administrativo do SaaS Owner
  * Acesso restrito apenas para role 'saas_owner'
  */
 
-'use client'
 
 import { RouteGuard } from '@/domains/auth/components'
 import { SaasAdminSidebar } from '@/components/saas/SaasAdminSidebar'

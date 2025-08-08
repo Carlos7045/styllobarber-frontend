@@ -1,14 +1,22 @@
-// Página dedicada do PDV (Ponto de Venda)
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Página dedicada do PDV (Ponto de Venda)
+
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { ArrowLeft, Calculator, TrendingUp, Clock, DollarSign, BarChart3 } from 'lucide-react'
+
+import { ArrowLeft, TrendingUp, Clock, DollarSign, BarChart3, Calculator } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/shared/components/ui/button'
 import { Card } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
-import { QuickTransactionPDV } from '@/components/financial/components/QuickTransactionPDV'
+import { LazyQuickTransactionPDV, LazyPageWrapper } from '@/shared/components/lazy'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
 // Removido import de debug component
 
@@ -227,7 +235,7 @@ export default function PDVPage() {
               transition={{ duration: 0.3, delay: 0.2 }}
               className="order-2 lg:order-2"
             >
-              <QuickTransactionPDV onTransactionSaved={handleTransactionSaved} />
+              <LazyQuickTransactionPDV onTransactionSaved={handleTransactionSaved} />
             </motion.div>
           </div>
 

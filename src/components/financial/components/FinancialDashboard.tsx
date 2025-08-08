@@ -1,17 +1,17 @@
-// Componente principal do dashboard financeiro
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componente principal do dashboard financeiro
+
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  Calculator,
-  AlertCircle,
-  RefreshCw
-} from 'lucide-react'
+
+import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { useMetrics } from '../hooks/use-metrics'

@@ -1,24 +1,16 @@
-// Componentes de gráficos para o dashboard financeiro
+
 'use client'
 
-import { motion } from 'framer-motion'
-import {
-  LineChart,
-  Line,
-  AreaChart,
-  Area,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts'
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componentes de gráficos para o dashboard financeiro
+
+
+
 import { Card } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'
 

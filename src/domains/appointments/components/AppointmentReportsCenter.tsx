@@ -1,28 +1,21 @@
-// Centro de relatórios de agendamentos
+
 'use client'
+
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Centro de relatórios de agendamentos
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import {
-  FileText,
-  Download,
-  Filter,
-  Calendar,
-  Clock,
-  TrendingUp,
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  FileSpreadsheet,
-  FileImage,
-  ArrowLeft,
-  RefreshCw,
-  Users,
-  Target,
-} from 'lucide-react'
+
+import { FileText, Download, Filter, Calendar, Clock, TrendingUp, Activity, AlertTriangle, BarChart3, ArrowLeft, RefreshCw, Users, Target } from 'lucide-react'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
+import { ApiErrorBoundary } from '@/shared/components/feedback'
 import {
   useAppointmentReports,
   type ConfigRelatorioAgendamento,
@@ -147,7 +140,16 @@ export const AppointmentReportsCenter = ({ className = '' }: AppointmentReportsC
   const dadosAtual = getDadosRelatorioAtual()
 
   return (
-    <div className={`space-y-6 ${className}`}>
+    <ApiErrorBoundary
+      apiName="AppointmentReports"
+      endpoint="/api/appointments/reports"
+      onRetry={() => {
+        // Recarregar dados dos relatórios
+        handleGerarRelatorio()
+      }}
+      maxRetries={3}
+    >
+      <div className={`space-y-6 ${className}`}>
       {/* Header Moderno */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -551,5 +553,6 @@ export const AppointmentReportsCenter = ({ className = '' }: AppointmentReportsC
         </Card>
       )}
     </div>
+    </ApiErrorBoundary>
   )
 }

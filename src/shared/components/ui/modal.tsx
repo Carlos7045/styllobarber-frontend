@@ -1,7 +1,7 @@
 import * as React from 'react'
 import * as Dialog from '@radix-ui/react-dialog'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { X } from '@/shared/utils/optimized-imports'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/utils'
 

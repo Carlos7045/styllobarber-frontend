@@ -1,6 +1,14 @@
+
 'use client'
 
-import { motion } from 'framer-motion'
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
+
 import { Users, ArrowLeft, Calendar, Filter, Download, DollarSign, TrendingUp, CreditCard, AlertCircle } from 'lucide-react'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'

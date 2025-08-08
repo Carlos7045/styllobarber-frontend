@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Calendar, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Calendar, ChevronLeft, ChevronRight } from '@/shared/utils/optimized-imports'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/utils'
 import { formatarData } from '@/shared/utils'

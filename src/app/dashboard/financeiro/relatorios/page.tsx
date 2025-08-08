@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Container } from '@/shared/components/layout'
-import { ReportsCenter } from '@/components/financial/components/ReportsCenter'
+import { LazyReportsCenter, LazyPageWrapper } from '@/shared/components/lazy'
 
 export const metadata: Metadata = {
   title: 'Relatórios Financeiros - StylloBarber',
@@ -15,7 +15,9 @@ export default function RelatoriosPage() {
   return (
     <Container className="py-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <ReportsCenter />
+        <LazyPageWrapper title="Relatórios Financeiros">
+          <LazyReportsCenter />
+        </LazyPageWrapper>
       </div>
     </Container>
   )

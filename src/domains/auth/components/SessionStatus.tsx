@@ -1,15 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  Shield, 
-  ShieldAlert, 
-  ShieldCheck, 
-  RefreshCw, 
-  Clock, 
-  AlertTriangle,
-  X
-} from 'lucide-react'
+import { Shield, RefreshCw, Clock, AlertTriangle, X } from 'lucide-react'
 
 import { Button } from '@/shared/components/ui'
 import { useMinimalSessionManager } from '../hooks/use-minimal-session-manager'

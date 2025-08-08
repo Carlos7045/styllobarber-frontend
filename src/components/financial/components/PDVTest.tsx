@@ -1,5 +1,6 @@
-// Componente de teste para verificar se o PDV está funcionando
+
 'use client'
+// Componente de teste para verificar se o PDV está funcionando
 
 import { useState } from 'react'
 import { Card } from '@/shared/components/ui'

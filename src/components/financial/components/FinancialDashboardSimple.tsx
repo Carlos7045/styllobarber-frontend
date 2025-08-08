@@ -1,40 +1,25 @@
-// Dashboard financeiro simplificado com dados mockados
+
 'use client'
+
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Dashboard financeiro simplificado com dados mockados
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { 
-  DollarSign, 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  Calculator,
-  AlertCircle,
-  RefreshCw,
-  Calendar,
-  User,
-  Filter,
-  FileText
-} from 'lucide-react'
+
+import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw, Calendar, User, Filter, FileText } from '@/shared/utils/optimized-imports'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { BarberDashboard } from './BarberDashboard'
 import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
 import { useFinancialData } from '@/shared/hooks/data/use-financial-data'
 import { DataSourceIndicator, useDataSource } from './DataSourceIndicator'
-import { 
-  LineChart,
-  Line,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts'
+
 
 // Dados mockados removidos - agora usando dados reais
 

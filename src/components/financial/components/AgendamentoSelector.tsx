@@ -1,22 +1,21 @@
-// Componente para seleção de agendamentos do cliente
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componente para seleção de agendamentos do cliente
+
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Calendar,
-  Clock,
-  User,
-  Scissors,
-  DollarSign,
-  Check,
-  AlertCircle,
-  ChevronRight
-} from 'lucide-react'
+
+import { Calendar, Clock, User, Scissors, DollarSign, Check, AlertCircle, ChevronRight } from '@/shared/utils/optimized-imports'
 import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
-import { useBarberFinancialFilter } from '@/domains/users/hooks/use-barber-permissions'
+// import { useBarberFinancialFilter } from '@/domains/users/hooks/use-barber-permissions' // Hook removido
 
 interface Agendamento {
   id: string
@@ -267,15 +266,15 @@ export const AgendamentoSelector = ({
   const [loading, setLoading] = useState(true)
 
   // Obter filtros baseados nas permissões do barbeiro
-  const { getAppointmentFilter } = useBarberFinancialFilter()
+  // const { getAppointmentFilter } = useBarberFinancialFilter() // Hook removido
 
   useEffect(() => {
     // Carregar agendamentos do cliente
     const carregarAgendamentos = async () => {
       setLoading(true)
       try {
-        const filtros = getAppointmentFilter()
-        const agendamentosCliente = await AgendamentoService.buscarAgendamentosCliente(clienteId, filtros)
+        // const filtros = getAppointmentFilter() // Hook removido
+        const agendamentosCliente = await AgendamentoService.buscarAgendamentosCliente(clienteId, {})
         setAgendamentos(agendamentosCliente)
       } catch (error) {
         console.error('Erro ao carregar agendamentos:', error)

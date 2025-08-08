@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Componente para configurações de privacidade
  */
 
-'use client'
 
 import { useState, useEffect } from 'react'
 import { Shield, Eye, Users, BarChart3, Share2, Check } from 'lucide-react'

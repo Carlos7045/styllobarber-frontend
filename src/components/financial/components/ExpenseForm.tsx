@@ -1,6 +1,7 @@
-// Componente para formulário de despesas
 
 'use client'
+// Componente para formulário de despesas
+
 
 import React, { useState, useEffect } from 'react'
 import { useCategories } from '../hooks/use-expenses'

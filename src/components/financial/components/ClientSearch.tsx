@@ -1,26 +1,23 @@
-// Componente de busca de clientes e agendamentos
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
+const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
+// Componente de busca de clientes e agendamentos
+
 import { useState, useEffect, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  Search,
-  User,
-  Calendar,
-  Clock,
-  DollarSign,
-  Check,
-  X,
-  Phone,
-  Mail,
-  Scissors,
-  ChevronDown,
-  ChevronUp
-} from 'lucide-react'
+
+import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Mail, Scissors, ChevronDown, ChevronUp } from '@/shared/utils/optimized-imports'
 import { Card, Button, Badge, Input } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'
-import { useBarberFinancialFilter } from '@/domains/users/hooks/use-barber-permissions'
+// import { useBarberFinancialFilter } from '@/domains/users/hooks/use-barber-permissions' // Hook removido
 
 interface Cliente {
   id: string
@@ -332,7 +329,7 @@ export const ClientSearch = ({
   const [showResults, setShowResults] = useState(false)
 
   // Obter filtros baseados nas permissões do barbeiro
-  const { getClientFilter, getAppointmentFilter } = useBarberFinancialFilter()
+  // const { getClientFilter, getAppointmentFilter } = useBarberFinancialFilter() // Hook removido
 
   // Buscar clientes usando o serviço
   const buscarClientes = useCallback(async (termo: string) => {
@@ -345,8 +342,10 @@ export const ClientSearch = ({
     setLoading(true)
     
     try {
-      const filtrosCliente = getClientFilter()
-      const filtrosAgendamento = getAppointmentFilter()
+      // const filtrosCliente = getClientFilter() // Hook removido
+      // const filtrosAgendamento = getAppointmentFilter() // Hook removido
+      const filtrosCliente = {}
+      const filtrosAgendamento = {}
       
       const clientesEncontrados = await AgendamentoService.buscarClientes(termo, filtrosCliente)
       setClientes(clientesEncontrados)

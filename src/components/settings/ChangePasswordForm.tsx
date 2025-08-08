@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Componente para alteração de senha
  */
 
-'use client'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'

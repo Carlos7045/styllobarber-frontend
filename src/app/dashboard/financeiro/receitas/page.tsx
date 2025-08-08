@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Container } from '@/shared/components/layout'
-import { ReceitasReport } from '@/components/financial/components/ReceitasReport'
+import { LazyReceitasReport, LazyPageWrapper } from '@/shared/components/lazy'
 
 export const metadata: Metadata = {
   title: 'Relatório de Receitas - StylloBarber',
@@ -15,10 +15,12 @@ export default function ReceitasPage() {
   return (
     <Container className="py-8">
       <div className="max-w-7xl mx-auto space-y-8">
-        <ReceitasReport 
-          showFilters={true}
-          autoLoad={false}
-        />
+        <LazyPageWrapper title="Relatório de Receitas">
+          <LazyReceitasReport 
+            showFilters={true}
+            autoLoad={false}
+          />
+        </LazyPageWrapper>
       </div>
     </Container>
   )

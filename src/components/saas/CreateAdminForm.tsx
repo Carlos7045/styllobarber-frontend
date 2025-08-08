@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Formulário para cadastro de administradores (apenas SaaS Owner)
  */
 
-'use client'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'

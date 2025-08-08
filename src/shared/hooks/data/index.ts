@@ -12,3 +12,16 @@ export { usePDVData as usePdvData } from './use-pdv-data'
 // Reports
 export { useClientReports } from './use-client-reports'
 export { useOperationalReports } from './use-operational-reports'
+
+// React Query integration
+export { 
+  useQueryService,
+  useSimpleQueryService
+} from './use-query-service'
+
+// Re-export types
+export type {
+  UseServiceQueryConfig,
+  UseServiceListQueryConfig,
+  UseServiceMutationConfig
+} from './use-query-service'

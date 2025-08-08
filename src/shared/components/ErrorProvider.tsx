@@ -1,9 +1,10 @@
+
+'use client'
 /**
  * Provider global para sistema de tratamento de erros
  * Integra Error Boundary, Toast, Logging e Network Retry
  */
 
-'use client'
 
 import React, { ReactNode, useEffect } from 'react'
 import { ToastProvider } from '@/shared/components/ui/toast'

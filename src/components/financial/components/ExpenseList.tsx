@@ -1,6 +1,7 @@
-// Componente para listar e gerenciar despesas
 
 'use client'
+// Componente para listar e gerenciar despesas
+
 
 import React, { useState } from 'react'
 import { useExpenses } from '../hooks/use-expenses'

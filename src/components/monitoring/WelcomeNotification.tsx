@@ -1,14 +1,15 @@
+
+'use client'
 /**
  * Notificação de boas-vindas para o sistema de monitoramento
  */
 
-'use client'
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { Card, CardContent, Button } from '@/shared/components/ui'
-import { Crown, X, Sparkles, Shield, TrendingUp } from 'lucide-react'
+import { Crown, X, Shield, TrendingUp } from 'lucide-react'
 
 export function WelcomeNotification() {
   const { profile } = useAuth()

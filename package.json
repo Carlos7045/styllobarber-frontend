@@ -29,7 +29,15 @@
     "lint:file": "node scripts/lint-helper.js file",
     "lint:fix-file": "node scripts/lint-helper.js fix",
     "lint:dir": "node scripts/lint-helper.js dir",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "analyze-bundle": "node scripts/analyze-bundle.js",
+    "optimize-images": "node scripts/optimize-images.js",
+    "analyze-dependencies": "node scripts/analyze-dependencies.js",
+    "optimize-webpack": "node scripts/optimize-webpack.js",
+    "optimize-tailwind": "node scripts/optimize-tailwind.js",
+    "optimize-all": "node scripts/optimize-all.js",
+    "verify-optimizations": "node scripts/verify-optimizations.js",
+    "build:analyze": "npm run build && npm run analyze-bundle"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -67,7 +75,7 @@
     "tailwind-merge": "^3.3.1",
     "web-vitals": "^5.1.0",
     "zod": "^4.0.10",
-    "zustand": "^5.0.6"
+    "zustand": "^5.0.7"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",

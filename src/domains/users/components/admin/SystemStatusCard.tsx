@@ -1,25 +1,17 @@
+
+'use client'
 /**
  * Componente simplificado de status do sistema para administradores da barbearia
  * Mostra apenas informações relevantes para o negócio
  */
 
-'use client'
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 import { performanceMonitor } from '@/lib/monitoring/performance-monitor'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { 
-  CheckCircle, 
-  AlertTriangle, 
-  XCircle, 
-  RefreshCw,
-  Shield,
-  Clock,
-  TrendingUp,
-  Users
-} from 'lucide-react'
+import { CheckCircle, AlertTriangle, XCircle, RefreshCw, Shield, Clock, TrendingUp, Users } from 'lucide-react'
 
 interface SystemStatus {
   isHealthy: boolean

@@ -1,5 +1,6 @@
-// Hook para gerenciar primeiro acesso de clientes cadastrados automaticamente
+
 'use client'
+// Hook para gerenciar primeiro acesso de clientes cadastrados automaticamente
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'

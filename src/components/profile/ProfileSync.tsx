@@ -2,7 +2,7 @@
 
 import { useProfileSync } from '@/domains/users/hooks/use-profile-sync'
 import { Card, CardContent, Button } from '@/shared/components/ui'
-import { RefreshCw, CheckCircle, AlertTriangle, ArrowLeftRight, Settings } from 'lucide-react'
+import { RefreshCw, CheckCircle, AlertTriangle, Settings } from 'lucide-react'
 
 export function ProfileSync() {
   const {

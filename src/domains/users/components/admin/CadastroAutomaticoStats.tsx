@@ -1,20 +1,17 @@
-// Componente para exibir estatísticas de cadastros automáticos
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+// Componente para exibir estatísticas de cadastros automáticos
+
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { 
-  UserPlus,
-  TrendingUp,
-  MessageSquare,
-  Mail,
-  Calendar,
-  BarChart3,
-  Users,
-  CheckCircle,
-  XCircle,
-  RefreshCw
-} from 'lucide-react'
+
+import { UserPlus, TrendingUp, MessageSquare, Mail, Calendar, BarChart3, Users, CheckCircle, XCircle, RefreshCw } from 'lucide-react'
 import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatDate } from '@/shared/utils/date-utils'
 import { supabase } from '@/lib/api/supabase'

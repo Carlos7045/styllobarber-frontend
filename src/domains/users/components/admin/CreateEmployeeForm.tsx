@@ -1,8 +1,9 @@
+
+'use client'
 /**
  * Formulário para cadastro de funcionários (apenas admins)
  */
 
-'use client'
 
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'

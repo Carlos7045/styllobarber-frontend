@@ -1,21 +1,19 @@
-// Componente para cadastro rápido de clientes no PDV
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
+const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
+// Componente para cadastro rápido de clientes no PDV
+
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  User,
-  Phone,
-  Mail,
-  Save,
-  X,
-  Loader2,
-  Check,
-  AlertCircle,
-  UserPlus,
-  Eye,
-  EyeOff
-} from 'lucide-react'
+
+import { User, Phone, Mail, Save, X, Loader2, Check, AlertCircle, UserPlus, Eye, EyeOff } from '@/shared/utils/optimized-imports'
 import { Card, Button, Input, Badge } from '@/shared/components/ui'
 import { useToast } from '@/shared/components/ui'
 import { clienteCadastroService, type NovoClienteData } from '../services/cliente-cadastro-service'
@@ -288,7 +286,7 @@ export const CadastroRapidoCliente = ({
 
           {/* Conteúdo */}
           <div className="p-6">
-            <AnimatePresence mode="wait">
+            <AnimatePresence>
               {/* Formulário */}
               {step === 'form' && (
                 <motion.div

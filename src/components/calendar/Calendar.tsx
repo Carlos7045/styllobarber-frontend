@@ -219,7 +219,7 @@ export function Calendar({
           {(['day', 'week', 'month'] as CalendarView[]).map((viewOption) => (
             <Button
               key={viewOption}
-              variant={currentView === viewOption ? 'default' : 'ghost'}
+              variant={currentView === viewOption ? 'primary' : 'ghost'}
               size="sm"
               onClick={() => handleViewChange(viewOption)}
               className={cn(

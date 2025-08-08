@@ -3,7 +3,7 @@
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/utils'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown } from '@/shared/utils/optimized-imports'
 
 // Variantes do select usando CVA
 const selectVariants = cva(

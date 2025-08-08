@@ -1,4 +1,6 @@
 'use client'
+import { User } from 'lucide-react'
+
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'

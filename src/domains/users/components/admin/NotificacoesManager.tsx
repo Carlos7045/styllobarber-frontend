@@ -1,21 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import {
-  Settings,
-  Plus,
-  Search,
-  Clock,
-  BarChart3,
-  FileText,
-  Eye,
-  Edit,
-  Trash2,
-  Mail,
-  MessageSquare,
-  Smartphone,
-  Send
-} from 'lucide-react'
+import { Settings, Plus, Search, Clock, BarChart3, FileText, Eye, Edit, Trash2, Mail, MessageSquare, Smartphone } from 'lucide-react'
 import { Button, Card, CardContent, Modal, Input } from '@/shared/components/ui'
 
 interface NotificacoesManagerProps {

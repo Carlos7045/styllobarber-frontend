@@ -3,12 +3,13 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react'
+import { Eye, EyeOff, Link as LinkIcon, Lock, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { NoSSR } from '@/shared/components/feedback/NoSSR'
+import { FormErrorBoundary } from '@/shared/components/forms/FormErrorBoundary'
 import { useAuth, type LoginData } from '@/domains/auth/hooks/use-auth'
 import { schemaLogin, type DadosLogin } from '@/shared/utils/validation'
 import { cn } from '@/shared/utils'
@@ -187,8 +188,19 @@ export function LoginForm({ onSuccess, className, redirectTo }: LoginFormProps) 
   }
 
   return (
-    <NoSSR fallback={<LoginFormSkeleton />}>
-      <Card className={cn('w-full max-w-md mx-auto', className)}>
+    <FormErrorBoundary
+      formName="LoginForm"
+      onError={(error, errorInfo) => {
+        console.error('Login form error:', error, errorInfo)
+        showError('Erro no formulário de login. Tente recarregar a página.')
+      }}
+      onReset={() => {
+        reset()
+        hideFeedback()
+      }}
+    >
+      <NoSSR fallback={<LoginFormSkeleton />}>
+        <Card className={cn('w-full max-w-md mx-auto', className)}>
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-heading text-primary-gold">
             Entrar no StylloBarber
@@ -330,6 +342,7 @@ export function LoginForm({ onSuccess, className, redirectTo }: LoginFormProps) 
         </CardContent>
       </Card>
     </NoSSR>
+    </FormErrorBoundary>
   )
 }
 

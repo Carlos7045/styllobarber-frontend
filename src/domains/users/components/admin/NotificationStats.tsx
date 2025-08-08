@@ -1,21 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-  BarChart3, 
-  TrendingUp, 
-  TrendingDown, 
-  Mail, 
-  MessageSquare, 
-  Bell, 
-  Smartphone,
-  CheckCircle,
-  XCircle,
-  Clock,
-  AlertTriangle,
-  Calendar,
-  RefreshCw
-} from 'lucide-react'
+import { BarChart3, TrendingUp, TrendingDown, Mail, MessageSquare, Bell, Smartphone, CheckCircle, XCircle, Clock, AlertTriangle, Calendar, RefreshCw } from 'lucide-react'
 
 import { useAdminNotificacoes } from '@/domains/users/hooks/use-admin-notificacoes'
 import { Button, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'

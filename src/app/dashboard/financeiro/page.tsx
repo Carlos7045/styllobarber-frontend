@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Container } from '@/shared/components/layout'
-import { FinancialDashboardSimple } from '@/components/financial/components/FinancialDashboardSimple'
+import { LazyFinancialDashboard, LazyPageWrapper } from '@/shared/components/lazy'
 
 export const metadata: Metadata = {
   title: 'Financeiro - StylloBarber',
@@ -14,7 +14,9 @@ export const metadata: Metadata = {
 export default function FinanceiroPage() {
   return (
     <Container className="py-8">
-      <FinancialDashboardSimple />
+      <LazyPageWrapper title="Dashboard Financeiro">
+        <LazyFinancialDashboard />
+      </LazyPageWrapper>
     </Container>
   )
 }

@@ -1,26 +1,19 @@
+
 'use client'
 
+// Mock temporário para motion
+const motion = {
+  div: 'div' as any,
+  span: 'span' as any,
+  button: 'button' as any,
+}
+
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+
 import { Container } from '@/shared/components/layout'
 import { Card } from '@/shared/components/ui/card'
 import { Button } from '@/shared/components/ui/button'
-import {
-  BarChart3,
-  FileText,
-  Download,
-  Calendar,
-  Users,
-  DollarSign,
-  TrendingUp,
-  TrendingDown,
-  ArrowRight,
-  Clock,
-  Target,
-  PieChart,
-  Activity,
-  Briefcase,
-} from 'lucide-react'
+import { Activity, ArrowRight, BarChart3, Briefcase, Calendar, Clock, DollarSign, Download, FileText, PieChart, Target, TrendingDown, TrendingUp, Users } from 'lucide-react'
 
 /**
  * Hub Central de Relatórios
