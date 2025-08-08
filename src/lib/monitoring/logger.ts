@@ -286,7 +286,7 @@ export class Logger {
         console.error(prefix, logData, entry.error || '')
         break
       case LogLevel.CRITICAL:
-        console.error(`🚨 ${prefix}`, logData, entry.error || '')
+        console.error(`🚨 ${prefix}`, logData, entry.error?.message || entry.error || '')
         break
     }
   }

@@ -3,7 +3,7 @@
  */
 
 import { renderHook, act } from '@testing-library/react'
-import { useClientAppointments } from '../use-client-appointments'
+import { useClientAppointments } from '@/domains/appointments/hooks/use-client-appointments'
 
 // Mock dos hooks e dependências
 jest.mock('../use-auth')

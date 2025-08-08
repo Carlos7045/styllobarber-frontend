@@ -103,7 +103,7 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
       }
 
       const agendamentosPagosIds = new Set(
-        transacoesPagas?.map(t => t.agendamento_id).filter(Boolean) || []
+        transacoesPagas?.map((t) => t.agendamento_id).filter(Boolean) || []
       )
 
       // Buscar agendamentos concluídos que ainda não foram pagos
@@ -116,9 +116,7 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
           preco_final,
           status,
           observacoes,
-          cliente:profiles!appointments_cliente_id_fkey(id, nome, telefone),
-          barbeiro:profiles!appointments_barbeiro_id_fkey(id, nome),
-          service:services!appointments_service_id_fkey(id, nome, preco, duracao_minutos)
+          *
         `
         )
         .eq('status', 'concluido')
@@ -140,9 +138,8 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
       }
 
       // Filtrar apenas agendamentos que NÃO foram pagos
-      const agendamentosNaoPagos = agendamentos?.filter(
-        agendamento => !agendamentosPagosIds.has(agendamento.id)
-      ) || []
+      const agendamentosNaoPagos =
+        agendamentos?.filter((agendamento) => !agendamentosPagosIds.has(agendamento.id)) || []
 
       // Processar dados
       interface ClienteData {
@@ -240,25 +237,23 @@ export const useAgendamentosPendentes = (): UseAgendamentosPendentesReturn => {
     async (agendamentoId: string, transacaoId: string): Promise<boolean> => {
       try {
         // Buscar dados do agendamento para criar a transação
-        const agendamento = agendamentosPendentes.find(a => a.id === agendamentoId)
+        const agendamento = agendamentosPendentes.find((a) => a.id === agendamentoId)
         if (!agendamento) {
           console.error('Agendamento não encontrado:', agendamentoId)
           return false
         }
 
         // Criar transação para marcar como pago
-        const { error: transacaoError } = await supabase
-          .from('transactions')
-          .insert({
-            id: transacaoId,
-            tipo: 'RECEITA',
-            valor: agendamento.valor_total,
-            descricao: `Pagamento - ${agendamento.servicos.map(s => s.nome).join(', ')}`,
-            data_transacao: new Date().toISOString(),
-            agendamento_id: agendamentoId,
-            barbeiro_id: agendamento.barbeiro_id,
-            status: 'CONFIRMADA'
-          })
+        const { error: transacaoError } = await supabase.from('transactions').insert({
+          id: transacaoId,
+          tipo: 'RECEITA',
+          valor: agendamento.valor_total,
+          descricao: `Pagamento - ${agendamento.servicos.map((s) => s.nome).join(', ')}`,
+          data_transacao: new Date().toISOString(),
+          agendamento_id: agendamentoId,
+          barbeiro_id: agendamento.barbeiro_id,
+          status: 'CONFIRMADA',
+        })
 
         if (transacaoError) {
           console.error('Erro ao criar transação:', transacaoError)

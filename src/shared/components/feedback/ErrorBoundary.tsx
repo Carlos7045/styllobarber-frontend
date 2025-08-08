@@ -7,7 +7,14 @@
 
 import React, { Component, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
-import { Button, Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/shared/components/ui'
+import {
+  Button,
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/shared/components/ui'
 import { errorHandler, ErrorType, ErrorSeverity } from '@/lib/error-handler'
 import { logger } from '@/lib/monitoring/logger'
 
@@ -65,7 +72,9 @@ export class ErrorBoundary extends Component<Props, State> {
     })
 
     // Log do erro
-    logger.critical('React Error Boundary triggered', error, {
+    logger.critical('React Error Boundary triggered', {
+      error: error.message || error.toString(),
+      stack: error.stack,
       component: 'ErrorBoundary',
       errorInfo,
       errorId: structuredError.id,

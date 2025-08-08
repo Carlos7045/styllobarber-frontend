@@ -371,6 +371,7 @@ function BarberSpecificContent({ profile }: { profile: Record<string, unknown> }
                     {new Date(agendamento.data_agendamento).toLocaleTimeString('pt-BR', {
                       hour: '2-digit',
                       minute: '2-digit',
+                      timeZone: 'America/Sao_Paulo',
                     })}
                   </span>
                 </div>

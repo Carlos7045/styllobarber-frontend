@@ -22,7 +22,7 @@ import {
 } from 'lucide-react'
 import { Button, Badge } from '@/shared/components/ui'
 import { Container } from '@/shared/components/layout'
-import { RouteGuard, PermissionGuard } from '@/domains/auth/components'
+import { RouteGuard, PermissionGate } from '@/domains/auth/components'
 import { useBarberPermissions } from '@/domains/users/hooks/use-barber-permissions'
 import { useBarberClients } from '@/domains/users/hooks/use-barber-clients'
 import { useAdminClientes } from '@/domains/users/hooks/use-admin-clientes'

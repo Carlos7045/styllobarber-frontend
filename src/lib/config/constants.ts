@@ -4,7 +4,8 @@ export const LOCALE_CONFIG = {
   currency: 'BRL',
   dateFormat: 'dd/MM/yyyy',
   timeFormat: 'HH:mm',
-  timezone: 'America/Sao_Paulo'
+  timezone: 'America/Sao_Paulo',
+  utcOffset: -3, // UTC-3 para horário de Brasília
 } as const
 
 // Status de agendamento
@@ -13,27 +14,27 @@ export const STATUS_AGENDAMENTO = {
   CONFIRMADO: 'confirmed',
   EM_ANDAMENTO: 'in_progress',
   CONCLUIDO: 'completed',
-  CANCELADO: 'cancelled'
+  CANCELADO: 'cancelled',
 } as const
 
 // Métodos de pagamento
 export const METODOS_PAGAMENTO = {
   DINHEIRO: 'cash',
   CARTAO: 'card',
-  PIX: 'pix'
+  PIX: 'pix',
 } as const
 
 // Status de pagamento
 export const STATUS_PAGAMENTO = {
   PENDENTE: 'pending',
-  PAGO: 'paid'
+  PAGO: 'paid',
 } as const
 
 // Roles de usuário
 export const ROLES_USUARIO = {
   ADMIN: 'admin',
   BARBEIRO: 'barber',
-  CLIENTE: 'client'
+  CLIENTE: 'client',
 } as const
 
 // Horários de funcionamento padrão

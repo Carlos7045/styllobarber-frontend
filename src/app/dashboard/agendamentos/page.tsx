@@ -5,21 +5,46 @@ import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useClientAppointments } from '@/domains/appointments/hooks/use-client-appointments'
 import { Container } from '@/shared/components/layout'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { NovoAgendamentoModal } from '@/domains/users/components/client/NovoAgendamentoModal'
-import { Calendar, Clock, Plus, Scissors, MapPin } from 'lucide-react'
+import {
+  NovoAgendamentoModal,
+  ClientStats,
+  ServicosModal,
+  LocalizacaoModal,
+  NextAppointmentHighlight,
+  DetalhesAgendamentoModal,
+} from '@/domains/users/components/client'
+import { Calendar, Clock, Plus, Scissors, MapPin, CheckCircle } from 'lucide-react'
 
 export default function AgendamentosPage() {
   const { profile } = useAuth()
-  const { upcomingAppointments, pastAppointments, loading } = useClientAppointments()
+  const { upcomingAppointments, pastAppointments, stats, loading } = useClientAppointments()
 
   // Estados para controlar modais
   const [isNovoAgendamentoOpen, setIsNovoAgendamentoOpen] = useState(false)
   const [isServicosOpen, setIsServicosOpen] = useState(false)
   const [isLocalizacaoOpen, setIsLocalizacaoOpen] = useState(false)
+  const [isDetalhesOpen, setIsDetalhesOpen] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null)
 
   const handleAgendamentoSuccess = (appointment: Record<string, unknown>) => {
     // console.log('Novo agendamento criado:', appointment)
     // Aqui você pode adicionar uma notificação de sucesso
+  }
+
+  const handleAgendarFromServicos = (serviceId: string) => {
+    setIsServicosOpen(false)
+    setIsNovoAgendamentoOpen(true)
+    // TODO: Passar serviceId para o modal de agendamento
+  }
+
+  const handleViewDetails = (appointmentId: string) => {
+    const appointment = [...upcomingAppointments, ...pastAppointments].find(
+      (apt) => apt.id === appointmentId
+    )
+    if (appointment) {
+      setSelectedAppointment(appointment)
+      setIsDetalhesOpen(true)
+    }
   }
 
   return (
@@ -42,6 +67,20 @@ export default function AgendamentosPage() {
           </div>
           <div className="mx-auto h-1 w-24 rounded-full bg-gradient-to-r from-primary-gold to-primary-gold-dark"></div>
         </div>
+
+        {/* Estatísticas do Cliente */}
+        <ClientStats stats={stats} loading={loading} className="mb-8" />
+
+        {/* Próximo Agendamento em Destaque */}
+        <NextAppointmentHighlight
+          appointment={upcomingAppointments[0] || null}
+          loading={loading}
+          onReschedule={(id) => console.log('Reagendar:', id)}
+          onCancel={(id) => console.log('Cancelar:', id)}
+          onViewDetails={handleViewDetails}
+          onNewAppointment={() => setIsNovoAgendamentoOpen(true)}
+          className="mb-8"
+        />
 
         {/* Ações rápidas para clientes */}
         <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -102,7 +141,7 @@ export default function AgendamentosPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-primary-gold" />
-              Próximos Agendamentos
+              Outros Agendamentos
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -112,9 +151,9 @@ export default function AgendamentosPage() {
                   <div key={i} className="h-20 animate-pulse rounded-lg bg-neutral-light-gray" />
                 ))}
               </div>
-            ) : upcomingAppointments.length > 0 ? (
+            ) : upcomingAppointments.length > 1 ? (
               <div className="space-y-4">
-                {upcomingAppointments.map((appointment) => (
+                {upcomingAppointments.slice(1).map((appointment) => (
                   <div key={appointment.id} className="border-border-default rounded-lg border p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
@@ -126,10 +165,14 @@ export default function AgendamentosPage() {
                             {appointment.service?.nome || 'Serviço'}
                           </h3>
                           <p className="text-sm text-text-muted">
-                            {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR')} às{' '}
+                            {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR', {
+                              timeZone: 'America/Sao_Paulo',
+                            })}{' '}
+                            às{' '}
                             {new Date(appointment.data_agendamento).toLocaleTimeString('pt-BR', {
                               hour: '2-digit',
                               minute: '2-digit',
+                              timeZone: 'America/Sao_Paulo',
                             })}
                           </p>
                           {appointment.barbeiro && (
@@ -152,6 +195,11 @@ export default function AgendamentosPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            ) : upcomingAppointments.length === 1 ? (
+              <div className="py-8 text-center">
+                <CheckCircle className="mx-auto mb-4 h-10 w-10 text-green-600" />
+                <p className="text-text-muted">Seu próximo agendamento está destacado acima</p>
               </div>
             ) : (
               <div className="py-12 text-center">
@@ -197,7 +245,9 @@ export default function AgendamentosPage() {
                           {appointment.service?.nome || 'Serviço'}
                         </p>
                         <p className="text-xs text-text-muted">
-                          {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR')}
+                          {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR', {
+                            timeZone: 'America/Sao_Paulo',
+                          })}
                         </p>
                       </div>
                     </div>
@@ -229,31 +279,21 @@ export default function AgendamentosPage() {
           onSuccess={handleAgendamentoSuccess}
         />
 
-        {/* TODO: Implementar ServicosModal */}
-        {isServicosOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6">
-              <h2 className="mb-4 text-xl font-bold">Serviços</h2>
-              <p className="mb-4 text-text-muted">
-                Modal de serviços será implementado na próxima tarefa.
-              </p>
-              <Button onClick={() => setIsServicosOpen(false)}>Fechar</Button>
-            </div>
-          </div>
-        )}
+        <ServicosModal
+          isOpen={isServicosOpen}
+          onClose={() => setIsServicosOpen(false)}
+          onAgendar={handleAgendarFromServicos}
+        />
 
-        {/* TODO: Implementar LocalizacaoModal */}
-        {isLocalizacaoOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-            <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6">
-              <h2 className="mb-4 text-xl font-bold">Localização</h2>
-              <p className="mb-4 text-text-muted">
-                Modal de localização será implementado na próxima tarefa.
-              </p>
-              <Button onClick={() => setIsLocalizacaoOpen(false)}>Fechar</Button>
-            </div>
-          </div>
-        )}
+        <LocalizacaoModal isOpen={isLocalizacaoOpen} onClose={() => setIsLocalizacaoOpen(false)} />
+
+        <DetalhesAgendamentoModal
+          isOpen={isDetalhesOpen}
+          onClose={() => setIsDetalhesOpen(false)}
+          appointment={selectedAppointment}
+          onReschedule={(id) => console.log('Reagendar:', id)}
+          onCancel={(id) => console.log('Cancelar:', id)}
+        />
       </div>
     </Container>
   )

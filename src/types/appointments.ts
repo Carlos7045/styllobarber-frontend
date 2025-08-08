@@ -3,7 +3,12 @@
  */
 
 // Status possíveis de um agendamento
-export type AppointmentStatus = 'pendente' | 'confirmado' | 'em_andamento' | 'concluido' | 'cancelado'
+export type AppointmentStatus =
+  | 'pendente'
+  | 'confirmado'
+  | 'em_andamento'
+  | 'concluido'
+  | 'cancelado'
 
 // Tipo de visualização do calendário
 export type CalendarView = 'day' | 'week' | 'month'
@@ -20,7 +25,7 @@ export interface Appointment {
   preco_final?: number
   created_at: string
   updated_at: string
-  
+
   // Dados relacionados (joins)
   cliente?: {
     id: string
@@ -48,16 +53,25 @@ export interface TimeSlot {
   available: boolean
   appointment?: Appointment
   blocked?: boolean
-  reason?: string // Motivo do bloqueio
+  reason?: 'occupied' | 'interval' | 'insufficient_time' | 'outside_hours'
+  message?: string
+  occupiedUntil?: string
 }
 
-// Interface para configuração do calendário
+// Configuração do calendário
 export interface CalendarConfig {
-  startHour: number // Hora de início (ex: 8)
-  endHour: number // Hora de fim (ex: 18)
-  slotDuration: number // Duração do slot em minutos (ex: 30)
-  workDays: number[] // Dias da semana que funciona (0=domingo, 1=segunda, etc)
-  holidays: string[] // Datas de feriados (YYYY-MM-DD)
+  startHour: number
+  endHour: number
+  slotInterval: number // em minutos
+  workDays: number[] // 0 = domingo, 1 = segunda, etc.
+}
+
+// Configuração padrão do calendário
+export const DEFAULT_CALENDAR_CONFIG: CalendarConfig = {
+  startHour: 8,
+  endHour: 18,
+  slotInterval: 30,
+  workDays: [1, 2, 3, 4, 5, 6], // Segunda a sábado
 }
 
 // Interface para dados do calendário
@@ -132,35 +146,34 @@ export interface ClientAppointment extends Appointment {
   isPast: boolean
 }
 
-// Interface para políticas de cancelamento e reagendamento
+// Interface para política de cancelamento
 export interface CancellationPolicy {
-  minHoursBeforeAppointment: number // 24 horas
   allowCancellation: boolean
+  minHoursBeforeAppointment: number
+  maxCancellationsPerMonth: number
+  requireReason: boolean
 }
 
+// Interface para política de reagendamento
 export interface ReschedulingPolicy {
-  minHoursBeforeAppointment: number // 12 horas
-  maxReschedulesPerMonth: number // 3
   allowRescheduling: boolean
+  minHoursBeforeAppointment: number
+  maxReschedulesPerAppointment: number
+  requireReason: boolean
 }
 
-// Configuração padrão do calendário
-export const DEFAULT_CALENDAR_CONFIG: CalendarConfig = {
-  startHour: 8,
-  endHour: 18,
-  slotDuration: 30,
-  workDays: [1, 2, 3, 4, 5, 6], // Segunda a sábado
-  holidays: [],
-}
-
-// Políticas padrão
+// Política padrão de cancelamento
 export const DEFAULT_CANCELLATION_POLICY: CancellationPolicy = {
-  minHoursBeforeAppointment: 24,
   allowCancellation: true,
+  minHoursBeforeAppointment: 2, // 2 horas antes
+  maxCancellationsPerMonth: 3,
+  requireReason: false,
 }
 
+// Política padrão de reagendamento
 export const DEFAULT_RESCHEDULING_POLICY: ReschedulingPolicy = {
-  minHoursBeforeAppointment: 12,
-  maxReschedulesPerMonth: 3,
   allowRescheduling: true,
+  minHoursBeforeAppointment: 2, // 2 horas antes
+  maxReschedulesPerAppointment: 2,
+  requireReason: false,
 }

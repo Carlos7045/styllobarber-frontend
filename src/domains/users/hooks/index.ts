@@ -18,3 +18,6 @@ export { useBarberPermissions } from './use-barber-permissions'
 // Profile hooks
 export { useProfileSync } from './use-profile-sync'
 export { useFuncionariosEspecialidades } from './use-funcionarios-especialidades-simple'
+
+// Public hooks (for clients)
+export { useFuncionariosPublicos } from './use-funcionarios-publicos'

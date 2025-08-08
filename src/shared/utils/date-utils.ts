@@ -52,9 +52,54 @@ export function formatDateForDB(date: Date): string {
 
 /**
  * Formatar datetime para o formato do banco (ISO string)
+ * Considera o fuso horário brasileiro
  */
 export function formatDateTimeForDB(date: Date): string {
   return date.toISOString()
+}
+
+/**
+ * Criar data com fuso horário brasileiro
+ */
+export function createBrazilianDate(dateString: string, timeString: string): Date {
+  // Combinar data e hora no formato brasileiro
+  const dateTimeString = `${dateString}T${timeString}:00`
+
+  // Criar data assumindo fuso horário brasileiro (UTC-3)
+  const date = new Date(dateTimeString)
+
+  // Ajustar para UTC considerando o offset brasileiro
+  const brazilOffset = -3 * 60 // -3 horas em minutos
+  const localOffset = date.getTimezoneOffset() // offset local em minutos
+  const adjustedDate = new Date(date.getTime() + (brazilOffset - localOffset) * 60 * 1000)
+
+  return adjustedDate
+}
+
+/**
+ * Converter data UTC para fuso horário brasileiro
+ */
+export function convertUTCToBrazilian(utcDate: Date): Date {
+  const brazilOffset = -3 * 60 * 60 * 1000 // -3 horas em millisegundos
+  return new Date(utcDate.getTime() + brazilOffset)
+}
+
+/**
+ * Formatar data considerando fuso horário brasileiro
+ */
+export function formatBrazilianDateTime(dateString: string): string {
+  const utcDate = new Date(dateString)
+  const brazilDate = convertUTCToBrazilian(utcDate)
+  return format(brazilDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })
+}
+
+/**
+ * Formatar apenas a hora considerando fuso horário brasileiro
+ */
+export function formatBrazilianTime(dateString: string): string {
+  const utcDate = new Date(dateString)
+  const brazilDate = convertUTCToBrazilian(utcDate)
+  return format(brazilDate, 'HH:mm', { locale: ptBR })
 }
 
 /**
@@ -106,110 +151,18 @@ export function isDateToday(date: Date): boolean {
  * Verificar se uma data é no passado
  */
 export function isDatePast(date: Date): boolean {
-  return isBefore(date, new Date())
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  const compareDate = new Date(date)
+  compareDate.setHours(0, 0, 0, 0)
+  return isBefore(compareDate, today)
 }
 
 /**
- * Verificar se uma data é no futuro
- */
-export function isDateFuture(date: Date): boolean {
-  return isAfter(date, new Date())
-}
-
-/**
- * Obter próximo dia útil
- */
-export function getNextWorkDay(date: Date, workDays: number[]): Date {
-  let nextDay = addDays(date, 1)
-
-  while (!workDays.includes(nextDay.getDay())) {
-    nextDay = addDays(nextDay, 1)
-  }
-
-  return nextDay
-}
-
-/**
- * Obter dia útil anterior
- */
-export function getPreviousWorkDay(date: Date, workDays: number[]): Date {
-  let prevDay = subDays(date, 1)
-
-  while (!workDays.includes(prevDay.getDay())) {
-    prevDay = subDays(prevDay, 1)
-  }
-
-  return prevDay
-}
-
-/**
- * Gerar slots de horário para um dia
- */
-export function generateTimeSlots(date: Date, config: CalendarConfig): TimeSlot[] {
-  const slots: TimeSlot[] = []
-  const dayOfWeek = date.getDay()
-
-  // Verificar se é dia útil
-  if (!config.workDays.includes(dayOfWeek)) {
-    return slots
-  }
-
-  // Verificar se é feriado
-  const dateString = formatDateForDB(date)
-  if (config.holidays.includes(dateString)) {
-    return slots
-  }
-
-  // Gerar slots de horário
-  for (let hour = config.startHour; hour < config.endHour; hour++) {
-    for (let minute = 0; minute < 60; minute += config.slotDuration) {
-      const slotTime = setMinutes(setHours(date, hour), minute)
-
-      // Não criar slots no passado
-      if (isBefore(slotTime, new Date())) {
-        continue
-      }
-
-      const slot: TimeSlot = {
-        time: formatTime(slotTime),
-        date: dateString,
-        datetime: slotTime,
-        available: true,
-        blocked: false,
-      }
-
-      slots.push(slot)
-    }
-  }
-
-  return slots
-}
-
-/**
- * Obter range de datas para visualização semanal
- */
-export function getWeekRange(date: Date): { start: Date; end: Date } {
-  return {
-    start: startOfWeek(date, { weekStartsOn: 1 }), // Segunda-feira
-    end: endOfWeek(date, { weekStartsOn: 1 }), // Domingo
-  }
-}
-
-/**
- * Obter range de datas para visualização mensal
- */
-export function getMonthRange(date: Date): { start: Date; end: Date } {
-  return {
-    start: startOfMonth(date),
-    end: endOfMonth(date),
-  }
-}
-
-/**
- * Obter array de datas para uma semana
+ * Obter os dias da semana para uma data específica
  */
 export function getWeekDays(date: Date): Date[] {
-  const { start } = getWeekRange(date)
+  const start = startOfWeek(date, { weekStartsOn: 0 }) // Domingo = 0
   const days: Date[] = []
 
   for (let i = 0; i < 7; i++) {
@@ -220,76 +173,188 @@ export function getWeekDays(date: Date): Date[] {
 }
 
 /**
- * Obter array de datas para um mês
+ * Obter os dias do mês para uma data específica
  */
 export function getMonthDays(date: Date): Date[] {
-  const { start, end } = getMonthRange(date)
-  const days: Date[] = []
+  const start = startOfMonth(date)
+  const end = endOfMonth(date)
+  const startWeek = startOfWeek(start, { weekStartsOn: 0 }) // Domingo = 0
+  const endWeek = endOfWeek(end, { weekStartsOn: 0 })
 
-  let currentDate = start
-  while (!isAfter(currentDate, end)) {
-    days.push(currentDate)
-    currentDate = addDays(currentDate, 1)
+  const days: Date[] = []
+  let current = startWeek
+
+  while (current <= endWeek) {
+    days.push(new Date(current))
+    current = addDays(current, 1)
   }
 
   return days
 }
 
 /**
- * Calcular duração entre dois horários em minutos
+ * Obter range de uma semana
  */
-export function calculateDuration(startTime: Date, endTime: Date): number {
-  return Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60))
-}
-
-/**
- * Adicionar minutos a uma data
- */
-export function addMinutesToDate(date: Date, minutes: number): Date {
-  return addMinutes(date, minutes)
-}
-
-// Re-exportar funções do date-fns para uso direto
-export { addDays, subDays, addMonths, subMonths }
-
-/**
- * Verificar se dois horários se sobrepõem
- */
-export function timeSlotsOverlap(start1: Date, end1: Date, start2: Date, end2: Date): boolean {
-  return isBefore(start1, end2) && isAfter(end1, start2)
-}
-
-/**
- * Obter nome do dia da semana
- */
-export function getDayName(date: Date, short: boolean = false): string {
-  return format(date, short ? 'EEE' : 'EEEE', { locale: ptBR })
-}
-
-/**
- * Obter nome do mês
- */
-export function getMonthName(date: Date, short: boolean = false): string {
-  return format(date, short ? 'MMM' : 'MMMM', { locale: ptBR })
-}
-
-/**
- * Verificar se é fim de semana
- */
-export function isWeekend(date: Date): boolean {
-  const day = date.getDay()
-  return day === 0 || day === 6 // Domingo ou sábado
-}
-
-/**
- * Obter horário de início e fim de um agendamento
- */
-export function getAppointmentTimeRange(
-  startTime: Date,
-  durationMinutes: number
-): { start: Date; end: Date } {
+export function getWeekRange(date: Date): { start: Date; end: Date } {
   return {
-    start: startTime,
-    end: addMinutes(startTime, durationMinutes),
+    start: startOfWeek(date, { weekStartsOn: 0 }),
+    end: endOfWeek(date, { weekStartsOn: 0 }),
   }
 }
+
+/**
+ * Obter range de um mês
+ */
+export function getMonthRange(date: Date): { start: Date; end: Date } {
+  return {
+    start: startOfMonth(date),
+    end: endOfMonth(date),
+  }
+}
+
+/**
+ * Interface para horários específicos de funcionamento
+ */
+export interface HorarioFuncionamentoDia {
+  horario_inicio: string // formato "HH:mm"
+  horario_fim: string // formato "HH:mm"
+  intervalo_inicio?: string
+  intervalo_fim?: string
+  ativo: boolean
+}
+
+/**
+ * Interface para agendamentos existentes (para verificação de conflitos)
+ */
+export interface ExistingAppointment {
+  data_agendamento: string
+  barbeiro_id?: string
+  service?: {
+    duracao_minutos: number
+  }
+}
+
+/**
+ * Gerar slots de horário para uma data
+ */
+export function generateTimeSlots(
+  date: Date,
+  config: CalendarConfig,
+  horarioEspecifico?: HorarioFuncionamentoDia,
+  existingAppointments?: ExistingAppointment[],
+  serviceDuration?: number
+): TimeSlot[] {
+  const slots: TimeSlot[] = []
+
+  // Se há horário específico e está inativo, retorna array vazio
+  if (horarioEspecifico && !horarioEspecifico.ativo) {
+    return slots
+  }
+
+  // Usar horário específico se disponível, senão usar config padrão
+  let startHour: number
+  let endHour: number
+
+  if (horarioEspecifico) {
+    const [startH, startM] = horarioEspecifico.horario_inicio.split(':').map(Number)
+    const [endH, endM] = horarioEspecifico.horario_fim.split(':').map(Number)
+    startHour = startH + startM / 60
+    endHour = endH + endM / 60
+  } else {
+    startHour = config.startHour || 8
+    endHour = config.endHour || 18
+  }
+
+  const interval = config.slotInterval || 30
+
+  let current = setMinutes(setHours(new Date(date), Math.floor(startHour)), (startHour % 1) * 60)
+  const end = setMinutes(setHours(new Date(date), Math.floor(endHour)), (endHour % 1) * 60)
+
+  // Calcular slots bloqueados por intervalos
+  const intervalBlockedSlots = new Set<string>()
+  if (horarioEspecifico?.intervalo_inicio && horarioEspecifico?.intervalo_fim) {
+    const { calculateIntervalBlockedSlots } = require('@/shared/utils/appointment-utils')
+    const blocked = calculateIntervalBlockedSlots(
+      horarioEspecifico.intervalo_inicio,
+      horarioEspecifico.intervalo_fim,
+      formatDateForDB(date),
+      interval
+    )
+    blocked.forEach((slot) => intervalBlockedSlots.add(slot))
+  }
+
+  // Calcular slots bloqueados por agendamentos existentes
+  const appointmentBlockedSlots = new Set<string>()
+  if (existingAppointments) {
+    const { calculateBlockedSlots } = require('@/shared/utils/appointment-utils')
+    const appointmentSlots = existingAppointments.map((apt) => ({
+      inicio: new Date(apt.data_agendamento),
+      fim: new Date(
+        new Date(apt.data_agendamento).getTime() + (apt.service?.duracao_minutos || 30) * 60 * 1000
+      ),
+      barbeiroId: apt.barbeiro_id,
+      servicoId: apt.data_agendamento,
+      duracaoMinutos: apt.service?.duracao_minutos || 30,
+    }))
+
+    const blocked = calculateBlockedSlots(appointmentSlots, formatDateForDB(date), interval)
+    blocked.forEach((slot) => appointmentBlockedSlots.add(slot))
+  }
+
+  while (current < end) {
+    const timeString = formatTime(current)
+
+    // Verificar se está bloqueado por intervalo
+    const isInInterval = intervalBlockedSlots.has(timeString)
+
+    // Verificar se está bloqueado por agendamento
+    const isOccupied = appointmentBlockedSlots.has(timeString)
+
+    // Verificar se há tempo suficiente para o serviço (se duração especificada)
+    let hasEnoughTime = true
+    if (serviceDuration && serviceDuration > interval) {
+      const { hasEnoughTimeForService } = require('@/shared/utils/appointment-utils')
+      const serviceEnd = addMinutes(current, serviceDuration)
+
+      // Verificar se o serviço terminaria após o horário de funcionamento
+      if (serviceEnd > end) {
+        hasEnoughTime = false
+      }
+
+      // Verificar se conflitaria com intervalo
+      if (
+        hasEnoughTime &&
+        horarioEspecifico?.intervalo_inicio &&
+        horarioEspecifico?.intervalo_fim
+      ) {
+        const { conflictsWithInterval } = require('@/shared/utils/appointment-utils')
+        hasEnoughTime = !conflictsWithInterval(
+          current,
+          serviceEnd,
+          horarioEspecifico.intervalo_inicio,
+          horarioEspecifico.intervalo_fim,
+          formatDateForDB(date)
+        )
+      }
+    }
+
+    // Só adicionar slot se não estiver bloqueado
+    if (!isInInterval) {
+      slots.push({
+        time: timeString,
+        date: formatDateForDB(date),
+        datetime: new Date(current),
+        available: !isOccupied && hasEnoughTime,
+        blocked: isOccupied,
+        reason: isOccupied ? 'occupied' : !hasEnoughTime ? 'insufficient_time' : undefined,
+      })
+    }
+
+    current = addMinutes(current, interval)
+  }
+
+  return slots
+}
+
+// Re-exportar funções do date-fns para compatibilidade
+export { addDays, subDays, addMonths, subMonths, isToday, isBefore, isAfter }
