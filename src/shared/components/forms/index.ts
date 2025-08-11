@@ -23,6 +23,7 @@ export { ValidatedEmployeeForm } from './ValidatedEmployeeForm'
 export { LoginForm, LoginFormSkeleton } from './auth/login-form'
 export { SignUpForm, SignUpFormSkeleton } from './auth/signup-form'
 export { ResetPasswordForm } from './auth/reset-password-form'
+export { NewPasswordForm } from './auth/new-password-form'
 
 // Error handling
 export { 

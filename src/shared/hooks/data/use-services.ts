@@ -228,7 +228,7 @@ export function useServices(options: UseServicesOptions = {}): UseServicesReturn
   // Deletar serviço permanentemente
   const deleteService = useCallback(async (serviceId: string): Promise<{ success: boolean; error?: string }> => {
     try {
-      console.log(`🗑️ Deletando serviço ${serviceId}...`)
+      // Deletando serviço
 
       // Primeiro, remover associações com funcionários
       const { error: associationError } = await supabase

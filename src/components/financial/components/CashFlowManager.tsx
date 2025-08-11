@@ -5,26 +5,6 @@
 
 import { useState } from 'react'
 import { 
-  TrendingUp, 
-  TrendingDown, 
-  DollarSign, 
-  AlertTriangle, 
-  Calendar, 
-  Filter, 
-  RefreshCw, 
-  Eye, 
-  EyeOff, 
-  Clock, 
-  Target, 
-  Plus, 
-  X, 
-  ArrowUpCircle, 
-  ArrowDownCircle, 
-  Wallet 
-} from '@/shared/utils/optimized-imports'
-import { Card } from '@/shared/components/ui'
-import { Button } from '@/shared/components/ui'
-import { 
   ResponsiveContainer, 
   BarChart, 
   CartesianGrid, 
@@ -35,10 +15,29 @@ import {
   Legend, 
   PieChart, 
   Pie, 
-  Cell,
-  motion,
-  AnimatePresence
-} from '@/shared/utils/optimized-imports'
+  Cell
+} from 'recharts'
+import { 
+  TrendingUp, 
+  TrendingDown, 
+  DollarSign, 
+  AlertTriangle, 
+  Calendar, 
+  Filter, 
+  Eye, 
+  EyeOff, 
+  Clock, 
+  Target, 
+  X, 
+  ArrowUpCircle, 
+  ArrowDownCircle, 
+  Wallet,
+  Plus, 
+  RefreshCw 
+} from 'lucide-react'
+import { Card } from '@/shared/components/ui'
+import { Button } from '@/shared/components/ui'
+import { motion, AnimatePresence } from 'framer-motion'
 import { Badge } from '@/shared/components/ui'
 
 import { formatCurrency, formatDate } from '../utils'

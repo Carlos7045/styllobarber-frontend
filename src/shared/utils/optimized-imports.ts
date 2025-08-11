@@ -115,6 +115,19 @@ export {
   ArrowDownCircle,
   Wallet,
   Target,
+  Award,
+  Calculator,
+  BellOff,
+  Receipt,
+  Code,
+  Sparkles,
+  History,
+  ArrowLeftRight,
+  Tag,
+  Minimize2,
+  Maximize2,
+  ShoppingCart,
+  Smartphone,
 } from 'lucide-react'
 
 // ===== DATE-FNS UTILITIES =====

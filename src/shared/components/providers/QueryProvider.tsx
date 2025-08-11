@@ -7,10 +7,10 @@
 
 
 import React, { ReactNode, useState } from 'react'
-import { QueryClient, QueryClientProvider, MutationCache, QueryCache } from '@tanstack/react-query'
+import { QueryClient, QueryClientProvider, MutationCache, QueryCache, useQueryClient } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { logger } from '@/lib/monitoring/logger'
-import { errorHandler } from '@/shared/services/base/ErrorHandler'
+// import { errorHandler } from '@/shared/services/base/ErrorHandler'
 
 interface QueryProviderProps {
   children: ReactNode
@@ -93,14 +93,14 @@ function createQueryClient(config?: QueryProviderProps['clientConfig']) {
         })
 
         // Tratar erro com o sistema global
-        errorHandler.handle(error as Error, {
-          service: 'ReactQuery',
-          method: 'query',
-          additionalData: {
-            queryKey: query.queryKey,
-            queryHash: query.queryHash,
-          },
-        })
+        // errorHandler.handle(error as Error, {
+        //   service: 'ReactQuery',
+        //   method: 'query',
+        //   additionalData: {
+        //     queryKey: query.queryKey,
+        //     queryHash: query.queryHash,
+        //   },
+        // })
       },
       
       onSuccess: (data, query) => {
@@ -126,14 +126,14 @@ function createQueryClient(config?: QueryProviderProps['clientConfig']) {
         })
 
         // Tratar erro com o sistema global
-        errorHandler.handle(error as Error, {
-          service: 'ReactQuery',
-          method: 'mutation',
-          additionalData: {
-            mutationKey: mutation.options.mutationKey,
-            variables,
-          },
-        })
+        // errorHandler.handle(error as Error, {
+        //   service: 'ReactQuery',
+        //   method: 'mutation',
+        //   additionalData: {
+        //     mutationKey: mutation.options.mutationKey,
+        //     variables,
+        //   },
+        // })
       },
       
       onSuccess: (data, variables, context, mutation) => {
@@ -248,13 +248,7 @@ export function QueryProvider({
   )
 }
 
-/**
- * Hook para acessar o QueryClient
- */
-export function useQueryClient() {
-  const { useQueryClient } = require('@tanstack/react-query')
-  return useQueryClient()
-}
+// useQueryClient já importado acima
 
 /**
  * Hook para estatísticas do cache

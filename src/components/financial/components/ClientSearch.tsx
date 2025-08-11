@@ -1,19 +1,12 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
-
-const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
 // Componente de busca de clientes e agendamentos
 
 import { useState, useEffect, useCallback } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 
-import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Mail, Scissors, ChevronDown, ChevronUp } from '@/shared/utils/optimized-imports'
+import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Mail, Scissors, ChevronDown, ChevronUp } from 'lucide-react'
 import { Card, Button, Badge, Input } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { AgendamentoService } from '../services/agendamento-service'

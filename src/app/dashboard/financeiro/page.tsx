@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Container } from '@/shared/components/layout'
-import { LazyFinancialDashboard, LazyPageWrapper } from '@/shared/components/lazy'
+// import { LazyFinancialDashboard, LazyPageWrapper } from '@/shared/components/lazy'
+import { FinancialDashboard } from '@/components/financial/components/FinancialDashboard'
 
 export const metadata: Metadata = {
   title: 'Financeiro - StylloBarber',
@@ -9,14 +10,12 @@ export const metadata: Metadata = {
 
 /**
  * Página de controle financeiro avançado
- * Dashboard completo com gráficos interativos, filtros e métricas detalhadas
+ * Dashboard completo com métricas detalhadas (sem lazy loading)
  */
 export default function FinanceiroPage() {
   return (
     <Container className="py-8">
-      <LazyPageWrapper title="Dashboard Financeiro">
-        <LazyFinancialDashboard />
-      </LazyPageWrapper>
+      <FinancialDashboard />
     </Container>
   )
 }

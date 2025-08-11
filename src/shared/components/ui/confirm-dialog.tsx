@@ -1,6 +1,6 @@
 import * as React from 'react'
 import * as AlertDialog from '@radix-ui/react-alert-dialog'
-import { AlertTriangle, Info, CheckCircle, XCircle } from '@/shared/utils/optimized-imports'
+import { AlertTriangle, Info, CheckCircle, XCircle } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/utils'
 import { Button } from './button'

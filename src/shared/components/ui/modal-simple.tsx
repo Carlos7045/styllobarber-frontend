@@ -1,8 +1,8 @@
 import * as React from 'react'
 import { createPortal } from 'react-dom'
-import { X } from '@/shared/utils/optimized-imports'
+import { X } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/shared/utils'
+import { cn } from '@/lib/utils'
 
 // Variantes do modal usando CVA
 const modalVariants = cva(
@@ -137,9 +137,11 @@ const SimpleModal = React.forwardRef<HTMLDivElement, SimpleModalProps>(
     )
 
     // Use portal to render in document.body
-    return typeof document !== 'undefined' 
-      ? createPortal(modalContent, document.body)
-      : null
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return null
+    }
+    
+    return createPortal(modalContent, document.body)
   }
 )
 
@@ -154,6 +156,7 @@ const SimpleModalHeader = React.forwardRef<
     {...props}
   />
 ))
+SimpleModalHeader.displayName = 'SimpleModalHeader'
 
 // Componente ModalTitle
 const SimpleModalTitle = React.forwardRef<

@@ -1,7 +1,7 @@
 // Hook para gerenciar relatórios financeiros
 import { useState, useCallback } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { ReportsServiceHybrid as ReportsService } from '../services/reports-service-hybrid'
+import { ReportsService } from '../services/reports-service'
 import { getMonthRange } from '../utils'
 import type { 
   ConfigRelatorio,

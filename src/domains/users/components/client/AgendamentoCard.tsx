@@ -7,9 +7,10 @@ import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { ConfirmDialog } from '@/shared/components/ui/confirm-dialog'
 import { useClientAppointments } from '@/domains/appointments/hooks/use-client-appointments'
+import { ReagendamentoModalSimples } from './ReagendamentoModalSimples'
 import { cn, formatarMoeda } from '@/shared/utils'
 import type { ClientAppointment } from '@/types/appointments'
-import { useBrazilianDate } from '@/shared/hooks/utils/use-brazilian-date'
+// import { useBrazilianDate } from '@/shared/hooks/utils/use-brazilian-date' // Hook não existe
 
 interface AgendamentoCardProps {
   appointment: ClientAppointment
@@ -53,6 +54,7 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
   className,
 }) => {
   const [showCancelDialog, setShowCancelDialog] = useState(false)
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
@@ -62,9 +64,23 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
     statusConfig[appointment.status as keyof typeof statusConfig] || statusConfig.pendente
   const StatusIcon = statusInfo.icon
 
-  // Usar hook para formatação de data brasileira
-  const brazilianDate = useBrazilianDate(appointment.data_agendamento)
-  const isFuture = !brazilianDate.isPast && !['cancelado', 'concluido'].includes(appointment.status)
+  // Formatação de data brasileira
+  const appointmentDate = new Date(appointment.data_agendamento)
+  const now = new Date()
+  const isPast = appointmentDate <= now || ['cancelado', 'concluido'].includes(appointment.status)
+  const isFuture = !isPast
+
+  const brazilianDate = {
+    date: appointmentDate.toLocaleDateString('pt-BR'),
+    time: appointmentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+    fullDateTime: appointmentDate.toLocaleDateString('pt-BR', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    }),
+    isPast
+  }
 
   // Função para cancelar agendamento
   const handleCancel = async () => {
@@ -201,11 +217,69 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
           {/* Ações */}
           {showActions && isFuture && (
             <div className="border-border-default flex items-center gap-2 border-t pt-2">
-              {appointment.canReschedule && (
-                <Button variant="outline" size="sm" onClick={() => onReschedule?.(appointment.id)}>
-                  Reagendar
-                </Button>
-              )}
+              <div>
+                {/* Debug info */}
+                <div className="text-xs text-gray-500 mb-2 p-2 bg-yellow-100 dark:bg-yellow-900 rounded">
+                  <div>🔍 DEBUG REAGENDAMENTO:</div>
+                  <div>canReschedule: <strong>{String(appointment.canReschedule)}</strong></div>
+                  <div>status: <strong>{appointment.status}</strong></div>
+                  <div>data: <strong>{new Date(appointment.data_agendamento).toLocaleString()}</strong></div>
+                  <div>isUpcoming: <strong>{String(appointment.isUpcoming)}</strong></div>
+                  <div>isPast: <strong>{String(appointment.isPast)}</strong></div>
+                  <div>horasAte: <strong>{Math.round((new Date(appointment.data_agendamento).getTime() - new Date().getTime()) / (1000 * 60 * 60))}h</strong></div>
+                </div>
+                
+                {appointment.canReschedule && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={() => {
+                      console.log('🔥 Botão Reagendar clicado!', {
+                        appointmentId: appointment.id,
+                        hasOnReschedule: !!onReschedule,
+                        canReschedule: appointment.canReschedule,
+                        showRescheduleModal,
+                        appointment: appointment
+                      })
+                      
+                      if (onReschedule) {
+                        console.log('📞 Chamando onReschedule prop')
+                        onReschedule(appointment.id)
+                      } else {
+                        console.log('🔄 Abrindo modal interno')
+                        setShowRescheduleModal(true)
+                        console.log('🔄 Modal state após setShowRescheduleModal:', true)
+                      }
+                    }}
+                  >
+                    Reagendar
+                  </Button>
+                )}
+                
+                {!appointment.canReschedule && (
+                  <div className="text-xs text-red-500 mb-2">
+                    Reagendamento não disponível
+                  </div>
+                )}
+                
+                {/* Botão de teste - sempre visível e destacado */}
+                <div className="mt-2 p-2 bg-red-100 dark:bg-red-900 rounded">
+                  <Button 
+                    variant="destructive" 
+                    size="sm" 
+                    onClick={() => {
+                      console.log('🧪 TESTE: Botão de teste clicado!')
+                      console.log('🧪 TESTE: Estado atual do modal:', showRescheduleModal)
+                      setShowRescheduleModal(true)
+                      console.log('🧪 TESTE: Modal definido como true')
+                      alert('Botão de teste clicado! Verifique o console.')
+                    }}
+                    className="w-full"
+                  >
+                    🧪 TESTE MODAL - CLIQUE AQUI
+                  </Button>
+                </div>
+              </div>
 
               {appointment.canCancel && (
                 <Button
@@ -275,6 +349,13 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
           />
         </div>
       </ConfirmDialog>
+
+      {/* Modal de reagendamento */}
+      <ReagendamentoModalSimples
+        isOpen={showRescheduleModal}
+        onClose={() => setShowRescheduleModal(false)}
+        appointment={appointment}
+      />
     </Card>
   )
 }

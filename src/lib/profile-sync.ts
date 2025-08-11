@@ -52,7 +52,7 @@ export class ProfileSync {
 
       if (!existingProfile) {
         // Criar novo perfil
-        console.log('📝 Criando novo perfil...')
+        // Criando novo perfil
         profile = await this.createProfile(user)
       } else {
         // Atualizar perfil existente

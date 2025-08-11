@@ -1,17 +1,12 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
 // Componente para exibir histórico de transações recentes
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 
-import { Clock, DollarSign, TrendingUp, TrendingDown, User, CreditCard, MoreVertical, X, AlertTriangle } from '@/shared/utils/optimized-imports'
+import { Clock, DollarSign, TrendingUp, TrendingDown, User, CreditCard, MoreVertical, X, AlertTriangle, Receipt, Smartphone } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { Badge } from '@/shared/components/ui'

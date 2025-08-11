@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, createContext, useContext, ReactNode, memo, useCallback } from 'react'
-import { CheckCircle, AlertTriangle, XCircle, Info, X } from '@/shared/utils/optimized-imports'
+import { CheckCircle, AlertTriangle, XCircle, Info, X } from 'lucide-react'
 import { cn } from '@/shared/utils'
 
 // Tipos de toast

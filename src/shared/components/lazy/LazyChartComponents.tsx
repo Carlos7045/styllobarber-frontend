@@ -151,11 +151,16 @@ export const AreaChartWithSuspense: React.FC<ChartProps> = ({ height = 'h-64', .
 
 // ===== COMPONENTES FINANCEIROS ESPECÍFICOS =====
 
-// Dashboard Financeiro Completo
+// Dashboard Financeiro Completo - Debug
 export const LazyFinancialDashboard = React.lazy(() => 
-  import('@/components/financial/components/FinancialDashboard').then(module => ({
-    default: module.default || module.FinancialDashboard
-  }))
+  import('@/components/financial/components/FinancialDashboard').then(module => {
+    console.log('LazyFinancialDashboard - module loaded:', module)
+    console.log('module.default:', module.default)
+    console.log('module.FinancialDashboard:', module.FinancialDashboard)
+    return {
+      default: module.default || module.FinancialDashboard
+    }
+  })
 )
 
 export const FinancialDashboardWithSuspense = () => (

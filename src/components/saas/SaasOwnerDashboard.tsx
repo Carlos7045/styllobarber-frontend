@@ -12,7 +12,7 @@ import { useMonitoringPermissions } from '@/lib/monitoring-permissions'
 // Removido import de debug component
 import { SystemStatusCard } from '@/domains/users/components/admin/SystemStatusCard'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { Crown, Building2, Users, DollarSign, TrendingUp, AlertTriangle, Shield, Database, Globe } from 'lucide-react'
+import { Crown, Building2, Users, DollarSign, TrendingUp, AlertTriangle, Shield, Database, Globe, Server } from 'lucide-react'
 
 interface SaasMetrics {
   totalClients: number

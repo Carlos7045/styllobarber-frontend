@@ -1,18 +1,13 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
 // Centro de relatórios financeiros
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 
-import { FileText, Download, Filter, Calendar, TrendingUp, TrendingDown, Users, BarChart3, ArrowLeft, RefreshCw } from '@/shared/utils/optimized-imports'
+import { FileText, Download, Filter, Calendar, TrendingUp, TrendingDown, Users, BarChart3, ArrowLeft, RefreshCw, FileSpreadsheet, FileImage } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { useReports } from '../hooks/use-reports'

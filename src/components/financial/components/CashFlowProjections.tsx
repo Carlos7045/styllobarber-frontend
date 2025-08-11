@@ -1,20 +1,15 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
+import { motion } from 'framer-motion'
 // Componente de projeções de fluxo de caixa
 
 import { useState, useEffect } from 'react'
 
-import { TrendingUp, TrendingDown, Calendar, Target, AlertTriangle, CheckCircle, Clock, BarChart3 } from '@/shared/utils/optimized-imports'
+import { TrendingUp, TrendingDown, Calendar, Target, AlertTriangle, CheckCircle, Clock, BarChart3 } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, Line } from '@/shared/utils/optimized-imports'
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ReferenceLine, Line } from 'recharts'
 import { Badge } from '@/shared/components/ui'
 
 import { formatCurrency, formatDate } from '../utils'

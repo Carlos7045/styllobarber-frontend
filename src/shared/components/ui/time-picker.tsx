@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { Clock, ChevronDown } from '@/shared/utils/optimized-imports'
+import { Clock, ChevronDown } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/shared/utils'
 

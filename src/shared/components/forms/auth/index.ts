@@ -19,3 +19,9 @@ export {
   ResetPasswordForm,
   ResetPasswordFormSkeleton,
 } from './reset-password-form'
+
+// Formulário de Nova Senha
+export {
+  NewPasswordForm,
+  NewPasswordFormSkeleton,
+} from './new-password-form'

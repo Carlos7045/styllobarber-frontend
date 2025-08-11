@@ -11,6 +11,8 @@ import { RouteGuard } from '@/domains/auth/components'
 import { useAppointments } from '@/domains/appointments/hooks/use-appointments'
 import { useAdminAgendamentos } from '@/domains/users/hooks/use-admin-agendamentos'
 import { ConfirmarAgendamentoModal } from '@/domains/appointments/components/ConfirmarAgendamentoModal'
+import { CalendarStatsComponent } from '@/components/calendar/CalendarStats'
+import { Calendar } from '@/components/calendar/Calendar'
 import { formatDateForDB } from '@/shared/utils/date-utils'
 import type {
   CalendarView,
@@ -207,7 +209,7 @@ export default function AgendaPage() {
           </div>
 
           {/* Estatísticas */}
-          <CalendarStats stats={stats} loading={loading} onPendentesClick={handlePendentesClick} />
+          <CalendarStatsComponent stats={stats} loading={loading} onPendentesClick={handlePendentesClick} />
 
           {/* Filtros */}
           <div className="bg-white dark:bg-secondary-graphite-light rounded-lg p-6">

@@ -120,6 +120,27 @@ const nextConfig: NextConfig = {
     return config
   },
   
+  // Redirecionamentos para manter compatibilidade
+  async redirects() {
+    return [
+      {
+        source: '/login',
+        destination: '/auth/login',
+        permanent: true,
+      },
+      {
+        source: '/cadastro',
+        destination: '/auth/signup',
+        permanent: true,
+      },
+      {
+        source: '/recuperar-senha',
+        destination: '/auth/reset-password',
+        permanent: true,
+      },
+    ];
+  },
+
   // Headers de segurança
   async headers() {
     return [

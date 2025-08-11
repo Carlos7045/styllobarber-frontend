@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { SimpleModal, SimpleModalContent, SimpleModalHeader, SimpleModalTitle, SimpleModalFooter } from '@/shared/components/ui/modal-simple'
 import { Button, Input, Textarea } from '@/shared/components/ui'
 import { useAdminServicos, type CreateServicoData, type UpdateServicoData, type ServicoAdmin } from '@/domains/users/hooks/use-admin-servicos'
-import { Scissors, DollarSign, Clock } from 'lucide-react'
+import { Scissors, DollarSign, Clock, Tag, Hash } from 'lucide-react'
 
 interface ServicoFormModalProps {
   isOpen: boolean

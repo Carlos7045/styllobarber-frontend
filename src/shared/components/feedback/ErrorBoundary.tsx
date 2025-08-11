@@ -8,14 +8,14 @@
 
 import React, { Component, ReactNode } from 'react'
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react'
-import {
-  Button,
+import { Button } from '@/shared/components/ui/button'
+import { 
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/shared/components/ui'
+} from '@/shared/components/ui/card'
 import { errorHandler, ErrorType, ErrorSeverity } from '@/lib/error-handler'
 import { logger } from '@/lib/monitoring/logger'
 
@@ -73,8 +73,7 @@ export class ErrorBoundary extends Component<Props, State> {
     })
 
     // Log do erro
-    logger.critical('React Error Boundary triggered', {
-      error: error.message || error.toString(),
+    logger.critical('React Error Boundary triggered', error, {
       stack: error.stack,
       component: 'ErrorBoundary',
       errorInfo,

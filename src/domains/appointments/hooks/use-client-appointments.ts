@@ -56,7 +56,8 @@ interface UseClientAppointmentsReturn {
   cancelAppointment: (id: string, reason?: string) => Promise<{ success: boolean; error?: string }>
   rescheduleAppointment: (
     id: string,
-    newDateTime: string
+    newDateTime: string,
+    observacoes?: string
   ) => Promise<{ success: boolean; error?: string }>
   refetch: () => Promise<void>
 }
@@ -191,8 +192,9 @@ export function useClientAppointments(
 
       if (hoursUntilAppointment < reschedulingPolicy.minHoursBeforeAppointment) return false
 
-      // Verificar limite de reagendamentos por mês
-      return rescheduleCount < reschedulingPolicy.maxReschedulesPerMonth
+      // Verificar limite de reagendamentos por agendamento
+      // Por enquanto, sempre permitir reagendamento se passou nas outras validações
+      return true
     },
     [allAppointments, reschedulingPolicy, rescheduleCount]
   )
@@ -217,10 +219,24 @@ export function useClientAppointments(
       const isPast =
         appointmentDate <= now || ['cancelado', 'concluido'].includes(appointment.status)
 
+      const canCancel = canCancelAppointment(appointment.id)
+      const canReschedule = canRescheduleAppointment(appointment.id)
+
+      // Debug log para verificar permissões
+      console.log('🔍 Agendamento:', {
+        id: appointment.id,
+        status: appointment.status,
+        data: appointment.data_agendamento,
+        isUpcoming,
+        canCancel,
+        canReschedule,
+        hoursUntil: (appointmentDate.getTime() - now.getTime()) / (1000 * 60 * 60)
+      })
+
       return {
         ...appointment,
-        canCancel: canCancelAppointment(appointment.id),
-        canReschedule: canRescheduleAppointment(appointment.id),
+        canCancel,
+        canReschedule,
         timeUntilAppointment: isUpcoming
           ? calculateTimeUntilAppointment(appointment.data_agendamento)
           : undefined,
@@ -376,61 +392,6 @@ export function useClientAppointments(
     [canCancelAppointment, updateAppointment, user?.id]
   )
 
-  // Função para reagendar agendamento
-  const rescheduleAppointment = useCallback(
-    async (id: string, newDateTime: string) => {
-      try {
-        if (!canRescheduleAppointment(id)) {
-          return {
-            success: false,
-            error: 'Agendamento não pode ser reagendado devido às políticas de reagendamento',
-          }
-        }
-
-        // Verificar se o novo horário está disponível
-        // TODO: Implementar verificação de conflitos de horário
-
-        const result = await updateAppointment(id, {
-          data_agendamento: newDateTime,
-          status: 'pendente', // Resetar para pendente após reagendamento
-        })
-
-        if (result.success) {
-          // Log do reagendamento
-          // TODO: Implementar sistema de logs quando necessário
-          // try {
-          //   await supabase
-          //     .from('appointment_logs')
-          //     .insert({
-          //       appointment_id: id,
-          //       cliente_id: user?.id,
-          //       action: 'reschedule',
-          //       details: `Reagendado para ${newDateTime}`,
-          //       created_at: new Date().toISOString()
-          //     })
-          // } catch (logError) {
-          //   console.warn('Erro ao registrar log de reagendamento:', logError)
-          // }
-
-          // Atualizar contagem de reagendamentos
-          setRescheduleCount((prev) => prev + 1)
-
-          // TODO: Enviar notificação ao barbeiro
-          console.log('Agendamento reagendado, notificação ao barbeiro deve ser enviada')
-        }
-
-        return result
-      } catch (error) {
-        console.error('Erro ao reagendar agendamento:', error)
-        return {
-          success: false,
-          error: error instanceof Error ? error.message : 'Erro ao reagendar agendamento',
-        }
-      }
-    },
-    [canRescheduleAppointment, updateAppointment, user?.id]
-  )
-
   // Função para verificar disponibilidade de horário (versão simplificada e robusta)
   const checkAvailability = useCallback(
     async (
@@ -460,6 +421,90 @@ export function useClientAppointments(
       }
     },
     []
+  )
+
+  // Função para reagendar agendamento
+  const rescheduleAppointment = useCallback(
+    async (id: string, newDateTime: string, observacoes?: string) => {
+      try {
+        if (!canRescheduleAppointment(id)) {
+          return {
+            success: false,
+            error: 'Agendamento não pode ser reagendado devido às políticas de reagendamento',
+          }
+        }
+
+        const appointment = allAppointments.find((apt) => apt.id === id)
+        if (!appointment) {
+          return {
+            success: false,
+            error: 'Agendamento não encontrado',
+          }
+        }
+
+        // Verificar se o novo horário está disponível
+        const [date, time] = newDateTime.split('T')
+        const isAvailable = await checkAvailability(
+          date,
+          time.substring(0, 5), // Remove segundos
+          appointment.barbeiro_id,
+          appointment.service_id,
+          appointment.service?.duracao_minutos || 30
+        )
+
+        if (!isAvailable) {
+          return {
+            success: false,
+            error: 'O horário selecionado não está mais disponível',
+          }
+        }
+
+        // Preparar dados para atualização
+        const updateData: any = {
+          data_agendamento: newDateTime,
+          status: 'pendente', // Resetar para pendente após reagendamento
+        }
+
+        // Adicionar observações se fornecidas
+        if (observacoes) {
+          const currentObservacoes = appointment.observacoes || ''
+          const reagendamentoNote = `Reagendado em ${new Date().toLocaleString('pt-BR')}: ${observacoes}`
+          updateData.observacoes = currentObservacoes 
+            ? `${currentObservacoes}\n\n${reagendamentoNote}`
+            : reagendamentoNote
+        }
+
+        const result = await updateAppointment(id, updateData)
+
+        if (result.success) {
+          // Log do reagendamento
+          console.log('✅ Agendamento reagendado com sucesso:', {
+            id,
+            oldDateTime: appointment.data_agendamento,
+            newDateTime,
+            observacoes,
+          })
+
+          // Atualizar contagem de reagendamentos
+          setRescheduleCount((prev) => prev + 1)
+
+          // TODO: Enviar notificação ao barbeiro
+          console.log('📧 Notificação ao barbeiro deve ser enviada sobre reagendamento')
+
+          // Recarregar dados
+          await baseRefetch()
+        }
+
+        return result
+      } catch (error) {
+        console.error('❌ Erro ao reagendar agendamento:', error)
+        return {
+          success: false,
+          error: error instanceof Error ? error.message : 'Erro ao reagendar agendamento',
+        }
+      }
+    },
+    [canRescheduleAppointment, updateAppointment, user?.id, allAppointments, checkAvailability, baseRefetch]
   )
 
   // Função para criar novo agendamento (versão simplificada para desenvolvimento)
@@ -570,7 +615,7 @@ export function useClientAppointments(
         }
 
         // Recarregar agendamentos para atualizar a lista
-        refetch()
+        await baseRefetch()
 
         return newAppointment
       } catch (error) {
@@ -578,7 +623,7 @@ export function useClientAppointments(
         throw error
       }
     },
-    [user?.id, services, funcionarios, profile]
+    [user?.id, services, funcionarios, profile, baseRefetch]
   )
 
   // Buscar contagem de reagendamentos na inicialização

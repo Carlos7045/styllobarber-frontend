@@ -3,20 +3,10 @@
 import React from 'react'
 import { Scissors, DollarSign, Star, Calendar, TrendingUp, User } from 'lucide-react'
 import { Card, CardContent } from '@/shared/components/ui/card'
-import { cn, formatarMoeda } from '@/shared/utils'
-
-interface ClientStats {
-  totalCortes: number
-  valorTotalGasto: number
-  pontosFidelidade: number
-  frequenciaMedia: number
-  servicoFavorito?: string
-  barbeiroFavorito?: string
-}
+import { cn, formatarMoeda } from '@/shared/utils/utils'
+import { useClientStats } from '@/domains/users/hooks/use-client-stats'
 
 interface ClientStatsProps {
-  stats: ClientStats
-  loading?: boolean
   className?: string
 }
 
@@ -57,7 +47,9 @@ const StatCard: React.FC<StatCardProps> = ({
   </Card>
 )
 
-export const ClientStats: React.FC<ClientStatsProps> = ({ stats, loading = false, className }) => {
+export const ClientStats: React.FC<ClientStatsProps> = ({ className }) => {
+  const { stats, loading, error } = useClientStats()
+  
   const {
     totalCortes,
     valorTotalGasto,
@@ -66,6 +58,24 @@ export const ClientStats: React.FC<ClientStatsProps> = ({ stats, loading = false
     servicoFavorito,
     barbeiroFavorito,
   } = stats
+
+  // Mostrar erro se houver
+  if (error) {
+    return (
+      <div className={cn('space-y-6', className)}>
+        <Card className="p-6 border-red-200 bg-red-50 dark:bg-red-900/20 dark:border-red-800">
+          <div className="text-center">
+            <h3 className="font-semibold text-red-900 dark:text-red-200 mb-2">
+              Erro ao Carregar Estatísticas
+            </h3>
+            <p className="text-red-700 dark:text-red-300">
+              {error}
+            </p>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
     <div className={cn('space-y-6', className)}>

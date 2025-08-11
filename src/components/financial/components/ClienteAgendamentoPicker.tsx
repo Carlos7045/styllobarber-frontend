@@ -1,17 +1,12 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
+import { motion } from 'framer-motion'
 // Componente para buscar e selecionar clientes com agendamentos pendentes
 
 import { useState, useEffect } from 'react'
 
-import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Scissors } from '@/shared/utils/optimized-imports'
+import { Search, User, Calendar, Clock, DollarSign, Check, X, Phone, Scissors } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'

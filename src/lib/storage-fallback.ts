@@ -79,6 +79,6 @@ function fileToBase64(file: File): Promise<string> {
  * Remove avatar (no fallback, apenas retorna sucesso)
  */
 export async function removeAvatarFallback(avatarUrl: string): Promise<boolean> {
-  console.log('🗑️ Fallback: Removendo avatar (simulado)')
+  // Fallback: Removendo avatar (simulado)
   return true
 }

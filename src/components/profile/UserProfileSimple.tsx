@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Mail, Phone, Calendar, Save, X, Shield } from 'lucide-react'
+import { User, Mail, Phone, Calendar, Save, X, Shield, Award } from 'lucide-react'
 
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'

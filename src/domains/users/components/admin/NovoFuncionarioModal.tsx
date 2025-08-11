@@ -5,7 +5,7 @@ import { SimpleModal, SimpleModalContent, SimpleModalHeader, SimpleModalTitle, S
 import { Button, Input, Textarea } from '@/shared/components/ui'
 import { useAdminFuncionarios, type CreateFuncionarioData } from '@/domains/users/hooks/use-admin-funcionarios'
 import { supabase } from '@/lib/api/supabase'
-import { User, Mail, Phone, Calendar } from 'lucide-react'
+import { User, Mail, Phone, Calendar, Percent } from 'lucide-react'
 
 interface NovoFuncionarioModalProps {
   isOpen: boolean

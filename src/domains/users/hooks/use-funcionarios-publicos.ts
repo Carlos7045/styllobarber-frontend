@@ -1,6 +1,6 @@
 /**
  * Hook para buscar funcionários públicos (para clientes)
- * Não requer permissões administrativas
+ * Versão simplificada e robusta
  */
 
 import { useState, useEffect, useCallback } from 'react'
@@ -36,185 +36,32 @@ export function useFuncionariosPublicos(): UseFuncionariosPublicosReturn {
       setLoading(true)
       setError(null)
 
-      console.log('🔍 Iniciando busca de funcionários...')
+      console.log('🔍 Iniciando busca de funcionários (versão simplificada)...')
 
-      // Estratégia 1: Tentar buscar funcionários com join (mais robusta)
-      console.log('📋 Estratégia 1: Buscar funcionários com join')
-      const { data: funcionariosData, error: funcionariosError } = await supabase
-        .from('funcionarios')
-        .select(
-          `
-          id,
-          especialidades,
-          ativo,
-          profile_id,
-          profiles!funcionarios_profile_id_fkey(
-            id,
-            nome,
-            avatar_url,
-            role
-          )
-        `
-        )
-        .eq('ativo', true)
-        .not('profile_id', 'is', null)
-        .order('created_at', { ascending: false })
-
-      console.log('📋 Resultado estratégia 1:', {
-        funcionariosData,
-        funcionariosError,
-        count: funcionariosData?.length || 0,
-      })
-
-      if (!funcionariosError && funcionariosData && funcionariosData.length > 0) {
-        // Filtrar apenas funcionários com profiles válidos
-        const funcionariosValidos = funcionariosData.filter(
-          (func) => func.profiles && func.profiles.nome && func.profiles.nome.trim() !== ''
-        )
-
-        console.log('✅ Estratégia 1 funcionou! Funcionários válidos:', funcionariosValidos.length)
-
-        if (funcionariosValidos.length > 0) {
-          setFuncionarios(funcionariosValidos)
-          return
-        }
-      }
-
-      // Estratégia 2: Buscar todos os funcionários primeiro e combinar manualmente
-      console.log('📋 Estratégia 2: Buscar funcionários e profiles separadamente')
-      const { data: allFuncionarios, error: allError } = await supabase
-        .from('funcionarios')
-        .select('*')
-        .eq('ativo', true)
-        .not('profile_id', 'is', null)
-
-      console.log('📋 Funcionários ativos:', {
-        allFuncionarios,
-        allError,
-        count: allFuncionarios?.length || 0,
-      })
-
-      if (!allError && allFuncionarios && allFuncionarios.length > 0) {
-        // Buscar profiles separadamente
-        const profileIds = allFuncionarios.map((f) => f.profile_id).filter(Boolean)
-
-        if (profileIds.length > 0) {
-          const { data: profilesData, error: profilesError } = await supabase
-            .from('profiles')
-            .select('id, nome, avatar_url, role')
-            .in('id', profileIds)
-            .in('role', ['admin', 'barber']) // Apenas roles válidos
-
-          console.log('📋 Profiles de barbeiros:', {
-            profilesData,
-            profilesError,
-            count: profilesData?.length || 0,
-          })
-
-          if (!profilesError && profilesData && profilesData.length > 0) {
-            // Combinar dados manualmente
-            const combinedData = allFuncionarios
-              .map((func) => {
-                const profile = profilesData.find((p) => p.id === func.profile_id)
-                return {
-                  id: func.id,
-                  especialidades: func.especialidades || [],
-                  ativo: func.ativo,
-                  profiles: profile
-                    ? {
-                        id: profile.id,
-                        nome: profile.nome,
-                        avatar_url: profile.avatar_url,
-                      }
-                    : undefined,
-                }
-              })
-              .filter((func) => func.profiles && func.profiles.nome) // Só incluir se tem profile válido
-
-            console.log('✅ Estratégia 2 funcionou! Dados combinados:', combinedData.length)
-
-            if (combinedData.length > 0) {
-              setFuncionarios(combinedData)
-              return
-            }
-          }
-        }
-      }
-
-      // Estratégia 3: Buscar através dos profiles (reverse join)
-      console.log('📋 Estratégia 3: Buscar através dos profiles')
-      const { data: profilesWithRole, error: profilesRoleError } = await supabase
-        .from('profiles')
-        .select(
-          `
-          id,
-          nome,
-          avatar_url,
-          role,
-          funcionarios!funcionarios_profile_id_fkey(
-            id,
-            especialidades,
-            ativo
-          )
-        `
-        )
-        .in('role', ['admin', 'barber'])
-        .not('nome', 'is', null)
-
-      console.log('📋 Profiles com role barbeiro:', {
-        profilesWithRole,
-        profilesRoleError,
-        count: profilesWithRole?.length || 0,
-      })
-
-      if (!profilesRoleError && profilesWithRole && profilesWithRole.length > 0) {
-        const convertedData = profilesWithRole
-          .filter(
-            (profile) =>
-              profile.funcionarios &&
-              profile.funcionarios.length > 0 &&
-              profile.funcionarios[0].ativo === true &&
-              profile.nome &&
-              profile.nome.trim() !== ''
-          )
-          .map((profile) => ({
-            id: profile.funcionarios[0].id,
-            especialidades: profile.funcionarios[0].especialidades || [],
-            ativo: profile.funcionarios[0].ativo,
-            profiles: {
-              id: profile.id,
-              nome: profile.nome,
-              avatar_url: profile.avatar_url,
-            },
-          }))
-
-        console.log('✅ Estratégia 3 funcionou! Dados convertidos:', convertedData.length)
-
-        if (convertedData.length > 0) {
-          setFuncionarios(convertedData)
-          return
-        }
-      }
-
-      // Estratégia 4: Buscar apenas profiles com role de barbeiro (fallback)
-      console.log('📋 Estratégia 4: Buscar apenas profiles de barbeiros')
-      const { data: onlyProfiles, error: onlyProfilesError } = await supabase
+      // Buscar profiles com role de barbeiro/admin
+      const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, nome, avatar_url, role')
         .in('role', ['admin', 'barber'])
         .not('nome', 'is', null)
+        .order('nome', { ascending: true })
 
-      console.log('📋 Apenas profiles:', {
-        onlyProfiles,
-        onlyProfilesError,
-        count: onlyProfiles?.length || 0,
+      console.log('📋 Resultado busca profiles:', {
+        profilesData,
+        profilesError,
+        count: profilesData?.length || 0,
       })
 
-      if (!onlyProfilesError && onlyProfiles && onlyProfiles.length > 0) {
-        // Criar funcionários mock baseados nos profiles
-        const mockFuncionarios = onlyProfiles.map((profile, index) => ({
+      if (profilesError) {
+        console.error('❌ Erro ao buscar profiles:', profilesError)
+        throw new Error(`Erro na consulta: ${profilesError.message}`)
+      }
+
+      if (profilesData && profilesData.length > 0) {
+        // Converter profiles para formato de funcionários
+        const funcionariosFromProfiles = profilesData.map((profile) => ({
           id: `profile-${profile.id}`,
-          especialidades: ['Corte', 'Barba'], // Especialidades padrão
+          especialidades: ['Corte Masculino', 'Barba'], // Especialidades padrão
           ativo: true,
           profiles: {
             id: profile.id,
@@ -223,16 +70,13 @@ export function useFuncionariosPublicos(): UseFuncionariosPublicosReturn {
           },
         }))
 
-        console.log(
-          '✅ Estratégia 4 funcionou! Funcionários mock criados:',
-          mockFuncionarios.length
-        )
-        setFuncionarios(mockFuncionarios)
+        console.log('✅ Funcionários criados a partir de profiles:', funcionariosFromProfiles.length)
+        setFuncionarios(funcionariosFromProfiles)
         return
       }
 
-      // Estratégia 5: Criar dados mock se nada funcionar (para desenvolvimento)
-      console.log('📋 Estratégia 5: Dados mock para desenvolvimento')
+      // Fallback: Criar dados mock se nada funcionar
+      console.log('📋 Fallback: Criando dados mock para desenvolvimento')
 
       // Só usar mock em desenvolvimento
       if (process.env.NODE_ENV === 'development') {
@@ -278,28 +122,8 @@ export function useFuncionariosPublicos(): UseFuncionariosPublicosReturn {
       }
     } catch (err) {
       console.error('❌ Erro geral ao buscar funcionários:', err)
-      const errorMessage = err instanceof Error ? err.message : 'Erro ao buscar funcionários'
-      setError(errorMessage)
-
-      // Em caso de erro, fornecer dados mock apenas em desenvolvimento
-      if (process.env.NODE_ENV === 'development') {
-        const errorMockData: FuncionarioPublico[] = [
-          {
-            id: 'error-mock-1',
-            especialidades: ['Corte Masculino'],
-            ativo: true,
-            profiles: {
-              id: 'error-mock-profile-1',
-              nome: 'Barbeiro Disponível (Erro)',
-              avatar_url: undefined,
-            },
-          },
-        ]
-        console.log('⚠️ Erro capturado - usando dados mock:', errorMockData)
-        setFuncionarios(errorMockData)
-      } else {
-        setFuncionarios([])
-      }
+      setError(err instanceof Error ? err.message : 'Erro desconhecido ao carregar barbeiros')
+      setFuncionarios([])
     } finally {
       setLoading(false)
     }

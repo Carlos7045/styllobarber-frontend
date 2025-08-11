@@ -12,6 +12,7 @@ import {
   LocalizacaoModal,
   NextAppointmentHighlight,
   DetalhesAgendamentoModal,
+  AgendamentoCard,
 } from '@/domains/users/components/client'
 import { Calendar, Clock, Plus, Scissors, MapPin, CheckCircle } from 'lucide-react'
 
@@ -154,46 +155,13 @@ export default function AgendamentosPage() {
             ) : upcomingAppointments.length > 1 ? (
               <div className="space-y-4">
                 {upcomingAppointments.slice(1).map((appointment) => (
-                  <div key={appointment.id} className="border-border-default rounded-lg border p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-gold/10">
-                          <Scissors className="h-6 w-6 text-primary-gold" />
-                        </div>
-                        <div>
-                          <h3 className="font-medium text-text-primary">
-                            {appointment.service?.nome || 'Serviço'}
-                          </h3>
-                          <p className="text-sm text-text-muted">
-                            {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR', {
-                              timeZone: 'America/Sao_Paulo',
-                            })}{' '}
-                            às{' '}
-                            {new Date(appointment.data_agendamento).toLocaleTimeString('pt-BR', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                              timeZone: 'America/Sao_Paulo',
-                            })}
-                          </p>
-                          {appointment.barbeiro && (
-                            <p className="text-sm text-text-muted">
-                              Com {appointment.barbeiro.nome}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-primary-gold/10 px-2 py-1 text-xs text-primary-gold">
-                          {appointment.status}
-                        </span>
-                        {appointment.timeUntilAppointment && (
-                          <span className="text-sm text-text-muted">
-                            em {appointment.timeUntilAppointment}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
+                  <AgendamentoCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    variant="compact"
+                    showActions={true}
+                    onViewDetails={handleViewDetails}
+                  />
                 ))}
               </div>
             ) : upcomingAppointments.length === 1 ? (
@@ -232,35 +200,13 @@ export default function AgendamentosPage() {
             {pastAppointments.length > 0 ? (
               <div className="space-y-3">
                 {pastAppointments.slice(0, 5).map((appointment) => (
-                  <div
+                  <AgendamentoCard
                     key={appointment.id}
-                    className="border-border-default flex items-center justify-between rounded-lg border p-3"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-full bg-neutral-light-gray">
-                        <Scissors className="h-4 w-4 text-text-muted" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          {appointment.service?.nome || 'Serviço'}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          {new Date(appointment.data_agendamento).toLocaleDateString('pt-BR', {
-                            timeZone: 'America/Sao_Paulo',
-                          })}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`rounded-full px-2 py-1 text-xs ${
-                        appointment.status === 'concluido'
-                          ? 'bg-success/10 text-success'
-                          : 'bg-error/10 text-error'
-                      }`}
-                    >
-                      {appointment.status}
-                    </span>
-                  </div>
+                    appointment={appointment}
+                    variant="compact"
+                    showActions={true}
+                    onViewDetails={handleViewDetails}
+                  />
                 ))}
               </div>
             ) : (

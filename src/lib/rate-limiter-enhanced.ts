@@ -90,7 +90,7 @@ class RateLimiterEnhanced {
    */
   registerConfig(name: string, config: RateLimitConfig): void {
     this.configs.set(name, config)
-    console.log(`📝 Rate limit registrado: ${name}`)
+    // Rate limit registrado
   }
 
   /**

@@ -1,18 +1,30 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
+import { motion } from 'framer-motion'
 // Componentes de gráficos para o dashboard financeiro
 
 
 
 import { Card } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'
+import {
+  LineChart,
+  AreaChart,
+  BarChart,
+  PieChart,
+  Line,
+  Area,
+  Bar,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer
+} from 'recharts'
 
 // Cores para os gráficos
 const CHART_COLORS = {

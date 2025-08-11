@@ -32,6 +32,11 @@ export const calculatePercentage = (value: number, total: number): number => {
   return (value / total) * 100
 }
 
+// Formatação de porcentagem
+export const formatPercentage = (value: number): string => {
+  return `${value.toFixed(1)}%`
+}
+
 // Validar valor monetário
 export const isValidCurrency = (value: string): boolean => {
   const numericValue = parseFloat(value.replace(/[^\d,.-]/g, '').replace(',', '.'))
@@ -118,6 +123,12 @@ export const generateDateRange = (days: number): { inicio: string; fim: string }
     inicio: inicio.toISOString(),
     fim: fim.toISOString()
   }
+}
+
+// Calcular taxa de crescimento
+export const calculateGrowthRate = (current: number, previous: number): number => {
+  if (previous === 0) return current > 0 ? 100 : 0
+  return ((current - previous) / previous) * 100
 }
 
 // Obter período da semana atual

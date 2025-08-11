@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { Clock, Calendar, Mail, MessageSquare, Bell, Smartphone, Trash2, Plus, Search, Filter } from 'lucide-react'
+import { Clock, Calendar, Mail, MessageSquare, Bell, Smartphone, Trash2, Plus, Search, Filter, Play, Pause } from 'lucide-react'
 
 import { useAdminNotificacoes } from '@/domains/users/hooks/use-admin-notificacoes'
 import { Button, Input, Card, CardContent } from '@/shared/components/ui'
-import { cn } from '@/shared/utils'
+import { cn } from '@/lib/utils'
 import { formatDate } from '@/shared/utils/date-utils'
 
 import type {

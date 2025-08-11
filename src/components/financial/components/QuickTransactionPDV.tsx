@@ -1,17 +1,12 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
 // Componente PDV para registrar transações rápidas
 
 import { useState, useEffect, useRef } from 'react'
+import { motion } from 'framer-motion'
 
-import { Check, CreditCard, DollarSign, Loader2, Minus, Plus, Save, Search, User, X } from '@/shared/utils/optimized-imports'
+import { Check, CreditCard, DollarSign, Loader2, Minus, Plus, Save, Search, User, X, Maximize2, Minimize2, Smartphone } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { formatCurrency } from '../utils'

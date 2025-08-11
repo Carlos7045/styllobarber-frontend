@@ -887,16 +887,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Função de recuperação de senha
   const resetPassword = async (data: ResetPasswordData): Promise<AuthResult> => {
     try {
+      console.log('🔄 Iniciando reset de senha para:', data.email)
+      console.log('🌐 URL de redirect:', `${window.location.origin}/auth/reset-password`)
+      
       const { error } = await supabase.auth.resetPasswordForEmail(data.email, {
         redirectTo: `${window.location.origin}/auth/reset-password`,
       })
 
+      console.log('📊 Resultado do resetPasswordForEmail:', { error })
+
       if (error) {
+        console.error('❌ Erro no reset:', error)
         return { success: false, error }
       }
 
+      console.log('✅ Reset enviado com sucesso')
       return { success: true, error: null }
     } catch (error) {
+      console.error('❌ Erro inesperado no reset:', error)
       return {
         success: false,
         error: error as AuthError,

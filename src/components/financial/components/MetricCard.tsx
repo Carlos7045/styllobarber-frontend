@@ -1,18 +1,13 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
 // Componente para cards de métricas financeiras
 
-
-import { TrendingUp, TrendingDown } from '@/shared/utils/optimized-imports'
+import { motion } from 'framer-motion'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { formatCurrency, formatPercentage } from '../utils'
+import type { LucideIcon } from 'lucide-react'
 
 interface MetricCardProps {
   title: string

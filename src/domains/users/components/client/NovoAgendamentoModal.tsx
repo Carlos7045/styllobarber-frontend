@@ -13,6 +13,7 @@ import {
   Scissors,
   MapPin,
   X,
+  CreditCard,
 } from 'lucide-react'
 import {
   SimpleModal,
@@ -60,12 +61,13 @@ interface Barbeiro {
 }
 
 // Etapas do formulário
-type FormStep = 'service' | 'barber' | 'datetime' | 'confirmation'
+type FormStep = 'service' | 'barber' | 'datetime' | 'payment' | 'confirmation'
 
 const stepTitles = {
   service: 'Escolha o Serviço',
   barber: 'Escolha o Barbeiro',
   datetime: 'Escolha Data e Horário',
+  payment: 'Forma de Pagamento',
   confirmation: 'Confirmar Agendamento',
 }
 
@@ -73,6 +75,7 @@ const stepIcons = {
   service: Scissors,
   barber: User,
   datetime: Calendar,
+  payment: DollarSign,
   confirmation: Check,
 }
 
@@ -118,6 +121,7 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
   const [selectedDate, setSelectedDate] = useState<Date>()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
+  const [paymentMethod, setPaymentMethod] = useState<'advance' | 'local'>('local')
 
   // Hooks
   const { services, loading: servicesLoading } = useServices()
@@ -294,7 +298,7 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
 
   // Navegação entre etapas
   const goToNextStep = () => {
-    const steps: FormStep[] = ['service', 'barber', 'datetime', 'confirmation']
+    const steps: FormStep[] = ['service', 'barber', 'datetime', 'payment', 'confirmation']
     const currentIndex = steps.indexOf(currentStep)
     console.log('🔧 goToNextStep:', {
       currentStep,
@@ -307,7 +311,7 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
   }
 
   const goToPreviousStep = () => {
-    const steps: FormStep[] = ['service', 'barber', 'datetime', 'confirmation']
+    const steps: FormStep[] = ['service', 'barber', 'datetime', 'payment', 'confirmation']
     const currentIndex = steps.indexOf(currentStep)
     if (currentIndex > 0) {
       setCurrentStep(steps[currentIndex - 1])
@@ -380,14 +384,36 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
         return
       }
 
-      // Criar agendamento
+      // Se pagamento antecipado, redirecionar para página de pagamento
+      if (paymentMethod === 'advance') {
+        // Salvar dados do agendamento no localStorage para recuperar após pagamento
+        const appointmentData = {
+          service_id: formData.serviceId,
+          barbeiro_id: formData.barbeiroId,
+          data_agendamento: `${formData.data}T${formData.horario}:00-03:00`,
+          observacoes: formData.observacoes || null,
+          payment_method: 'advance',
+          amount: (selectedService?.preco || 0) * 0.9, // Valor com desconto
+        }
+        
+        localStorage.setItem('pendingAppointment', JSON.stringify(appointmentData))
+        
+        // Redirecionar para página de pagamento
+        window.location.href = `/dashboard/pagamento?amount=${appointmentData.amount}&type=appointment`
+        return
+      }
+
+      // Pagamento no local - criar agendamento normalmente
       const appointment = await createAppointment({
         service_id: formData.serviceId,
         barbeiro_id: formData.barbeiroId,
         data_agendamento: `${formData.data}T${formData.horario}:00-03:00`, // Especifica fuso brasileiro
         observacoes: formData.observacoes || null,
+        payment_method: 'local',
+        payment_status: 'pending',
       })
 
+      console.log('✅ Agendamento criado:', appointment)
       onSuccess?.(appointment)
       onClose()
     } catch (err) {
@@ -703,6 +729,111 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
     </div>
   )
 
+  // Renderizar etapa de pagamento
+  const renderPaymentStep = () => (
+    <div className="space-y-6">
+      <div className="text-center">
+        <h3 className="text-lg font-semibold mb-2">Forma de Pagamento</h3>
+        <p className="text-gray-400">Como você gostaria de pagar pelo serviço?</p>
+      </div>
+
+      <div className="space-y-3">
+        {/* Pagar Agora */}
+        <Card
+          className={cn(
+            'cursor-pointer transition-all hover:shadow-md border-gray-700',
+            paymentMethod === 'advance'
+              ? 'ring-2 ring-primary-gold bg-primary-gold/5'
+              : 'hover:bg-gray-800/50'
+          )}
+          onClick={() => setPaymentMethod('advance')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
+                  <CreditCard className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-white">Pagar Agora</h4>
+                  <p className="text-sm text-gray-400">
+                    Pagamento antecipado com desconto
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-green-600">
+                  {formatarMoeda((selectedService?.preco || 0) * 0.9)}
+                </div>
+                <div className="text-xs text-gray-500 line-through">
+                  {formatarMoeda(selectedService?.preco || 0)}
+                </div>
+                <div className="text-xs text-green-600 font-medium">
+                  10% desconto
+                </div>
+              </div>
+              {paymentMethod === 'advance' && (
+                <Check className="h-5 w-5 text-primary-gold ml-2" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Pagar no Local */}
+        <Card
+          className={cn(
+            'cursor-pointer transition-all hover:shadow-md border-gray-700',
+            paymentMethod === 'local'
+              ? 'ring-2 ring-primary-gold bg-primary-gold/5'
+              : 'hover:bg-gray-800/50'
+          )}
+          onClick={() => setPaymentMethod('local')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <MapPin className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <h4 className="font-medium text-white">Pagar no Local</h4>
+                  <p className="text-sm text-gray-400">
+                    Pagamento após o serviço
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="font-bold text-white">
+                  {formatarMoeda(selectedService?.preco || 0)}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Valor integral
+                </div>
+              </div>
+              {paymentMethod === 'local' && (
+                <Check className="h-5 w-5 text-primary-gold ml-2" />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Métodos de Pagamento Disponíveis */}
+      <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+        <h4 className="font-medium mb-2 flex items-center text-white">
+          <CreditCard className="h-4 w-4 mr-2" />
+          Métodos Aceitos
+        </h4>
+        <div className="flex flex-wrap gap-2 text-sm text-gray-400">
+          <span className="bg-gray-700 px-2 py-1 rounded">💳 Cartão</span>
+          <span className="bg-gray-700 px-2 py-1 rounded">💰 Dinheiro</span>
+          <span className="bg-gray-700 px-2 py-1 rounded">📱 PIX</span>
+          <span className="bg-gray-700 px-2 py-1 rounded">💸 Débito</span>
+        </div>
+      </div>
+    </div>
+  )
+
   // Renderizar etapa de confirmação
   const renderConfirmationStep = () => (
     <div className="space-y-4">
@@ -816,6 +947,8 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
         return !!formData.barbeiroId
       case 'datetime':
         return !!formData.data && !!formData.horario
+      case 'payment':
+        return true // Sempre pode prosseguir (tem valor padrão)
       case 'confirmation':
         return true
       default:
@@ -852,19 +985,19 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-400">Progresso</span>
               <span className="font-medium text-primary-gold">
-                {(['service', 'barber', 'datetime', 'confirmation'] as FormStep[]).indexOf(
+                {(['service', 'barber', 'datetime', 'payment', 'confirmation'] as FormStep[]).indexOf(
                   currentStep
                 ) + 1}{' '}
-                de 4
+                de 5
               </span>
             </div>
 
             <div className="flex items-center gap-2">
-              {(['service', 'barber', 'datetime', 'confirmation'] as FormStep[]).map(
+              {(['service', 'barber', 'datetime', 'payment', 'confirmation'] as FormStep[]).map(
                 (step, index) => {
                   const isActive = step === currentStep
                   const isCompleted =
-                    ['service', 'barber', 'datetime', 'confirmation'].indexOf(currentStep) > index
+                    ['service', 'barber', 'datetime', 'payment', 'confirmation'].indexOf(currentStep) > index
                   const StepIcon = stepIcons[step]
 
                   return (
@@ -915,6 +1048,7 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
               {currentStep === 'service' && renderServiceStep()}
               {currentStep === 'barber' && renderBarberStep()}
               {currentStep === 'datetime' && renderDateTimeStep()}
+              {currentStep === 'payment' && renderPaymentStep()}
               {currentStep === 'confirmation' && renderConfirmationStep()}
             </motion.div>
           </AnimatePresence>

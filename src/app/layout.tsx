@@ -4,6 +4,7 @@ import './globals.css'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { ErrorProvider } from '@/shared/components/ErrorProvider'
 import { ToastProvider } from '@/shared/components/ui'
+import { QueryProvider } from '@/shared/components/providers/QueryProvider'
 
 // Configuração das fontes do StylloBarber
 const inter = Inter({
@@ -82,11 +83,22 @@ export default function RootLayout({
           enableNetworkErrorHandling={true}
           enablePerformanceMonitoring={process.env.NODE_ENV === 'development'}
         >
-          <ToastProvider>
-            <AuthProvider>
-              <div id="root">{children}</div>
-            </AuthProvider>
-          </ToastProvider>
+          <QueryProvider
+            showDevtools={process.env.NODE_ENV === 'development'}
+            clientConfig={{
+              defaultStaleTime: 5 * 60 * 1000, // 5 minutos
+              defaultCacheTime: 10 * 60 * 1000, // 10 minutos
+              defaultRetry: 3,
+              refetchOnWindowFocus: false,
+              refetchOnReconnect: true,
+            }}
+          >
+            <ToastProvider>
+              <AuthProvider>
+                <div id="root">{children}</div>
+              </AuthProvider>
+            </ToastProvider>
+          </QueryProvider>
         </ErrorProvider>
       </body>
     </html>

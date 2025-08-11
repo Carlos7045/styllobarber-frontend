@@ -17,7 +17,7 @@ import { Button } from '@/shared/components/ui/button'
 import { Badge } from '@/shared/components/ui/badge'
 import { cn, formatarMoeda } from '@/shared/utils'
 import type { ClientAppointment } from '@/types/appointments'
-// Removido import do hook que não existe
+import { ReagendamentoModalCompleto } from './ReagendamentoModalCompleto'
 
 interface NextAppointmentHighlightProps {
   appointment: ClientAppointment | null
@@ -125,6 +125,7 @@ export const NextAppointmentHighlight: React.FC<NextAppointmentHighlightProps> =
   className,
 }) => {
   const [countdown, setCountdown] = useState<CountdownTime | null>(null)
+  const [showRescheduleModal, setShowRescheduleModal] = useState(false)
 
   // Atualizar countdown a cada segundo
   useEffect(() => {
@@ -319,13 +320,30 @@ export const NextAppointmentHighlight: React.FC<NextAppointmentHighlightProps> =
           </div>
         )}
 
+        {/* Debug info para NextAppointmentHighlight */}
+        <div className="mb-4 p-2 bg-yellow-100 dark:bg-yellow-900 rounded text-xs">
+          <div>🔍 DEBUG NEXT APPOINTMENT:</div>
+          <div>canReschedule: <strong>{String(appointment.canReschedule)}</strong></div>
+          <div>canCancel: <strong>{String(appointment.canCancel)}</strong></div>
+          <div>status: <strong>{appointment.status}</strong></div>
+        </div>
+
         {/* Ações */}
         <div className="flex items-center gap-2 border-t pt-4">
           {appointment.canReschedule && (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => onReschedule?.(appointment.id)}
+              onClick={() => {
+                console.log('🔥 NextAppointmentHighlight: Reagendar clicado!', {
+                  appointmentId: appointment.id,
+                  canReschedule: appointment.canReschedule,
+                  showRescheduleModal
+                })
+                console.log('🔄 Abrindo modal de reagendamento')
+                setShowRescheduleModal(true)
+                console.log('🔄 Modal state definido como:', true)
+              }}
               className="flex items-center gap-1"
             >
               <Edit className="h-4 w-4" />
@@ -383,6 +401,21 @@ export const NextAppointmentHighlight: React.FC<NextAppointmentHighlightProps> =
           </div>
         )}
       </CardContent>
+
+      {/* Modal de reagendamento */}
+      <ReagendamentoModalCompleto
+        isOpen={showRescheduleModal}
+        onClose={() => {
+          console.log('🔄 Fechando modal de reagendamento')
+          setShowRescheduleModal(false)
+        }}
+        onSuccess={() => {
+          console.log('✅ Reagendamento realizado com sucesso!')
+          setShowRescheduleModal(false)
+          // TODO: Mostrar toast de sucesso e atualizar dados
+        }}
+        appointment={appointment}
+      />
     </Card>
   )
 }

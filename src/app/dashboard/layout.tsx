@@ -1,17 +1,17 @@
 'use client'
 
-import { Suspense, useEffect } from 'react'
+import React, { Suspense, useEffect } from 'react'
 import { Sidebar, useSidebar } from '@/shared/components/layout/sidebar'
 import { Header, HeaderContent } from '@/shared/components/layout/header'
 import { Container } from '@/shared/components/layout'
 import { UserMenu } from '@/shared/components/layout/UserMenu'
 import { RouteGuard } from '@/domains/auth/components'
 import { ToastProvider } from '@/shared/components/ui'
-import { ErrorBoundary } from '@/shared/components/feedback'
+// Removido import do ErrorBoundary temporariamente
 // Debug components removidos - problema resolvido!
 // import { SessionProvider } from '@/domains/auth/components/SessionProvider' // Removido temporariamente
 import { useAuth } from '@/domains/auth/hooks/use-auth'
-import { cn } from '@/shared/utils'
+import { cn } from '@/lib/utils'
 import { usePreloadComponents } from '@/shared/hooks/use-dynamic-import'
 
 // Componente de loading para o dashboard
@@ -59,18 +59,9 @@ function DashboardSkeleton() {
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
     <RouteGuard requiredRoles={['admin', 'barber', 'client']}>
-      <ErrorBoundary
-        enableRetry={true}
-        enableReporting={true}
-        showDetails={process.env.NODE_ENV === 'development'}
-        onError={(error, errorInfo) => {
-          console.error('Dashboard Error:', error, errorInfo)
-        }}
-      >
-        <ToastProvider>
-          <DashboardContent>{children}</DashboardContent>
-        </ToastProvider>
-      </ErrorBoundary>
+      <ToastProvider>
+        <DashboardContent>{children}</DashboardContent>
+      </ToastProvider>
     </RouteGuard>
   )
 }
@@ -155,14 +146,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-background-secondary dark:bg-background-dark">
-          <ErrorBoundary
-            enableRetry={true}
-            showDetails={process.env.NODE_ENV === 'development'}
-            onError={(error, errorInfo) => {
-              console.error('Dashboard Page Error:', error, errorInfo)
-            }}
-          >
-            <Suspense
+          <Suspense
               fallback={
                 <div className="p-6">
                   <div className="space-y-4">
@@ -181,7 +165,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             >
               {children}
             </Suspense>
-          </ErrorBoundary>
         </main>
       </div>
     </div>

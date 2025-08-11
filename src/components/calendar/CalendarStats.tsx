@@ -3,7 +3,7 @@
 import { Calendar, Clock, DollarSign, Users, TrendingUp, AlertCircle } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, Badge } from '@/shared/components/ui'
 import { formatDate } from '@/shared/utils/date-utils'
-import { cn } from '@/shared/utils'
+import { cn } from '@/lib/utils'
 import type { CalendarStats } from '@/types/appointments'
 
 interface CalendarStatsProps {

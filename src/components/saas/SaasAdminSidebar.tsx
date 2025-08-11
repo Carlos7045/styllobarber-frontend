@@ -7,7 +7,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { BarChart3, Building2, Crown, DollarSign, FileText, Link as LinkIcon, Settings, Shield, Users } from 'lucide-react'
+import { BarChart3, Building2, Crown, DollarSign, FileText, LayoutDashboard, Link as LinkIcon, Settings, Shield, Users } from 'lucide-react'
 import { cn } from '@/shared/utils'
 
 const menuItems = [

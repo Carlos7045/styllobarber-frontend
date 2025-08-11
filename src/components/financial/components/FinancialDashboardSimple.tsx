@@ -1,18 +1,13 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
 // Dashboard financeiro simplificado com dados mockados
 
 import { useState } from 'react'
+import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 
-import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw, Calendar, User, Filter, FileText } from '@/shared/utils/optimized-imports'
+import { DollarSign, TrendingUp, TrendingDown, Users, AlertCircle, RefreshCw, Calendar, User, Filter, FileText } from 'lucide-react'
 import { Card } from '@/shared/components/ui'
 import { Button } from '@/shared/components/ui'
 import { BarberDashboard } from './BarberDashboard'

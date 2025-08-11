@@ -1,19 +1,14 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
+import { motion } from 'framer-motion'
 
 const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
 // Componente para cadastro rápido de clientes no PDV
 
 import { useState, useEffect } from 'react'
 
-import { User, Phone, Mail, Save, X, Loader2, Check, AlertCircle, UserPlus, Eye, EyeOff } from '@/shared/utils/optimized-imports'
+import { User, Phone, Mail, Save, X, Loader2, Check, AlertCircle, UserPlus, Eye, EyeOff } from 'lucide-react'
 import { Card, Button, Input, Badge } from '@/shared/components/ui'
 import { useToast } from '@/shared/components/ui'
 import { clienteCadastroService, type NovoClienteData } from '../services/cliente-cadastro-service'

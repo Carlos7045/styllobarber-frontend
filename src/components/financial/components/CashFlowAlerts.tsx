@@ -1,19 +1,14 @@
 
 'use client'
 
-// Mock temporário para motion
-const motion = {
-  div: 'div' as any,
-  span: 'span' as any,
-  button: 'button' as any,
-}
+import { motion } from 'framer-motion'
 
 const AnimatePresence = ({ children }: { children: React.ReactNode }) => <>{children}</>
 // Componente para gerenciamento de alertas de fluxo de caixa
 
 import { useState, useEffect } from 'react'
 
-import { Bell, Settings, AlertTriangle, CheckCircle, X, Mail, MessageSquare, Clock, DollarSign, TrendingDown, Target } from '@/shared/utils/optimized-imports'
+import { Bell, Settings, AlertTriangle, CheckCircle, X, Mail, MessageSquare, Clock, DollarSign, TrendingDown, Target } from 'lucide-react'
 import { Card, Button, Badge } from '@/shared/components/ui'
 import { formatCurrency, formatDate } from '../utils'
 import { useCashFlowAlerts } from '../hooks/use-cash-flow'
