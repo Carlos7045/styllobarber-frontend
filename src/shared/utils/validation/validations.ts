@@ -1,6 +1,32 @@
 import { z } from 'zod'
 import { VALIDACAO } from './constants'
 
+// Função para validar CPF brasileiro
+function validarCPF(cpf: string): boolean {
+  if (!cpf) return false
+  
+  const cpfNumeros = cpf.replace(/\D/g, '')
+  if (cpfNumeros.length !== 11 || /^(\d)\1+$/.test(cpfNumeros)) return false
+  
+  // Primeiro dígito verificador
+  let soma = 0
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpfNumeros.charAt(i)) * (10 - i)
+  }
+  let resto = soma % 11
+  let digito1 = resto < 2 ? 0 : 11 - resto
+  
+  // Segundo dígito verificador
+  soma = 0
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpfNumeros.charAt(i)) * (11 - i)
+  }
+  resto = soma % 11
+  let digito2 = resto < 2 ? 0 : 11 - resto
+  
+  return digito1 === parseInt(cpfNumeros.charAt(9)) && digito2 === parseInt(cpfNumeros.charAt(10))
+}
+
 // Schema para validação de usuário
 export const schemaUsuario = z.object({
   nome: z
@@ -14,6 +40,13 @@ export const schemaUsuario = z.object({
   telefone: z
     .string()
     .regex(VALIDACAO.TELEFONE_REGEX, 'Formato de telefone inválido: (XX) XXXXX-XXXX'),
+  cpf: z
+    .string()
+    .optional()
+    .refine((cpf) => {
+      if (!cpf || cpf.trim() === '') return true // CPF é opcional
+      return validarCPF(cpf)
+    }, 'CPF inválido'),
 })
 
 // Schema para login
@@ -26,6 +59,13 @@ export const schemaLogin = z.object({
 export const schemaCadastro = schemaUsuario.extend({
   senha: z.string().min(VALIDACAO.SENHA_MIN_LENGTH, 'Senha deve ter pelo menos 6 caracteres'),
   confirmarSenha: z.string(),
+  cpf: z
+    .string()
+    .optional()
+    .refine((cpf) => {
+      if (!cpf || cpf.trim() === '') return true // CPF é opcional no cadastro
+      return validarCPF(cpf)
+    }, 'CPF inválido'),
 }).refine((data) => data.senha === data.confirmarSenha, {
   message: 'Senhas não coincidem',
   path: ['confirmarSenha'],
@@ -41,6 +81,14 @@ export const schemaPerfilUsuario = z.object({
     .string()
     .regex(VALIDACAO.TELEFONE_REGEX, 'Formato de telefone inválido: (XX) XXXXX-XXXX')
     .optional()
+    .or(z.literal('')),
+  cpf: z
+    .string()
+    .optional()
+    .refine((cpf) => {
+      if (!cpf || cpf.trim() === '') return true // CPF é opcional
+      return validarCPF(cpf)
+    }, 'CPF inválido')
     .or(z.literal('')),
   data_nascimento: z
     .string()

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import type { Service } from '@/types/services'
 

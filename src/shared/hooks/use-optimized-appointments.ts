@@ -12,7 +12,7 @@ import {
   type AppointmentSlot,
   type SlotAvailability,
 } from '@/shared/utils/appointment-utils'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 
 interface UseOptimizedAppointmentsOptions {
   date: string

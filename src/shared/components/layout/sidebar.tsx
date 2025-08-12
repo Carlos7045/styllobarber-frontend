@@ -8,7 +8,7 @@ import { Activity, BarChart3, Calendar, ChevronLeft, ChevronRight, Clock, Dollar
 
 import { cn } from '@/shared/utils'
 import { Button } from '@/shared/components/ui'
-import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { useAuth } from '@/contexts/AuthContext'
 import { usePermissions } from '@/domains/auth/hooks/use-permissions'
 import { LogoutButton } from '@/domains/auth/components/LogoutButton'
 import { useMonitoringPermissions } from '@/lib/monitoring-permissions'

@@ -13,6 +13,12 @@ export type AppointmentStatus =
 // Tipo de visualização do calendário
 export type CalendarView = 'day' | 'week' | 'month'
 
+// Status de pagamento
+export type PaymentStatus = 'pending' | 'paid' | 'failed' | 'refunded'
+
+// Método de pagamento
+export type PaymentMethod = 'advance' | 'cash' | 'card' | 'pix' | 'local'
+
 // Interface para um agendamento
 export interface Appointment {
   id: string
@@ -25,6 +31,13 @@ export interface Appointment {
   preco_final?: number
   created_at: string
   updated_at: string
+
+  // Campos de pagamento
+  payment_status?: PaymentStatus
+  payment_method?: PaymentMethod
+  payment_date?: string
+  asaas_payment_id?: string
+  discount_applied?: number
 
   // Dados relacionados (joins)
   cliente?: {
@@ -98,6 +111,11 @@ export interface CreateAppointmentData {
   service_id: string
   data_agendamento: string
   observacoes?: string
+  payment_method?: PaymentMethod
+  payment_status?: PaymentStatus
+  payment_type?: 'pix' | 'card' | 'cash'
+  asaas_payment_id?: string
+  discount_applied?: number
 }
 
 // Interface para atualização de agendamento
@@ -108,6 +126,10 @@ export interface UpdateAppointmentData {
   status?: AppointmentStatus
   observacoes?: string
   preco_final?: number
+  payment_status?: PaymentStatus
+  payment_method?: PaymentMethod
+  payment_date?: string
+  asaas_payment_id?: string
 }
 
 // Interface para estatísticas do calendário
@@ -144,6 +166,8 @@ export interface ClientAppointment extends Appointment {
   timeUntilAppointment?: string
   isUpcoming: boolean
   isPast: boolean
+  canPay?: boolean // Se pode efetuar pagamento
+  needsPayment?: boolean // Se precisa de pagamento
 }
 
 // Interface para política de cancelamento
@@ -176,4 +200,29 @@ export const DEFAULT_RESCHEDULING_POLICY: ReschedulingPolicy = {
   minHoursBeforeAppointment: 2, // 2 horas antes
   maxReschedulesPerAppointment: 2,
   requireReason: false,
+}
+
+// Cores para diferentes status de pagamento
+export const PAYMENT_STATUS_COLORS: Record<PaymentStatus, string> = {
+  pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  paid: 'bg-green-100 text-green-800 border-green-200',
+  failed: 'bg-red-100 text-red-800 border-red-200',
+  refunded: 'bg-gray-100 text-gray-800 border-gray-200',
+}
+
+// Labels para status de pagamento
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  pending: 'Pendente',
+  paid: 'Pago',
+  failed: 'Falhou',
+  refunded: 'Reembolsado',
+}
+
+// Labels para métodos de pagamento
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  advance: 'Pagamento Antecipado',
+  cash: 'Dinheiro',
+  card: 'Cartão',
+  pix: 'PIX',
+  local: 'No Local',
 }

@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { NoSSR } from '@/shared/components/feedback/NoSSR'
 import { FormErrorBoundary } from '@/shared/components/forms/FormErrorBoundary'
-import { useAuth, type LoginData } from '@/domains/auth/hooks/use-auth'
+import { useAuth, type LoginData } from '@/contexts/AuthContext'
 import { schemaLogin, type DadosLogin } from '@/shared/utils/validation'
 import { cn } from '@/shared/utils'
 

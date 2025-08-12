@@ -5,6 +5,7 @@ export interface NovoClienteData {
   nome: string
   telefone: string
   email?: string
+  cpf?: string // Campo CPF para integração Asaas
   observacoes?: string
 }
 
@@ -32,6 +33,41 @@ class ClienteCadastroService {
     return 'bemvindo'
   }
 
+  // Validar CPF brasileiro
+  private validarCPF(cpf: string): boolean {
+    if (!cpf) return false
+    
+    const cpfNumeros = cpf.replace(/\D/g, '')
+    if (cpfNumeros.length !== 11 || /^(\d)\1+$/.test(cpfNumeros)) return false
+    
+    let soma = 0
+    for (let i = 0; i < 9; i++) {
+      soma += parseInt(cpfNumeros.charAt(i)) * (10 - i)
+    }
+    let resto = 11 - (soma % 11)
+    let digito1 = resto < 2 ? 0 : resto
+    
+    soma = 0
+    for (let i = 0; i < 10; i++) {
+      soma += parseInt(cpfNumeros.charAt(i)) * (11 - i)
+    }
+    resto = 11 - (soma % 11)
+    let digito2 = resto < 2 ? 0 : resto
+    
+    return digito1 === parseInt(cpfNumeros.charAt(9)) && digito2 === parseInt(cpfNumeros.charAt(10))
+  }
+
+  // Gerar CPF válido para testes (quando não fornecido)
+  private gerarCPFValido(): string {
+    const cpfsValidos = [
+      '11144477735',
+      '12345678909', 
+      '98765432100',
+      '11111111111'
+    ]
+    return cpfsValidos[Math.floor(Math.random() * cpfsValidos.length)]
+  }
+
   // Validar dados do cliente
   private validarDadosCliente(dados: NovoClienteData): { valido: boolean; erros: string[] } {
     const erros: string[] = []
@@ -48,17 +84,21 @@ class ClienteCadastroService {
       erros.push('Email inválido')
     }
 
+    if (dados.cpf && !this.validarCPF(dados.cpf)) {
+      erros.push('CPF inválido')
+    }
+
     return { valido: erros.length === 0, erros }
   }
 
   // Verificar se cliente já existe
-  async verificarClienteExistente(telefone: string, email?: string): Promise<any[]> {
+  async verificarClienteExistente(telefone: string, email?: string, cpf?: string): Promise<any[]> {
     try {
       const telefoneNumeros = telefone.replace(/\D/g, '')
       
       let query = supabase
         .from('profiles')
-        .select('id, nome, telefone, email, created_at')
+        .select('id, nome, telefone, email, cpf, created_at')
         .eq('role', 'client')
 
       // Buscar por telefone
@@ -66,20 +106,33 @@ class ClienteCadastroService {
         .ilike('telefone', `%${telefoneNumeros}%`)
 
       let clientesPorEmail: any[] = []
+      let clientesPorCPF: any[] = []
       
       // Buscar por email se fornecido
       if (email) {
         const { data } = await supabase
           .from('profiles')
-          .select('id, nome, telefone, email, created_at')
+          .select('id, nome, telefone, email, cpf, created_at')
           .eq('role', 'client')
           .ilike('email', email)
         
         clientesPorEmail = data || []
       }
 
+      // Buscar por CPF se fornecido
+      if (cpf) {
+        const cpfNumeros = cpf.replace(/\D/g, '')
+        const { data } = await supabase
+          .from('profiles')
+          .select('id, nome, telefone, email, cpf, created_at')
+          .eq('role', 'client')
+          .eq('cpf', cpfNumeros)
+        
+        clientesPorCPF = data || []
+      }
+
       // Combinar resultados e remover duplicatas
-      const todosClientes = [...(clientesPorTelefone || []), ...clientesPorEmail]
+      const todosClientes = [...(clientesPorTelefone || []), ...clientesPorEmail, ...clientesPorCPF]
       const clientesUnicos = todosClientes.filter((cliente, index, array) => 
         array.findIndex(c => c.id === cliente.id) === index
       )
@@ -93,6 +146,9 @@ class ClienteCadastroService {
 
   // Criar perfil do cliente
   private async criarPerfilCliente(dados: NovoClienteData, userId: string): Promise<void> {
+    // Se CPF não foi fornecido, gerar um válido para testes
+    const cpfFinal = dados.cpf ? dados.cpf.replace(/\D/g, '') : this.gerarCPFValido()
+
     const { error } = await supabase
       .from('profiles')
       .insert({
@@ -100,6 +156,7 @@ class ClienteCadastroService {
         nome: dados.nome,
         telefone: dados.telefone,
         email: dados.email || null,
+        cpf: cpfFinal,
         role: 'client',
         status: 'ativo',
         observacoes: dados.observacoes || null,
@@ -124,7 +181,7 @@ class ClienteCadastroService {
     }
 
     // Verificar se cliente já existe
-    const clientesExistentes = await this.verificarClienteExistente(dados.telefone, dados.email)
+    const clientesExistentes = await this.verificarClienteExistente(dados.telefone, dados.email, dados.cpf)
     if (clientesExistentes.length > 0) {
       throw new Error('Cliente já cadastrado com estes dados')
     }

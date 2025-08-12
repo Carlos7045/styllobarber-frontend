@@ -34,6 +34,7 @@ interface QuickTransaction {
   observacoes?: string
   agendamentoId?: string
   servicosSelecionados?: ServicoSelecionado[]
+  telefone?: string // Campo para telefone do cliente (PIX)
 }
 
 interface QuickTransactionPDVProps {
@@ -64,7 +65,8 @@ export const QuickTransactionPDV = ({
     barbeiro: '',
     observacoes: '',
     agendamentoId: undefined,
-    servicosSelecionados: []
+    servicosSelecionados: [],
+    telefone: '' // Campo para telefone do cliente (PIX)
   })
 
   const selectRef = useRef<HTMLSelectElement>(null)
@@ -246,7 +248,8 @@ export const QuickTransactionPDV = ({
       barbeiro: '',
       observacoes: '',
       agendamentoId: undefined, // Limpar agendamentoId
-      servicosSelecionados: []
+      servicosSelecionados: [],
+      telefone: '' // Limpar telefone
     })
   }
 
@@ -268,7 +271,8 @@ export const QuickTransactionPDV = ({
         barbeiro: '',
         observacoes: '',
         agendamentoId: undefined,
-        servicosSelecionados: []
+        servicosSelecionados: [],
+        telefone: '' // Resetar telefone
       })
       
       alert('Transação registrada com sucesso!')
@@ -820,6 +824,50 @@ export const QuickTransactionPDV = ({
                 })}
               </div>
             </div>
+
+            {/* Campo de Telefone para PIX */}
+            {transaction.metodoPagamento === 'PIX' && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 p-6 rounded-2xl border-2 border-blue-200 dark:border-blue-800/30"
+              >
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="p-2 bg-blue-500/10 rounded-lg">
+                    <Smartphone className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900 dark:text-white">
+                    Telefone para PIX
+                  </h4>
+                </div>
+                
+                <div className="space-y-3">
+                  <p className="text-sm text-blue-700 dark:text-blue-300">
+                    Para pagamentos PIX, é necessário informar o telefone do cliente para criar a cobrança no sistema Asaas.
+                  </p>
+                  
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">
+                      Telefone/Celular
+                    </label>
+                    <input
+                      type="tel"
+                      value={transaction.telefone || ''}
+                      onChange={(e) => setTransaction(prev => ({
+                        ...prev,
+                        telefone: e.target.value
+                      }))}
+                      className="w-full px-4 py-3 border-2 border-blue-300 dark:border-blue-700 rounded-xl bg-white dark:bg-secondary-graphite text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="(11) 99999-9999"
+                    />
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Formato: (11) 99999-9999 ou 11999999999
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
           </motion.div>
         )}
 

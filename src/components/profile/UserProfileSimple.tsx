@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { User, Mail, Phone, Calendar, Save, X, Shield, Award } from 'lucide-react'
+import { User, Mail, Phone, Calendar, Save, X, Shield, Award, CreditCard } from 'lucide-react'
 
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
@@ -33,17 +33,26 @@ export function UserProfile({ className }: UserProfileProps) {
     defaultValues: {
       nome: profile?.nome || '',
       telefone: profile?.telefone || '',
+      cpf: profile?.cpf || '',
       data_nascimento: profile?.data_nascimento || '',
     },
   })
 
-  // Observar valor do telefone para formatação
+  // Observar valores para formatação
   const telefoneValue = watch('telefone')
+  const cpfValue = watch('cpf')
 
   // Função para formatar telefone em tempo real
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatarTelefone(e.target.value)
     setValue('telefone', formatted)
+  }
+
+  // Função para formatar CPF em tempo real
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '')
+    const formatted = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+    setValue('cpf', formatted)
   }
 
   // Função para fazer upload do avatar
@@ -116,6 +125,12 @@ export function UserProfile({ className }: UserProfileProps) {
         console.log('📞 Telefone será atualizado:', data.telefone)
       }
 
+      // Adicionar CPF se fornecido
+      if (data.cpf && data.cpf.trim()) {
+        updateData.cpf = data.cpf.replace(/\D/g, '') // Salvar apenas números
+        console.log('🆔 CPF será atualizado:', data.cpf)
+      }
+
       // Adicionar data de nascimento se fornecida
       if (data.data_nascimento && data.data_nascimento.trim()) {
         updateData.data_nascimento = data.data_nascimento
@@ -162,6 +177,7 @@ export function UserProfile({ className }: UserProfileProps) {
     reset({
       nome: profile?.nome || '',
       telefone: profile?.telefone || '',
+      cpf: profile?.cpf || '',
       data_nascimento: profile?.data_nascimento || '',
     })
   }
@@ -300,6 +316,20 @@ export function UserProfile({ className }: UserProfileProps) {
             placeholder="(11) 99999-9999"
             maxLength={15}
             helperText="Formato: (XX) XXXXX-XXXX"
+          />
+
+          {/* CPF */}
+          <Input
+            {...register('cpf')}
+            label="CPF (opcional)"
+            leftIcon={<CreditCard className="h-4 w-4" />}
+            error={errors.cpf?.message}
+            disabled={!isEditing || isSubmitting || loading || uploadingAvatar}
+            onChange={handleCPFChange}
+            value={cpfValue || ''}
+            placeholder="000.000.000-00"
+            maxLength={14}
+            helperText="Necessário para pagamentos PIX"
           />
 
           {/* Data de Nascimento */}

@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 // Removido: import de mock appointments - usando apenas dados reais
 import type { Appointment } from '@/types/appointments'

@@ -7,7 +7,7 @@ import { useAuth, UserProfile } from '@/domains/auth/hooks/use-auth'
 import { usePermissions, PERMISSIONS } from '@/domains/auth/hooks/use-permissions'
 import { PermissionGuard, AdminOnly } from '@/domains/auth/components/PermissionGuard'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { UserEditModal } from './UserEditModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CriarFuncionarioModal } from './CriarFuncionarioModal'
@@ -30,6 +30,15 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
         refetch,
         stats
     } = useFuncionariosEspecialidades()
+
+    // Debug: Log dos dados recebidos do hook
+    console.log('🎯 [COMPONENTE] Dados do hook:', {
+        funcionarios: funcionarios?.length || 0,
+        filteredFuncionarios: filteredFuncionarios?.length || 0,
+        loading,
+        error,
+        stats
+    })
 
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState<string>('all')

@@ -60,6 +60,36 @@ const validarEmail = (email: string): boolean => {
   return emailRegex.test(email)
 }
 
+// Função para validar CPF
+const validarCPF = (cpf: string): boolean => {
+  if (!cpf) return false
+  
+  const cpfNumeros = cpf.replace(/\D/g, '')
+  if (cpfNumeros.length !== 11 || /^(\d)\1+$/.test(cpfNumeros)) return false
+  
+  let soma = 0
+  for (let i = 0; i < 9; i++) {
+    soma += parseInt(cpfNumeros.charAt(i)) * (10 - i)
+  }
+  let resto = 11 - (soma % 11)
+  let digito1 = resto < 2 ? 0 : resto
+  
+  soma = 0
+  for (let i = 0; i < 10; i++) {
+    soma += parseInt(cpfNumeros.charAt(i)) * (11 - i)
+  }
+  resto = 11 - (soma % 11)
+  let digito2 = resto < 2 ? 0 : resto
+  
+  return digito1 === parseInt(cpfNumeros.charAt(9)) && digito2 === parseInt(cpfNumeros.charAt(10))
+}
+
+// Função para formatar CPF
+const formatarCPF = (cpf: string): string => {
+  const numeros = cpf.replace(/\D/g, '')
+  return numeros.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+}
+
 export const CadastroRapidoCliente = ({
   isOpen,
   onClose,
@@ -70,6 +100,7 @@ export const CadastroRapidoCliente = ({
     nome: '',
     telefone: '',
     email: '',
+    cpf: '',
     observacoes: ''
   })
   
@@ -91,6 +122,7 @@ export const CadastroRapidoCliente = ({
         nome: '',
         telefone: '',
         email: '',
+        cpf: '',
         observacoes: ''
       })
       setClientesEncontrados([])
@@ -100,15 +132,16 @@ export const CadastroRapidoCliente = ({
     }
   }, [isOpen])
 
-  // Buscar clientes similares quando digitar telefone
+  // Buscar clientes similares quando digitar telefone, email ou CPF
   useEffect(() => {
     const buscarClientesSimilares = async () => {
-      if (formData.telefone.length >= 8) {
+      if (formData.telefone.length >= 8 || formData.email.length >= 5 || formData.cpf.length >= 8) {
         setLoading(true)
         try {
           const clientesEncontrados = await clienteCadastroService.verificarClienteExistente(
             formData.telefone, 
-            formData.email
+            formData.email,
+            formData.cpf
           )
           
           setClientesEncontrados(clientesEncontrados.map(cliente => ({
@@ -131,7 +164,7 @@ export const CadastroRapidoCliente = ({
 
     const timer = setTimeout(buscarClientesSimilares, 300)
     return () => clearTimeout(timer)
-  }, [formData.telefone, formData.email])
+  }, [formData.telefone, formData.email, formData.cpf])
 
   // Validar formulário
   const validarFormulario = (): boolean => {
@@ -151,6 +184,10 @@ export const CadastroRapidoCliente = ({
 
     if (formData.email && !validarEmail(formData.email)) {
       novosErrors.email = 'Email inválido'
+    }
+
+    if (formData.cpf && !validarCPF(formData.cpf)) {
+      novosErrors.cpf = 'CPF inválido'
     }
 
     setErrors(novosErrors)
@@ -404,6 +441,28 @@ export const CadastroRapidoCliente = ({
                       />
                     </div>
 
+                    {/* CPF */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                        CPF (opcional)
+                      </label>
+                      <Input
+                        value={formData.cpf}
+                        onChange={(e) => {
+                          const formatted = formatarCPF(e.target.value)
+                          setFormData(prev => ({ ...prev, cpf: formatted }))
+                        }}
+                        placeholder="000.000.000-00"
+                        leftIcon={<User className="h-4 w-4" />}
+                        error={errors.cpf}
+                        className="py-3"
+                        maxLength={14}
+                      />
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        Necessário para pagamentos PIX
+                      </p>
+                    </div>
+
                     {/* Observações */}
                     <div className="md:col-span-2">
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -488,6 +547,13 @@ export const CadastroRapidoCliente = ({
                         <div>
                           <p className="text-sm text-gray-600 dark:text-gray-400">Email</p>
                           <p className="font-medium text-gray-900 dark:text-white">{formData.email}</p>
+                        </div>
+                      )}
+
+                      {formData.cpf && (
+                        <div>
+                          <p className="text-sm text-gray-600 dark:text-gray-400">CPF</p>
+                          <p className="font-medium text-gray-900 dark:text-white">{formatarCPF(formData.cpf)}</p>
                         </div>
                       )}
                       

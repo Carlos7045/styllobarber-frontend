@@ -23,6 +23,12 @@
 - ✅ **💳 SISTEMA DE PAGAMENTO** - Pagamento antecipado com 10% desconto, página dedicada  
 - ✅ **🔧 CORREÇÕES CRÍTICAS** - Imports, barbeiros, erros runtime resolvidos
 
+### ✅ **Concluído Hoje (08/02/2025 - Tarde):**
+
+- ✅ **💳 PAGAMENTO DE SERVIÇOS** - Botão para pagar serviços não pagos no histórico
+- ✅ **📊 INFORMAÇÕES DETALHADAS** - Cards com mais informações (barbeiro, duração, status pagamento)
+- ✅ **🔗 INTEGRAÇÃO ASAAS** - Serviço completo de pagamento com PIX, Cartão e Dinheiro
+
 ### 🔄 **Em andamento:**
 
 - 🔄 **Cancelamento com motivo** - Próxima funcionalidade a implementar (Fase 2)
@@ -3024,3 +3030,159 @@ Como você gostaria de pagar pelo serviço?
 ---
 
 **💪 RESULTADO:** Sistema de reagendamento e pagamento antecipado 100% funcional, com UX profissional e todas as validações necessárias implementadas!
+
+---
+
+## 💳 **08/02/2025 - TARDE: Melhorias nos Agendamentos e Integração Asaas**
+
+### **🎯 FUNCIONALIDADES IMPLEMENTADAS:**
+
+#### **✅ 1. INFORMAÇÕES DETALHADAS NOS CARDS**
+- **Versão Compacta Melhorada**: Mais informações em menos espaço
+  - Nome do barbeiro junto ao serviço
+  - Duração do serviço exibida
+  - Preço destacado em dourado
+  - Status de pagamento com badges coloridos
+  - Botão de pagamento para serviços pendentes
+
+- **Versão Detalhada Expandida**: Cards com informações completas
+  - Seção de pagamento com forma e status
+  - Informações do barbeiro com especialidades e avaliação
+  - Desconto aplicado para pagamentos antecipados
+  - Layout organizado em seções visuais
+
+#### **✅ 2. SISTEMA DE PAGAMENTO DE SERVIÇOS**
+- **Botão "Pagar Serviço"**: Para agendamentos com pagamento pendente
+- **Integração com Página de Pagamento**: Reutiliza infraestrutura existente
+- **Diferenciação de Tipos**: Pagamento antecipado vs pagamento de serviço
+- **Persistência de Dados**: localStorage para dados temporários
+
+#### **✅ 3. INTEGRAÇÃO COMPLETA COM ASAAS**
+- **Serviço AsaasService**: Classe completa para integração
+  - Criação/atualização de clientes
+  - Criação de cobranças (PIX, Cartão, Dinheiro)
+  - Verificação de status de pagamento
+  - Tratamento de erros robusto
+
+- **Métodos de Pagamento Suportados**:
+  - **PIX**: QR Code gerado automaticamente
+  - **Cartão**: Integração com gateway
+  - **Dinheiro**: Marcação como recebido
+
+- **Interface PIX Completa**:
+  - QR Code visual para escaneamento
+  - Código PIX copiável
+  - Botão "Já paguei" para confirmação manual
+  - Redirecionamento automático
+
+### **🔧 ARQUIVOS IMPLEMENTADOS/MODIFICADOS:**
+
+#### **Componentes Atualizados:**
+- ✅ `src/domains/users/components/client/AgendamentoCard.tsx`
+  - Versão compacta com mais informações
+  - Versão detalhada com seções organizadas
+  - Função `handlePayment` para processar pagamentos
+  - Status de pagamento visual
+  - Botões condicionais baseados no status
+
+#### **Página de Pagamento Melhorada:**
+- ✅ `src/app/dashboard/pagamento/page.tsx`
+  - Suporte a dois tipos: 'appointment' e 'service'
+  - Integração com AsaasService
+  - Interface PIX com QR Code
+  - Resumos diferenciados por tipo
+  - Tratamento de erros melhorado
+
+#### **Novo Serviço:**
+- ✅ `src/lib/services/asaas-service.ts`
+  - Classe AsaasService completa
+  - Métodos para clientes, pagamentos e verificação
+  - Suporte a PIX, Cartão e Dinheiro
+  - Tratamento de erros e tipos TypeScript
+
+### **🎨 MELHORIAS VISUAIS:**
+
+#### **Cards de Agendamento:**
+```
+📅 Corte Masculino • João Silva
+   15/08/2025 às 14:30 • 30min • R$ 45,00
+   ✓ Pago | ⏳ Pendente [💳 Pagar]
+```
+
+#### **Informações Detalhadas:**
+- **Seção de Pagamento**: Forma, status e desconto aplicado
+- **Seção do Barbeiro**: Nome, especialidades e avaliação
+- **Seção de Observações**: Notas do agendamento
+- **Ações Contextuais**: Botões baseados no status
+
+#### **Interface PIX:**
+- QR Code centralizado em fundo branco
+- Código PIX copiável em fonte mono
+- Botões de ação claros
+- Feedback visual adequado
+
+### **🔍 COMO TESTAR:**
+
+#### **Informações Detalhadas:**
+1. Acesse `/dashboard/agendamentos`
+2. Observe os cards com mais informações
+3. Verifique status de pagamento nos badges
+4. Teste diferentes variantes (compact/detailed)
+
+#### **Pagamento de Serviços:**
+1. Encontre um agendamento com status "Pendente"
+2. Clique no botão "💳 Pagar"
+3. Será redirecionado para página de pagamento
+4. Escolha método e processe pagamento
+
+#### **Integração Asaas:**
+1. Teste pagamento PIX → Veja QR Code
+2. Teste pagamento Cartão → Processamento
+3. Teste pagamento Dinheiro → Confirmação
+4. Verifique logs no console para debug
+
+### **💡 BENEFÍCIOS ALCANÇADOS:**
+
+#### **Para o Cliente:**
+- **Mais Informações**: Cards informativos e completos
+- **Pagamento Fácil**: Botão direto para pagar serviços
+- **PIX Integrado**: QR Code automático para pagamento
+- **Status Claro**: Badges visuais para status de pagamento
+
+#### **Para a Barbearia:**
+- **Gestão Financeira**: Controle de pagamentos pendentes
+- **Integração Real**: Asaas para processamento
+- **Automação**: Menos trabalho manual
+- **Rastreabilidade**: IDs de pagamento para auditoria
+
+#### **Para o Sistema:**
+- **Arquitetura Limpa**: Serviço dedicado para Asaas
+- **Reutilização**: Página de pagamento para múltiplos casos
+- **Escalabilidade**: Fácil adicionar novos métodos
+- **Manutenibilidade**: Código organizado e tipado
+
+### **🎯 PRÓXIMOS PASSOS:**
+
+#### **Melhorias Imediatas:**
+- Webhook do Asaas para confirmação automática
+- Atualização de status em tempo real
+- Histórico de pagamentos detalhado
+- Notificações de pagamento
+
+#### **Funcionalidades Futuras:**
+- Parcelamento no cartão
+- Desconto por forma de pagamento
+- Cashback e programa de fidelidade
+- Relatórios financeiros para clientes
+
+### **🏆 STATUS FINAL:**
+
+🟢 **INFORMAÇÕES DETALHADAS**: Cards completos e informativos
+🟢 **PAGAMENTO DE SERVIÇOS**: Botão funcional integrado
+🟢 **INTEGRAÇÃO ASAAS**: Serviço completo implementado
+🟢 **INTERFACE PIX**: QR Code e experiência completa
+🟢 **UX MELHORADA**: Informações claras e ações intuitivas
+
+---
+
+**💪 RESULTADO FINAL:** Sistema completo de informações detalhadas e pagamento de serviços integrado com Asaas, proporcionando experiência premium para os clientes!

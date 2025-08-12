@@ -4,11 +4,11 @@
  */
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { useAuth } from '@/contexts/AuthContext'
 import { useAppointments } from './use-appointments'
 import { useServices } from '@/shared/hooks/data/use-services'
 import { useFuncionariosPublicos } from '@/domains/users/hooks/use-funcionarios-publicos'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import type {
   Appointment,
   ClientAppointment,
@@ -60,6 +60,11 @@ interface UseClientAppointmentsReturn {
     observacoes?: string
   ) => Promise<{ success: boolean; error?: string }>
   refetch: () => Promise<void>
+
+  // Funcionalidades de pagamento
+  preparePaymentRedirect: (appointment: ClientAppointment) => void
+  needsPayment: (appointment: ClientAppointment) => boolean
+  canPay: (appointment: ClientAppointment) => boolean
 }
 
 export function useClientAppointments(
@@ -77,6 +82,56 @@ export function useClientAppointments(
   // Hooks para dados necessários
   const { services } = useServices()
   const { funcionarios } = useFuncionariosPublicos()
+  
+  // Funcionalidades de pagamento simplificadas
+  const preparePaymentRedirect = useCallback((appointment: ClientAppointment): void => {
+    const appointmentDate = new Date(appointment.data_agendamento)
+    
+    const paymentData = {
+      appointment_id: appointment.id,
+      service_name: appointment.service?.nome || 'Serviço',
+      barbeiro_name: appointment.barbeiro?.nome || 'Barbeiro',
+      date: appointmentDate.toLocaleDateString('pt-BR'),
+      time: appointmentDate.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      amount: appointment.preco_final || appointment.service?.preco || 0,
+      payment_type: 'service_payment',
+    }
+    
+    localStorage.setItem('pendingPayment', JSON.stringify(paymentData))
+    window.location.href = `/dashboard/pagamento?type=service&appointment=${appointment.id}`
+  }, [])
+
+  const needsPayment = useCallback((appointment: ClientAppointment): boolean => {
+    // Se foi cancelado, não precisa pagar
+    if (appointment.status === 'cancelado') return false
+    
+    // Se já foi pago (qualquer método), não precisa pagar
+    if (appointment.payment_status === 'paid') return false
+    
+    // Se foi pago antecipadamente, não precisa pagar
+    if (appointment.payment_method === 'advance') return false
+    
+    const now = new Date()
+    const appointmentDate = new Date(appointment.data_agendamento)
+    const isAppointmentPast = appointmentDate <= now
+    
+    // Se o agendamento foi concluído e não tem status de pagamento OU está pendente, precisa pagar
+    if (appointment.status === 'concluido') {
+      return !appointment.payment_status || appointment.payment_status === 'pending'
+    }
+    
+    // Se o agendamento está confirmado mas já passou da data/hora, considera como serviço realizado que precisa de pagamento
+    if (appointment.status === 'confirmado' && isAppointmentPast) {
+      return !appointment.payment_status || appointment.payment_status === 'pending'
+    }
+    
+    return false
+  }, [])
+
+  const canPay = useCallback((appointment: ClientAppointment): boolean => {
+    // Só pode pagar se precisa de pagamento
+    return needsPayment(appointment)
+  }, [needsPayment])
 
   // Configurar filtros para buscar apenas agendamentos do cliente logado
   const clientFilters: CalendarFilters = useMemo(() => {
@@ -242,6 +297,8 @@ export function useClientAppointments(
           : undefined,
         isUpcoming,
         isPast,
+        canPay: canPay(appointment),
+        needsPayment: needsPayment(appointment),
       }
     })
   }, [
@@ -656,5 +713,9 @@ export function useClientAppointments(
     cancelAppointment,
     rescheduleAppointment,
     refetch,
+    // Funcionalidades de pagamento
+    preparePaymentRedirect,
+    needsPayment,
+    canPay,
   }
 }

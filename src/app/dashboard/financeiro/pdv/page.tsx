@@ -18,6 +18,7 @@ import { Card } from '@/shared/components/ui/card'
 import { Badge } from '@/shared/components/ui/badge'
 import { LazyQuickTransactionPDV, LazyPageWrapper } from '@/shared/components/lazy'
 import { RecentTransactions } from '@/components/financial/components/RecentTransactions'
+import { PixQRCodeModal } from '@/components/financial/components/PixQRCodeModal'
 // Removido import de debug component
 
 import { PDVGuard } from '@/domains/auth/components/PermissionGuard'
@@ -122,6 +123,20 @@ const RealtimeStats = () => {
 export default function PDVPage() {
   const router = useRouter()
   const [showStats, setShowStats] = useState(true)
+  const [pixModal, setPixModal] = useState<{
+    isOpen: boolean
+    qrCode?: string
+    copyAndPaste?: string
+    valor: number
+    descricao: string
+    cliente?: string
+    paymentId?: string
+  }>({
+    isOpen: false,
+    valor: 0,
+    descricao: ''
+  })
+  
   const { registrarTransacao } = useQuickTransactions()
   // const { estatisticasDia } = useQuickTransactions() // Não utilizado no momento
 
@@ -129,16 +144,29 @@ export default function PDVPage() {
     try {
       const result = await registrarTransacao(transaction as any)
       if (result.success) {
-        // Feedback visual de sucesso
-        const notification = document.createElement('div')
-        notification.className =
-          'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50'
-        notification.textContent = `${(transaction as any).tipo === 'ENTRADA' ? 'Entrada' : 'Saída'} registrada: ${formatCurrency((transaction as any).valor)}`
-        document.body.appendChild(notification)
+        // Se é PIX e tem dados do Asaas, mostrar QR Code
+        if (transaction.metodoPagamento === 'PIX' && result.asaasData?.qrCode) {
+          setPixModal({
+            isOpen: true,
+            qrCode: result.asaasData.qrCode,
+            copyAndPaste: result.asaasData.copyAndPaste,
+            valor: transaction.valor,
+            descricao: transaction.descricao,
+            cliente: transaction.cliente,
+            paymentId: result.asaasData.payment?.id
+          })
+        } else {
+          // Feedback visual de sucesso normal
+          const notification = document.createElement('div')
+          notification.className =
+            'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50'
+          notification.textContent = `${(transaction as any).tipo === 'ENTRADA' ? 'Entrada' : 'Saída'} registrada: ${formatCurrency((transaction as any).valor)}`
+          document.body.appendChild(notification)
 
-        setTimeout(() => {
-          document.body.removeChild(notification)
-        }, 3000)
+          setTimeout(() => {
+            document.body.removeChild(notification)
+          }, 3000)
+        }
       } else {
         alert(`Erro ao registrar transação: ${result.error}`)
       }
@@ -299,6 +327,18 @@ export default function PDVPage() {
 
         {/* Debug removido para produção */}
       </div>
+
+      {/* Modal PIX QR Code */}
+      <PixQRCodeModal
+        isOpen={pixModal.isOpen}
+        onClose={() => setPixModal(prev => ({ ...prev, isOpen: false }))}
+        qrCode={pixModal.qrCode}
+        copyAndPaste={pixModal.copyAndPaste}
+        valor={pixModal.valor}
+        descricao={pixModal.descricao}
+        cliente={pixModal.cliente}
+        paymentId={pixModal.paymentId}
+      />
     </PDVGuard>
   )
 }

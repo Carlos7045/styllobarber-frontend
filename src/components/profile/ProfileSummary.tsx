@@ -3,7 +3,7 @@
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { useProfileSync } from '@/domains/users/hooks/use-profile-sync'
 import { Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { User, CheckCircle, AlertTriangle, Calendar, Phone, Mail } from 'lucide-react'
+import { User, CheckCircle, AlertTriangle, Calendar, Phone, Mail, Camera, CreditCard } from 'lucide-react'
 
 export function ProfileSummary() {
   const { user, profile, loading } = useAuth()
@@ -53,6 +53,13 @@ export function ProfileSummary() {
       value: profile.telefone
     },
     {
+      key: 'cpf',
+      label: 'CPF',
+      icon: CreditCard,
+      completed: !!profile.cpf,
+      value: profile.cpf ? profile.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4') : null
+    },
+    {
       key: 'data_nascimento',
       label: 'Data de Nascimento',
       icon: Calendar,
@@ -62,7 +69,7 @@ export function ProfileSummary() {
     {
       key: 'avatar_url',
       label: 'Foto de Perfil',
-      icon: Image,
+      icon: Camera,
       completed: !!profile.avatar_url,
       value: profile.avatar_url ? 'Configurada' : null
     }

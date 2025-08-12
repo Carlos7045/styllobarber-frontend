@@ -733,47 +733,67 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
   const renderPaymentStep = () => (
     <div className="space-y-6">
       <div className="text-center">
-        <h3 className="text-lg font-semibold mb-2">Forma de Pagamento</h3>
-        <p className="text-gray-400">Como você gostaria de pagar pelo serviço?</p>
+        <h3 className="text-lg font-semibold mb-2 text-white">Forma de Pagamento</h3>
+        <p className="text-gray-400">Escolha como você prefere pagar pelo serviço</p>
+      </div>
+
+      {/* Destaque da economia */}
+      <div className="bg-gradient-to-r from-green-900/30 to-green-800/30 border border-green-500/30 rounded-lg p-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-green-500/20 rounded-full">
+            <DollarSign className="h-5 w-5 text-green-400" />
+          </div>
+          <div>
+            <h4 className="font-semibold text-green-300">💰 Economize Pagando Antecipado!</h4>
+            <p className="text-sm text-green-200/80">
+              Pague agora e ganhe 10% de desconto. Você economiza {formatarMoeda((selectedService?.preco || 0) * 0.1)}!
+            </p>
+          </div>
+        </div>
       </div>
 
       <div className="space-y-3">
-        {/* Pagar Agora */}
+        {/* Pagar Agora - Destacado */}
         <Card
           className={cn(
-            'cursor-pointer transition-all hover:shadow-md border-gray-700',
+            'cursor-pointer transition-all hover:shadow-lg border-2',
             paymentMethod === 'advance'
-              ? 'ring-2 ring-primary-gold bg-primary-gold/5'
-              : 'hover:bg-gray-800/50'
+              ? 'ring-2 ring-primary-gold bg-gradient-to-r from-green-900/20 to-green-800/20 border-green-500'
+              : 'border-green-500/50 hover:border-green-500 hover:bg-green-900/10'
           )}
           onClick={() => setPaymentMethod('advance')}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-green-100 dark:bg-green-900/20 rounded-lg">
-                  <CreditCard className="h-5 w-5 text-green-600" />
+                <div className="p-3 bg-green-500/20 rounded-lg">
+                  <CreditCard className="h-6 w-6 text-green-400" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-white">Pagar Agora</h4>
-                  <p className="text-sm text-gray-400">
-                    Pagamento antecipado com desconto
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-bold text-white">💳 Pagar Agora</h4>
+                    <span className="bg-green-500 text-green-900 text-xs font-bold px-2 py-1 rounded-full">
+                      RECOMENDADO
+                    </span>
+                  </div>
+                  <p className="text-sm text-green-300">
+                    Pagamento antecipado • Sem filas • Sem pressa
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-green-600">
+                <div className="font-bold text-xl text-green-400">
                   {formatarMoeda((selectedService?.preco || 0) * 0.9)}
                 </div>
-                <div className="text-xs text-gray-500 line-through">
+                <div className="text-sm text-gray-400 line-through">
                   {formatarMoeda(selectedService?.preco || 0)}
                 </div>
-                <div className="text-xs text-green-600 font-medium">
-                  10% desconto
+                <div className="text-xs text-green-400 font-bold bg-green-500/20 px-2 py-1 rounded">
+                  ✨ 10% OFF
                 </div>
               </div>
               {paymentMethod === 'advance' && (
-                <Check className="h-5 w-5 text-primary-gold ml-2" />
+                <Check className="h-6 w-6 text-primary-gold ml-3" />
               )}
             </div>
           </CardContent>
@@ -792,18 +812,18 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                  <MapPin className="h-5 w-5 text-blue-600" />
+                <div className="p-3 bg-blue-500/20 rounded-lg">
+                  <MapPin className="h-6 w-6 text-blue-400" />
                 </div>
                 <div>
-                  <h4 className="font-medium text-white">Pagar no Local</h4>
+                  <h4 className="font-semibold text-white">🏪 Pagar no Local</h4>
                   <p className="text-sm text-gray-400">
-                    Pagamento após o serviço
+                    Pagamento após o serviço • Dinheiro, cartão ou PIX
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <div className="font-bold text-white">
+                <div className="font-bold text-lg text-white">
                   {formatarMoeda(selectedService?.preco || 0)}
                 </div>
                 <div className="text-xs text-gray-500">
@@ -811,7 +831,7 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
                 </div>
               </div>
               {paymentMethod === 'local' && (
-                <Check className="h-5 w-5 text-primary-gold ml-2" />
+                <Check className="h-6 w-6 text-primary-gold ml-3" />
               )}
             </div>
           </CardContent>
@@ -820,17 +840,46 @@ export const NovoAgendamentoModal: React.FC<NovoAgendamentoModalProps> = ({
 
       {/* Métodos de Pagamento Disponíveis */}
       <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
-        <h4 className="font-medium mb-2 flex items-center text-white">
+        <h4 className="font-medium mb-3 flex items-center text-white">
           <CreditCard className="h-4 w-4 mr-2" />
-          Métodos Aceitos
+          Métodos de Pagamento Aceitos
         </h4>
-        <div className="flex flex-wrap gap-2 text-sm text-gray-400">
-          <span className="bg-gray-700 px-2 py-1 rounded">💳 Cartão</span>
-          <span className="bg-gray-700 px-2 py-1 rounded">💰 Dinheiro</span>
-          <span className="bg-gray-700 px-2 py-1 rounded">📱 PIX</span>
-          <span className="bg-gray-700 px-2 py-1 rounded">💸 Débito</span>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded">
+            <span>💳</span>
+            <span className="text-gray-300">Cartão de Crédito</span>
+          </div>
+          <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded">
+            <span>💸</span>
+            <span className="text-gray-300">Cartão de Débito</span>
+          </div>
+          <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded">
+            <span>📱</span>
+            <span className="text-gray-300">PIX Instantâneo</span>
+          </div>
+          <div className="flex items-center gap-2 bg-gray-700/50 px-3 py-2 rounded">
+            <span>💰</span>
+            <span className="text-gray-300">Dinheiro</span>
+          </div>
         </div>
       </div>
+
+      {/* Vantagens do pagamento antecipado */}
+      {paymentMethod === 'advance' && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-primary-gold/10 to-yellow-500/10 border border-primary-gold/30 rounded-lg p-4"
+        >
+          <h4 className="font-semibold text-primary-gold mb-2">✨ Vantagens do Pagamento Antecipado</h4>
+          <ul className="text-sm text-yellow-200/80 space-y-1">
+            <li>• 10% de desconto no valor total</li>
+            <li>• Não precisa se preocupar com pagamento no dia</li>
+            <li>• Atendimento mais rápido e sem filas</li>
+            <li>• Pagamento seguro via PIX, cartão ou dinheiro</li>
+          </ul>
+        </motion.div>
+      )}
     </div>
   )
 

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import { Card, CardContent, CardHeader, CardTitle, Button } from '@/shared/components/ui'
-import { Calendar, Clock, Image, Phone, RefreshCw, User } from 'lucide-react'
+import { Calendar, Clock, Camera, Phone, RefreshCw, User, FileText } from 'lucide-react'
 
 interface ProfileChange {
   id: string
@@ -103,7 +103,7 @@ export function ProfileHistory() {
       case 'data_nascimento':
         return <Calendar className="h-4 w-4" />
       case 'avatar_url':
-        return <Image className="h-4 w-4" />
+        return <Camera className="h-4 w-4" />
       default:
         return <Clock className="h-4 w-4" />
     }
@@ -163,7 +163,7 @@ export function ProfileHistory() {
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" />
+            <FileText className="h-5 w-5" />
             Histórico de Alterações
           </CardTitle>
           
@@ -187,7 +187,7 @@ export function ProfileHistory() {
           </div>
         ) : changes.length === 0 ? (
           <div className="text-center py-8 text-text-muted">
-            <History className="h-12 w-12 mx-auto mb-4 opacity-50" />
+            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
             <p>Nenhuma alteração encontrada</p>
           </div>
         ) : (

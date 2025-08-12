@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import type { PostgrestError } from '@supabase/supabase-js'
 
 /**

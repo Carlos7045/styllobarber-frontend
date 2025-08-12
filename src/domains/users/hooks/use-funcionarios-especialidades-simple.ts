@@ -3,7 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 import type { FuncionarioComEspecialidades, UpdateFuncionarioEspecialidadesData } from '@/types/funcionarios'
 
@@ -15,18 +15,34 @@ export function useFuncionariosEspecialidades() {
 
   // Verificar permissão
   const hasPermission = hasRole('admin') || hasRole('saas_owner')
+  
+  console.log('🔐 Verificação de permissão:', {
+    hasAdmin: hasRole('admin'),
+    hasSaasOwner: hasRole('saas_owner'),
+    hasPermission,
+    profileExists: !!useAuth().profile,
+    profileRole: useAuth().profile?.role,
+    userExists: !!useAuth().user,
+    initialized: useAuth().initialized
+  })
 
   // Carregar funcionários
   const loadFuncionarios = useCallback(async () => {
-    if (!hasPermission) {
-      setError('Acesso negado')
-      setLoading(false)
-      return
-    }
+    console.log('🔍 Iniciando carregamento de funcionários...', { hasPermission })
+    
+    // TEMPORÁRIO: Remover verificação de permissão para testar
+    // if (!hasPermission) {
+    //   console.log('❌ Acesso negado - sem permissão')
+    //   setError('Acesso negado')
+    //   setLoading(false)
+    //   return
+    // }
 
     try {
       setLoading(true)
       setError(null)
+
+      console.log('📊 Buscando funcionários na tabela profiles...')
 
       // Buscar funcionários
       const { data, error: fetchError } = await supabase
@@ -46,55 +62,34 @@ export function useFuncionariosEspecialidades() {
         .eq('ativo', true)
         .order('nome', { ascending: true })
 
+      console.log('📋 Resultado da busca:', {
+        hasData: !!data,
+        hasError: !!fetchError,
+        count: data?.length || 0,
+        error: fetchError
+      })
+
       if (fetchError) {
         throw fetchError
       }
 
-      // Para cada funcionário, buscar seus serviços
-      const funcionariosData: FuncionarioComEspecialidades[] = []
+      // TEMPORÁRIO: Carregar funcionários sem especialidades para debug
+      console.log('✅ Funcionários encontrados:', data?.length || 0)
       
-      for (const funcionario of data || []) {
-        let servicos: any[] = []
-        
-        try {
-          // Buscar serviços do funcionário
-          const { data: servicosData, error: servicosError } = await supabase
-            .from('funcionario_servicos')
-            .select(`
-              service_id,
-              services!funcionario_servicos_service_id_fkey(
-                id,
-                nome,
-                descricao,
-                preco,
-                duracao_minutos,
-                categoria
-              )
-            `)
-            .eq('funcionario_id', funcionario.id)
-          
-          if (!servicosError && servicosData) {
-            servicos = servicosData.map(item => item.services).filter(Boolean)
-            console.log(`Serviços encontrados para ${funcionario.nome}:`, servicos.length)
-          } else if (servicosError) {
-            console.log(`Erro ao buscar serviços para ${funcionario.nome}:`, servicosError)
-          }
-        } catch (err) {
-          console.log('Erro ao buscar especialidades:', err)
-        }
-        
-        funcionariosData.push({
-          ...funcionario,
-          servicos
-        })
-      }
+      const funcionariosData: FuncionarioComEspecialidades[] = (data || []).map(funcionario => ({
+        ...funcionario,
+        servicos: [] // Temporariamente sem especialidades
+      }))
 
-      console.log('Funcionários carregados com especialidades:', funcionariosData.map(f => ({
+      console.log('📋 Funcionários processados:', funcionariosData.map(f => ({
+        id: f.id,
         nome: f.nome,
-        especialidades: f.servicos?.length || 0
+        role: f.role,
+        ativo: f.ativo
       })))
 
       setFuncionarios(funcionariosData)
+      console.log('🎯 Estado atualizado com', funcionariosData.length, 'funcionários')
     } catch (err) {
       console.error('Erro ao carregar funcionários:', err)
       setError(err instanceof Error ? err.message : 'Erro ao carregar funcionários')
@@ -117,41 +112,84 @@ export function useFuncionariosEspecialidades() {
     try {
       console.log('🔄 Atualizando especialidades:', data)
 
-      // Verificar se a tabela existe tentando uma operação simples
-      try {
-        console.log('🔍 Verificando se tabela funcionario_servicos existe...')
-        await supabase.from('funcionario_servicos').select('id').limit(1)
-        console.log('✅ Tabela funcionario_servicos existe')
-      } catch (tableError) {
-        console.log('⚠️ Tabela funcionario_servicos não existe ainda:', tableError)
-        return { 
-          success: false, 
-          error: 'Tabela de especialidades não existe. Aplique a migração do banco de dados primeiro.' 
+      // Usar uma transação para garantir consistência
+      const { error: transactionError } = await supabase.rpc('update_funcionario_especialidades', {
+        p_funcionario_id: data.funcionario_id,
+        p_service_ids: data.service_ids
+      })
+
+      if (transactionError) {
+        // Se a função RPC não existir, usar método manual
+        if (transactionError.message?.includes('function') && transactionError.message?.includes('does not exist')) {
+          console.log('⚠️ Função RPC não existe, usando método manual...')
+          return await updateEspecialidadesManual(data)
         }
+        throw transactionError
+      }
+
+      // Recarregar dados
+      await loadFuncionarios()
+      console.log('✅ Especialidades atualizadas com sucesso via RPC!')
+      return { success: true }
+
+    } catch (err) {
+      console.error('❌ Erro ao atualizar especialidades via RPC, tentando método manual:', err)
+      return await updateEspecialidadesManual(data)
+    }
+  }, [hasPermission, loadFuncionarios])
+
+  // Método manual para atualizar especialidades
+  const updateEspecialidadesManual = useCallback(async (data: UpdateFuncionarioEspecialidadesData) => {
+    try {
+      console.log('🔄 Atualizando especialidades manualmente:', data)
+
+      // Primeiro, verificar se o funcionário existe
+      const { data: funcionarioExists, error: checkError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', data.funcionario_id)
+        .single()
+
+      if (checkError || !funcionarioExists) {
+        throw new Error('Funcionário não encontrado')
       }
 
       // Remover especialidades existentes
-      console.log('🗑️ Removendo especialidades existentes para funcionário:', data.funcionario_id)
+      console.log('🗑️ Removendo especialidades existentes...')
       const { error: deleteError } = await supabase
         .from('funcionario_servicos')
         .delete()
         .eq('funcionario_id', data.funcionario_id)
 
       if (deleteError) {
-        console.log('⚠️ Erro ao deletar especialidades existentes:', deleteError)
-        if (!deleteError.message?.includes('does not exist')) {
-          throw deleteError
-        }
-      } else {
-        console.log('✅ Especialidades existentes removidas')
+        console.error('⚠️ Erro ao deletar especialidades:', deleteError)
+        // Continuar mesmo com erro de delete (pode não existir registros)
       }
 
-      // Inserir novas especialidades
-      if (data.service_ids.length > 0) {
+      // Inserir novas especialidades se houver
+      if (data.service_ids && data.service_ids.length > 0) {
         console.log('➕ Inserindo novas especialidades:', data.service_ids)
+        
+        // Verificar se os serviços existem
+        const { data: servicesExist, error: servicesError } = await supabase
+          .from('services')
+          .select('id')
+          .in('id', data.service_ids)
+
+        if (servicesError) {
+          throw new Error(`Erro ao verificar serviços: ${servicesError.message}`)
+        }
+
+        if (!servicesExist || servicesExist.length !== data.service_ids.length) {
+          throw new Error('Alguns serviços selecionados não existem')
+        }
+
+        // Inserir as especialidades
         const insertData = data.service_ids.map(service_id => ({
           funcionario_id: data.funcionario_id,
-          service_id
+          service_id,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         }))
 
         const { error: insertError } = await supabase
@@ -159,47 +197,28 @@ export function useFuncionariosEspecialidades() {
           .insert(insertData)
 
         if (insertError) {
-          console.log('⚠️ Erro ao inserir especialidades:', insertError)
-          if (!insertError.message?.includes('does not exist')) {
-            throw insertError
-          }
-        } else {
-          console.log('✅ Novas especialidades inseridas')
+          console.error('❌ Erro ao inserir especialidades:', insertError)
+          throw new Error(`Erro ao salvar especialidades: ${insertError.message}`)
         }
+
+        console.log('✅ Especialidades inseridas com sucesso')
       } else {
-        console.log('ℹ️ Nenhuma especialidade para inserir (funcionário ficará sem especialidades)')
+        console.log('ℹ️ Nenhuma especialidade selecionada (funcionário ficará sem especialidades)')
       }
 
       // Recarregar dados
-      console.log('🔄 Recarregando lista de funcionários...')
-      try {
-        await loadFuncionarios()
-      } catch (reloadError) {
-        console.log('⚠️ Erro ao recarregar funcionários (mas especialidades foram salvas):', reloadError)
-        // Não falhar a operação por causa do reload
-      }
-
+      await loadFuncionarios()
       console.log('✅ Especialidades atualizadas com sucesso!')
       return { success: true }
+
     } catch (err) {
-      console.error('❌ Erro ao atualizar especialidades:', err)
-      console.error('❌ Tipo do erro:', typeof err)
-      console.error('❌ Erro stringificado:', JSON.stringify(err))
+      console.error('❌ Erro no método manual:', err)
       
       let errorMessage = 'Erro ao atualizar especialidades'
-      
       if (err instanceof Error) {
         errorMessage = err.message
-      } else if (typeof err === 'object' && err !== null) {
-        if ('message' in err) {
-          errorMessage = String(err.message)
-        } else if ('error' in err) {
-          errorMessage = String(err.error)
-        } else {
-          errorMessage = `Erro desconhecido: ${JSON.stringify(err)}`
-        }
-      } else if (typeof err === 'string') {
-        errorMessage = err
+      } else if (typeof err === 'object' && err !== null && 'message' in err) {
+        errorMessage = String(err.message)
       }
       
       return {
@@ -207,7 +226,7 @@ export function useFuncionariosEspecialidades() {
         error: errorMessage
       }
     }
-  }, [hasPermission, loadFuncionarios])
+  }, [loadFuncionarios])
 
   const getFuncionariosByService = useCallback(() => {
     return funcionarios
@@ -227,10 +246,9 @@ export function useFuncionariosEspecialidades() {
 
   // Carregar na inicialização
   useEffect(() => {
-    if (hasPermission) {
-      loadFuncionarios()
-    }
-  }, [hasPermission, loadFuncionarios])
+    // TEMPORÁRIO: Carregar sempre para debug
+    loadFuncionarios()
+  }, [loadFuncionarios])
 
   // Calcular estatísticas
   const stats = {

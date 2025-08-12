@@ -8,7 +8,7 @@ import Link from 'next/link'
 import { z } from 'zod'
 
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/shared/utils'
 
 // Schema de validação para recuperação de senha

@@ -4,7 +4,7 @@ import { User } from 'lucide-react'
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session, AuthError } from '@supabase/supabase-js'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { uploadAvatar, removeAvatar, type UploadResult } from '@/lib/storage'
 import { uploadAvatarFallback, removeAvatarFallback } from '@/lib/storage-fallback'
 import { authInterceptor } from '@/lib/api/auth-interceptor'
@@ -31,6 +31,7 @@ export interface SignUpData {
   nome: string
   email: string
   telefone: string
+  cpf?: string // Campo CPF opcional
   senha: string
   confirmarSenha: string
 }
@@ -44,6 +45,7 @@ export interface UserProfile {
   nome: string
   email: string
   telefone?: string
+  cpf?: string // Campo CPF
   role: 'admin' | 'barber' | 'client' | 'saas_owner'
   avatar_url?: string
   pontos_fidelidade?: number
@@ -1258,8 +1260,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   return (
     <AuthContext.Provider value={value}>
       {children}
-      {/* Modal de primeiro acesso para clientes cadastrados automaticamente */}
-      <PrimeiroAcessoModal />
+      {/* Modal de primeiro acesso para clientes cadastrados automaticamente - apenas quando há usuário */}
+      {user && initialized && <PrimeiroAcessoModal />}
     </AuthContext.Provider>
   )
 }

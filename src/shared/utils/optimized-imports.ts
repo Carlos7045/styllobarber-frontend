@@ -238,7 +238,7 @@ export const motion = {
 }
 
 export const AnimatePresence = ({ children }: { children: React.ReactNode }) => {
-  return <>{children}</>
+  return React.createElement(React.Fragment, null, children)
 }
 
 // ===== TANSTACK QUERY =====

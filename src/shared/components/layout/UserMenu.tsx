@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { User, Settings, LogOut, ChevronDown } from 'lucide-react'
-import { useAuth } from '@/domains/auth/hooks/use-auth'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/shared/components/ui'
 import { cn } from '@/shared/utils'
 import { logoutManager } from '@/lib/logout-manager'

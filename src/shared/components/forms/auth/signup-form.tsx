@@ -3,12 +3,12 @@
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Eye, EyeOff, Link as LinkIcon, Lock, Mail, Phone, User } from 'lucide-react'
+import { Eye, EyeOff, Link as LinkIcon, Lock, Mail, Phone, User, CreditCard } from 'lucide-react'
 import Link from 'next/link'
 
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
 import { NoSSR } from '@/shared/components/feedback/NoSSR'
-import { useAuth, type SignUpData } from '@/domains/auth/hooks/use-auth'
+import { useAuth, type SignUpData } from '@/contexts/AuthContext'
 import { schemaCadastro, type DadosCadastro } from '@/shared/utils/validation'
 import { cn, formatarTelefone } from '@/shared/utils'
 
@@ -38,18 +38,27 @@ export function SignUpForm({ onSuccess, className, redirectTo }: SignUpFormProps
       nome: '',
       email: '',
       telefone: '',
+      cpf: '',
       senha: '',
       confirmarSenha: '',
     },
   })
 
-  // Observar valor do telefone para formatação
+  // Observar valores para formatação
   const telefoneValue = watch('telefone')
+  const cpfValue = watch('cpf')
 
   // Função para formatar telefone em tempo real
   const handleTelefoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const formatted = formatarTelefone(e.target.value)
     setValue('telefone', formatted)
+  }
+
+  // Função para formatar CPF em tempo real
+  const handleCPFChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '')
+    const formatted = value.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4')
+    setValue('cpf', formatted)
   }
 
   // Função para submeter o formulário
@@ -129,6 +138,21 @@ export function SignUpForm({ onSuccess, className, redirectTo }: SignUpFormProps
             onChange={handleTelefoneChange}
             value={telefoneValue}
             maxLength={15}
+          />
+
+          {/* Campo CPF */}
+          <Input
+            {...register('cpf')}
+            type="text"
+            label="CPF (opcional)"
+            placeholder="000.000.000-00"
+            leftIcon={<CreditCard className="h-4 w-4" />}
+            error={errors.cpf?.message}
+            disabled={isSubmitting || loading}
+            onChange={handleCPFChange}
+            value={cpfValue}
+            maxLength={14}
+            helperText="Necessário para pagamentos PIX"
           />
 
           {/* Campo Senha */}

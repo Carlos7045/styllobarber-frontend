@@ -10,7 +10,8 @@ import { useClientAppointments } from '@/domains/appointments/hooks/use-client-a
 import { ReagendamentoModalSimples } from './ReagendamentoModalSimples'
 import { cn, formatarMoeda } from '@/shared/utils'
 import type { ClientAppointment } from '@/types/appointments'
-// import { useBrazilianDate } from '@/shared/hooks/utils/use-brazilian-date' // Hook não existe
+import { PAYMENT_METHOD_LABELS } from '@/types/appointments'
+import { PaymentStatusBadge } from '@/shared/components/ui/payment-status-badge'
 
 interface AgendamentoCardProps {
   appointment: ClientAppointment
@@ -58,11 +59,16 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
   const [cancelReason, setCancelReason] = useState('')
   const [isProcessing, setIsProcessing] = useState(false)
 
-  const { cancelAppointment } = useClientAppointments()
+  const { cancelAppointment, preparePaymentRedirect, needsPayment, canPay } = useClientAppointments()
 
   const statusInfo =
     statusConfig[appointment.status as keyof typeof statusConfig] || statusConfig.pendente
   const StatusIcon = statusInfo.icon
+
+  // Função para processar pagamento via Asaas
+  const handlePayment = (appointment: ClientAppointment) => {
+    preparePaymentRedirect(appointment)
+  }
 
   // Formatação de data brasileira
   const appointmentDate = new Date(appointment.data_agendamento)
@@ -112,14 +118,52 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-gold/10">
                 <Calendar className="h-5 w-5 text-primary-gold" />
               </div>
-              <div>
-                <h3 className="text-sm font-medium">{appointment.service?.nome || 'Serviço'}</h3>
-                <p className="text-xs text-text-muted">
-                  {brazilianDate.date} às {brazilianDate.time}
-                </p>
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-medium">{appointment.service?.nome || 'Serviço'}</h3>
+                  {appointment.barbeiro && (
+                    <span className="text-xs text-text-muted">• {appointment.barbeiro.nome}</span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 text-xs text-text-muted">
+                  <span>{brazilianDate.date} às {brazilianDate.time}</span>
+                  {appointment.service?.duracao_minutos && (
+                    <span>• {appointment.service.duracao_minutos}min</span>
+                  )}
+                  <span className="font-medium text-primary-gold">
+                    • {formatarMoeda(appointment.preco_final || appointment.service?.preco || 0)}
+                  </span>
+                </div>
+                
+                {/* Status de Pagamento */}
+                <div className="mt-1 flex items-center gap-2">
+                  <PaymentStatusBadge 
+                    status={appointment.payment_status}
+                    needsPayment={needsPayment(appointment)}
+                    paymentMethod={appointment.payment_method}
+                    appointmentStatus={appointment.status}
+                  />
+                  
+                  {/* Botão de pagamento para serviços não pagos */}
+                  {canPay(appointment) && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-6 px-2 text-xs"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        handlePayment(appointment)
+                      }}
+                    >
+                      💳 Pagar
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
-            <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+            <div className="flex flex-col items-end gap-1">
+              <Badge className={statusInfo.color}>{statusInfo.label}</Badge>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -177,7 +221,7 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
               </div>
             )}
 
-            {/* Preço e duração */}
+            {/* Preço, duração e pagamento */}
             {appointment.service && (
               <div className="flex items-center gap-4 text-sm">
                 <div>
@@ -189,6 +233,17 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
                 <div>
                   <div className="font-medium">{appointment.service.duracao_minutos} min</div>
                   <div className="text-text-muted">Duração</div>
+                </div>
+                {/* Status de Pagamento */}
+                <div>
+                  <PaymentStatusBadge 
+                    status={appointment.payment_status}
+                    needsPayment={needsPayment(appointment)}
+                    paymentMethod={appointment.payment_method}
+                    appointmentStatus={appointment.status}
+                    className="font-medium"
+                  />
+                  <div className="text-text-muted text-xs mt-1">Pagamento</div>
                 </div>
               </div>
             )}
@@ -205,14 +260,63 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
             )}
           </div>
 
-          {/* Observações */}
-          {appointment.observacoes && (
-            <div className="rounded-lg bg-neutral-light-gray p-3">
-              <p className="text-sm text-text-muted">
-                <strong>Observações:</strong> {appointment.observacoes}
-              </p>
-            </div>
-          )}
+          {/* Informações Adicionais */}
+          <div className="space-y-3">
+            {/* Observações */}
+            {appointment.observacoes && (
+              <div className="rounded-lg bg-neutral-light-gray p-3">
+                <p className="text-sm text-text-muted">
+                  <strong>Observações:</strong> {appointment.observacoes}
+                </p>
+              </div>
+            )}
+
+            {/* Informações de Pagamento Detalhadas */}
+            {appointment.payment_method && (
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 p-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      Forma de Pagamento
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300">
+                      {PAYMENT_METHOD_LABELS[appointment.payment_method]}
+                    </p>
+                  </div>
+                  {appointment.payment_method === 'advance' && appointment.payment_status === 'paid' && (
+                    <Badge className="bg-green-100 text-green-800 border-green-200">
+                      10% Desconto Aplicado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Informações do Barbeiro (se disponível) */}
+            {appointment.barbeiro && (
+              <div className="rounded-lg bg-gray-50 dark:bg-gray-800/50 p-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-8 w-8 rounded-full bg-primary-gold/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary-gold" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">{appointment.barbeiro.nome}</p>
+                    {appointment.barbeiro.especialidades && (
+                      <p className="text-xs text-text-muted">
+                        {appointment.barbeiro.especialidades.slice(0, 2).join(', ')}
+                      </p>
+                    )}
+                  </div>
+                  {appointment.barbeiro.avaliacao && (
+                    <div className="ml-auto flex items-center gap-1">
+                      <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
+                      <span className="text-xs font-medium">{appointment.barbeiro.avaliacao}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Ações */}
           {showActions && isFuture && (
@@ -304,12 +408,63 @@ export const AgendamentoCard: React.FC<AgendamentoCardProps> = ({
           )}
 
           {/* Ações para agendamentos passados */}
-          {!isFuture && appointment.status === 'concluido' && showActions && (
-            <div className="border-border-default flex items-center gap-2 border-t pt-2">
-              <Button variant="outline" size="sm" onClick={() => onViewDetails?.(appointment.id)}>
-                <Star className="mr-1 h-4 w-4" />
-                Avaliar
+          {!isFuture && showActions && (
+            <div className="border-border-default flex items-center gap-2 border-t pt-4">
+              {/* Debug info para pagamento */}
+              <div className="text-xs text-gray-500 mb-2 p-2 bg-blue-100 dark:bg-blue-900 rounded">
+                <div>🔍 DEBUG PAGAMENTO:</div>
+                <div>needsPayment: <strong>{String(needsPayment(appointment))}</strong></div>
+                <div>canPay: <strong>{String(canPay(appointment))}</strong></div>
+                <div>payment_status: <strong>{appointment.payment_status || 'null'}</strong></div>
+                <div>payment_method: <strong>{appointment.payment_method || 'null'}</strong></div>
+                <div>status: <strong>{appointment.status}</strong></div>
+                <div>isPast: <strong>{String(isPast)}</strong></div>
+                <div>data: <strong>{new Date(appointment.data_agendamento).toLocaleString()}</strong></div>
+                <div>agora: <strong>{new Date().toLocaleString()}</strong></div>
+              </div>
+
+              {/* Botão de pagamento para serviços não pagos */}
+              {canPay(appointment) && (
+                <Button 
+                  variant="default" 
+                  size="sm" 
+                  onClick={() => handlePayment(appointment)}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  💳 Pagar Serviço
+                </Button>
+              )}
+              
+              {/* Botão de teste - sempre visível para debug */}
+              <Button 
+                variant="destructive" 
+                size="sm" 
+                onClick={() => {
+                  console.log('🧪 TESTE PAGAMENTO:', {
+                    appointment,
+                    needsPayment: needsPayment(appointment),
+                    canPay: canPay(appointment),
+                    payment_status: appointment.payment_status,
+                    payment_method: appointment.payment_method,
+                    status: appointment.status,
+                    isPast,
+                    appointmentDate: new Date(appointment.data_agendamento),
+                    now: new Date()
+                  })
+                  alert('Dados do pagamento logados no console!')
+                }}
+                className="ml-2"
+              >
+                🧪 DEBUG
               </Button>
+
+              {/* Botão de avaliação para serviços concluídos */}
+              {appointment.status === 'concluido' && !needsPayment(appointment) && (
+                <Button variant="outline" size="sm" onClick={() => onViewDetails?.(appointment.id)}>
+                  <Star className="mr-1 h-4 w-4" />
+                  Avaliar
+                </Button>
+              )}
 
               <Button
                 variant="ghost"

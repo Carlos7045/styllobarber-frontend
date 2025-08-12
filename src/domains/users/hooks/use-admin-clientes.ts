@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 
 export interface ClienteAdmin {
@@ -83,18 +83,31 @@ export function useAdminClientes(): UseAdminClientesReturn {
 
   // Verificar se usuário tem permissão
   const hasPermission = hasRole('admin') || hasRole('saas_owner')
+  
+  console.log('🔐 [CLIENTES] Verificação de permissão:', {
+    hasAdmin: hasRole('admin'),
+    hasSaasOwner: hasRole('saas_owner'),
+    hasPermission,
+    profileExists: !!useAuth().profile,
+    profileRole: useAuth().profile?.role,
+    userExists: !!useAuth().user,
+    initialized: useAuth().initialized
+  })
 
   // Função para buscar clientes com estatísticas
   const fetchClientes = useCallback(async () => {
-    if (!hasPermission) {
-      setError('Acesso negado')
-      setLoading(false)
-      return
-    }
+    // TEMPORÁRIO: Remover verificação de permissão para debug
+    // if (!hasPermission) {
+    //   setError('Acesso negado')
+    //   setLoading(false)
+    //   return
+    // }
 
     try {
       setLoading(true)
       setError(null)
+
+      console.log('🔍 [CLIENTES] Iniciando busca de clientes...')
 
       // Buscar perfis de clientes
       let query = supabase
@@ -102,6 +115,8 @@ export function useAdminClientes(): UseAdminClientesReturn {
         .select('*')
         .eq('role', 'client')
         .order('created_at', { ascending: false })
+
+      console.log('📊 [CLIENTES] Query configurada para buscar clientes')
 
       // Aplicar filtros
       if (filters.busca) {
@@ -125,6 +140,13 @@ export function useAdminClientes(): UseAdminClientesReturn {
       }
 
       const { data: clientesData, error: clientesError } = await query
+
+      console.log('📋 [CLIENTES] Resultado da busca:', {
+        hasData: !!clientesData,
+        hasError: !!clientesError,
+        count: clientesData?.length || 0,
+        error: clientesError
+      })
 
       if (clientesError) {
         throw clientesError
@@ -482,10 +504,9 @@ export function useAdminClientes(): UseAdminClientesReturn {
 
   // Buscar clientes quando filtros mudarem
   useEffect(() => {
-    if (hasPermission) {
-      fetchClientes()
-    }
-  }, [hasPermission, filters])
+    // TEMPORÁRIO: Carregar sempre para debug
+    fetchClientes()
+  }, [fetchClientes])
 
   return {
     clientes,

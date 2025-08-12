@@ -1,6 +1,7 @@
 // Serviço para gerenciar transações rápidas do PDV
 import { supabase } from '@/lib/api/supabase'
 import { AgendamentoService } from './agendamento-service'
+import { AsaasIntegrationService, type AsaasCustomer, type AsaasPayment } from './asaas-integration-service'
 
 export interface QuickTransactionData {
   tipo: 'ENTRADA' | 'SAIDA'
@@ -12,12 +13,21 @@ export interface QuickTransactionData {
   barbeiro?: string
   observacoes?: string
   agendamentoId?: string // ID do agendamento relacionado
+  telefone?: string // Telefone do cliente para integração Asaas
+}
+
+export interface AsaasTransactionResult {
+  customer?: AsaasCustomer
+  payment?: AsaasPayment
+  qrCode?: string
+  copyAndPaste?: string
 }
 
 export interface TransactionResponse {
   success: boolean
   transactionId?: string
   error?: string
+  asaasData?: AsaasTransactionResult // Dados da integração Asaas
 }
 
 export class QuickTransactionService {
@@ -31,6 +41,46 @@ export class QuickTransactionService {
 
       if (!data.descricao.trim()) {
         return { success: false, error: 'Descrição é obrigatória' }
+      }
+
+      // Integração com Asaas para pagamentos PIX
+      let asaasData: AsaasTransactionResult | undefined
+      if (data.tipo === 'ENTRADA' && data.metodoPagamento === 'PIX') {
+        console.log('🔄 Processando pagamento PIX via Asaas...')
+        
+        const asaasResult = await AsaasIntegrationService.processPayment({
+          cliente: data.cliente,
+          valor: data.valor,
+          descricao: data.descricao,
+          metodoPagamento: data.metodoPagamento,
+          telefone: data.telefone
+        })
+
+        if (asaasResult.success && asaasResult.customer && asaasResult.payment) {
+          asaasData = {
+            customer: asaasResult.customer,
+            payment: asaasResult.payment,
+            qrCode: asaasResult.payment.pixTransaction?.qrCode,
+            copyAndPaste: asaasResult.payment.pixTransaction?.copyAndPaste
+          }
+          
+          console.log('✅ Pagamento PIX criado no Asaas:', asaasResult.payment.id)
+          
+          // Atualizar observações com dados do Asaas
+          data.observacoes = [
+            data.observacoes,
+            `PIX Asaas: ${asaasResult.payment.id}`,
+            `Cliente Asaas: ${asaasResult.customer.id}`,
+            asaasResult.payment.pixTransaction ? 'QR Code gerado' : ''
+          ].filter(Boolean).join(' | ')
+        } else {
+          console.warn('⚠️ Falha na integração Asaas, continuando com registro local:', asaasResult.error)
+          // Continuar com o registro local mesmo se Asaas falhar
+          data.observacoes = [
+            data.observacoes,
+            `PIX local (Asaas indisponível): ${asaasResult.error}`
+          ].filter(Boolean).join(' | ')
+        }
       }
 
       // Verificar se a tabela existe
@@ -149,6 +199,7 @@ export class QuickTransactionService {
       return {
         success: true,
         transactionId: transacao.id,
+        asaasData // Incluir dados do Asaas se disponível
       }
     } catch (error) {
       console.error('Erro no serviço de transação rápida:', error)

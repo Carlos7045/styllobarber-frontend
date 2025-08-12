@@ -398,12 +398,40 @@ export const ReagendamentoModalCompleto: React.FC<ReagendamentoModalCompletoProp
         )
 
       case 'payment':
+        // Verificar se o agendamento atual precisa de pagamento
+        const currentNeedsPayment = appointment.status === 'concluido' && 
+          (!appointment.payment_status || appointment.payment_status === 'pending') &&
+          appointment.payment_method !== 'advance'
+        
         return (
           <div className="space-y-6">
             <div className="text-center">
               <h3 className="text-lg font-semibold mb-2">Forma de Pagamento</h3>
-              <p className="text-gray-600">Como você gostaria de pagar pelo serviço?</p>
+              <p className="text-gray-600">
+                {currentNeedsPayment 
+                  ? 'Você tem um pagamento pendente. Como gostaria de proceder?'
+                  : 'Como você gostaria de pagar pelo serviço reagendado?'
+                }
+              </p>
             </div>
+
+            {/* Aviso sobre pagamento pendente */}
+            {currentNeedsPayment && (
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+                  <div>
+                    <h4 className="font-medium text-yellow-800 dark:text-yellow-200">
+                      Pagamento Pendente
+                    </h4>
+                    <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+                      Você tem um pagamento pendente de {formatarMoeda(appointment.service?.preco || 0)} 
+                      do serviço já realizado. Aproveite para quitar agora com desconto!
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-3">
               {/* Pagar Agora */}
@@ -423,22 +451,43 @@ export const ReagendamentoModalCompleto: React.FC<ReagendamentoModalCompletoProp
                         <CreditCard className="h-5 w-5 text-green-600" />
                       </div>
                       <div>
-                        <h4 className="font-medium">Pagar Agora</h4>
+                        <h4 className="font-medium">
+                          {currentNeedsPayment ? 'Pagar Pendência + Reagendamento' : 'Pagar Agora'}
+                        </h4>
                         <p className="text-sm text-gray-600">
-                          Pagamento antecipado com desconto
+                          {currentNeedsPayment 
+                            ? 'Quite a pendência e pague antecipado com desconto'
+                            : 'Pagamento antecipado com desconto'
+                          }
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-green-600">
-                        {formatarMoeda((appointment.service?.preco || 0) * 0.9)}
-                      </div>
-                      <div className="text-xs text-gray-500 line-through">
-                        {formatarMoeda(appointment.service?.preco || 0)}
-                      </div>
-                      <div className="text-xs text-green-600 font-medium">
-                        10% desconto
-                      </div>
+                      {currentNeedsPayment ? (
+                        <>
+                          <div className="font-bold text-green-600">
+                            {formatarMoeda((appointment.service?.preco || 0) * 1.8)} {/* Pendência + novo com desconto */}
+                          </div>
+                          <div className="text-xs text-gray-500 line-through">
+                            {formatarMoeda((appointment.service?.preco || 0) * 2)}
+                          </div>
+                          <div className="text-xs text-green-600 font-medium">
+                            10% desconto no total
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="font-bold text-green-600">
+                            {formatarMoeda((appointment.service?.preco || 0) * 0.9)}
+                          </div>
+                          <div className="text-xs text-gray-500 line-through">
+                            {formatarMoeda(appointment.service?.preco || 0)}
+                          </div>
+                          <div className="text-xs text-green-600 font-medium">
+                            10% desconto
+                          </div>
+                        </>
+                      )}
                     </div>
                     {paymentMethod === 'advance' && (
                       <Check className="h-5 w-5 text-primary-gold ml-2" />
@@ -466,16 +515,22 @@ export const ReagendamentoModalCompleto: React.FC<ReagendamentoModalCompletoProp
                       <div>
                         <h4 className="font-medium">Pagar no Local</h4>
                         <p className="text-sm text-gray-600">
-                          Pagamento após o serviço
+                          {currentNeedsPayment 
+                            ? 'Manter pendência e pagar tudo no local'
+                            : 'Pagamento após o serviço'
+                          }
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="font-bold text-gray-900 dark:text-gray-100">
-                        {formatarMoeda(appointment.service?.preco || 0)}
+                        {currentNeedsPayment 
+                          ? formatarMoeda((appointment.service?.preco || 0) * 2)
+                          : formatarMoeda(appointment.service?.preco || 0)
+                        }
                       </div>
                       <div className="text-xs text-gray-500">
-                        Valor integral
+                        {currentNeedsPayment ? 'Pendência + novo serviço' : 'Valor integral'}
                       </div>
                     </div>
                     {paymentMethod === 'local' && (

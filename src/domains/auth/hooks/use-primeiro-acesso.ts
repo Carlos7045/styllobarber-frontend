@@ -4,9 +4,10 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from './use-auth'
 import { useToast } from '@/shared/components/ui'
+// Removido import do error-handler para usar tratamento mais simples
 
 interface PrimeiroAcessoState {
   isPrimeiroAcesso: boolean
@@ -29,7 +30,7 @@ interface AlterarSenhaData {
 export const usePrimeiroAcesso = () => {
   const [state, setState] = useState<PrimeiroAcessoState>({
     isPrimeiroAcesso: false,
-    loading: true,
+    loading: false, // Mudado para false para evitar loading infinito
     alterandoSenha: false,
     dadosCliente: null
   })
@@ -38,30 +39,54 @@ export const usePrimeiroAcesso = () => {
   const router = useRouter()
   const { addToast } = useToast()
 
-  // Verificar se é primeiro acesso
+  // Verificar se é primeiro acesso - VERSÃO SIMPLIFICADA
   useEffect(() => {
     const verificarPrimeiroAcesso = async () => {
-      if (!user) {
+      // Verificações iniciais
+      if (!user?.id) {
+        console.log('👤 Nenhum usuário válido, pulando verificação')
         setState(prev => ({ ...prev, loading: false }))
         return
       }
 
+      console.log('🔍 Verificando primeiro acesso para usuário:', user.id)
+
       try {
-        // Buscar dados do perfil
+        // Buscar dados do perfil de forma simples
         const { data: profile, error } = await supabase
           .from('profiles')
           .select('nome, telefone, email, created_at, senha_alterada, cadastro_automatico')
           .eq('id', user.id)
           .single()
+          
+        console.log('📊 Query concluída:', {
+          hasProfile: !!profile,
+          hasError: !!error
+        })
 
         if (error) {
-          console.error('Erro ao buscar perfil:', error)
+          console.error('❌ Erro ao buscar perfil:', error?.message || 'Erro desconhecido')
+          console.log('🔍 Código do erro:', error?.code)
+          
+          // Por enquanto, apenas definir como não sendo primeiro acesso em caso de erro
+          setState(prev => ({ ...prev, loading: false, isPrimeiroAcesso: false }))
+          return
+          
           setState(prev => ({ ...prev, loading: false }))
           return
         }
 
-        // Verificar se é primeiro acesso (cadastro automático + senha não alterada)
+        // Verificar se o perfil foi encontrado
+        if (!profile) {
+          console.warn('⚠️ Perfil não encontrado para o usuário:', user.id)
+          setState(prev => ({ ...prev, loading: false, isPrimeiroAcesso: false }))
+          return
+        }
+
+        // Verificar se é primeiro acesso
         const isPrimeiroAcesso = profile.cadastro_automatico && !profile.senha_alterada
+
+        console.log('✅ Perfil encontrado:', profile.nome, '- Primeiro acesso:', isPrimeiroAcesso)
 
         setState(prev => ({
           ...prev,
@@ -75,8 +100,8 @@ export const usePrimeiroAcesso = () => {
           } : null
         }))
 
-      } catch (error) {
-        console.error('Erro ao verificar primeiro acesso:', error)
+      } catch (error: any) {
+        console.error('❌ Erro inesperado:', error?.message || 'Erro desconhecido')
         setState(prev => ({ ...prev, loading: false }))
       }
     }

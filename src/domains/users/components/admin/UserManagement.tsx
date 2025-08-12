@@ -7,7 +7,7 @@ import { useAuth, UserProfile } from '@/domains/auth/hooks/use-auth'
 import { usePermissions, PERMISSIONS } from '@/domains/auth/hooks/use-permissions'
 import { PermissionGuard, AdminOnly } from '@/domains/auth/components/PermissionGuard'
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { UserEditModal } from './UserEditModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { NovoFuncionarioModal } from './NovoFuncionarioModal'
@@ -43,14 +43,21 @@ export function UserManagement({ className }: UserManagementProps) {
 
   // Carregar usuários
   useEffect(() => {
-    if (canManageUsers && profile?.id) {
-      loadUsers()
-    }
+    console.log('🔐 [USUARIOS] Verificação de permissão:', {
+      canManageUsers,
+      profileExists: !!profile,
+      profileId: profile?.id
+    })
+    
+    // TEMPORÁRIO: Carregar sempre para debug
+    loadUsers()
   }, [canManageUsers, profile?.id])
 
   const loadUsers = async () => {
     try {
       setLoading(true)
+      console.log('🔍 [USUARIOS] Iniciando busca de clientes...')
+      
       // Buscar apenas clientes
       const { data, error } = await supabase
         .from('profiles')
@@ -58,15 +65,23 @@ export function UserManagement({ className }: UserManagementProps) {
         .eq('role', 'client')
         .order('created_at', { ascending: false })
 
+      console.log('📋 [USUARIOS] Resultado da busca:', {
+        hasData: !!data,
+        hasError: !!error,
+        count: data?.length || 0,
+        error: error
+      })
+
       if (error) {
-        console.error('Erro ao carregar usuários:', error)
+        console.error('❌ [USUARIOS] Erro ao carregar usuários:', error)
         alert('Erro ao carregar usuários: ' + error.message)
         return
       }
 
+      console.log('✅ [USUARIOS] Clientes encontrados:', data?.length || 0)
       setUsers(data as UserProfile[])
     } catch (error) {
-      console.error('Erro ao carregar usuários:', error)
+      console.error('❌ [USUARIOS] Erro inesperado:', error)
       alert('Erro inesperado ao carregar usuários')
     } finally {
       setLoading(false)
