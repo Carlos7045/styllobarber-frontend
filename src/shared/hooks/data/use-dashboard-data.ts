@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/api/supabase'
+import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/domains/auth/hooks/use-auth'
 
 // Tipos para os dados do banco
@@ -37,8 +37,19 @@ export function useDashboardData() {
     error: null,
   })
 
+  console.log('🔍 [DASHBOARD] useDashboardData iniciado:', {
+    profileExists: !!profile,
+    profileId: profile?.id,
+    profileRole: profile?.role
+  })
+
   useEffect(() => {
-    if (!profile?.id) return
+    if (!profile?.id) {
+      console.log('❌ [DASHBOARD] Profile não disponível, não buscando dados')
+      return
+    }
+
+    console.log('🔍 [DASHBOARD] Iniciando busca de dados do dashboard...')
 
     const fetchDashboardData = async () => {
       try {
@@ -110,6 +121,17 @@ export function useDashboardData() {
         const totalServicos = servicosResult.data?.length || 0
         const funcionariosAtivos = funcionariosResult.data?.length || 0
 
+        console.log('📊 [DASHBOARD] Dados processados:', {
+          agendamentosHoje,
+          clientesAtivos,
+          totalServicos,
+          funcionariosAtivos,
+          hasAgendamentosError: !!agendamentosResult.error,
+          hasClientesError: !!clientesResult.error,
+          hasServicosError: !!servicosResult.error,
+          hasFuncionariosError: !!funcionariosResult.error
+        })
+
         // Calcular receita de hoje (agendamentos + PDV)
 
         const receitaAgendamentos =
@@ -134,7 +156,7 @@ export function useDashboardData() {
         const slotsOcupados = ocupacaoResult.data?.length || 0
         const taxaOcupacao = slotsDisponiveis > 0 ? (slotsOcupados / slotsDisponiveis) * 100 : 0
 
-        setMetrics({
+        const finalMetrics = {
           agendamentosHoje,
           clientesAtivos,
           receitaHoje,
@@ -143,12 +165,17 @@ export function useDashboardData() {
           funcionariosAtivos,
           loading: false,
           error: null,
-        })
+        }
+
+        console.log('✅ [DASHBOARD] Métricas finais:', finalMetrics)
+        setMetrics(finalMetrics)
       } catch (error) {
-        // console.error('Erro ao buscar dados do dashboard:', error)
+        console.error('❌ [DASHBOARD] Erro ao buscar dados:', error)
 
         // Em caso de erro, usar dados de fallback baseados em dados históricos
         const fallbackData = await getFallbackData()
+
+        console.log('🔄 [DASHBOARD] Usando dados de fallback:', fallbackData)
 
         setMetrics({
           ...fallbackData,
