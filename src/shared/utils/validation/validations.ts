@@ -4,26 +4,26 @@ import { VALIDACAO } from './constants'
 // Função para validar CPF brasileiro
 function validarCPF(cpf: string): boolean {
   if (!cpf) return false
-  
+
   const cpfNumeros = cpf.replace(/\D/g, '')
   if (cpfNumeros.length !== 11 || /^(\d)\1+$/.test(cpfNumeros)) return false
-  
+
   // Primeiro dígito verificador
   let soma = 0
   for (let i = 0; i < 9; i++) {
     soma += parseInt(cpfNumeros.charAt(i)) * (10 - i)
   }
   let resto = soma % 11
-  let digito1 = resto < 2 ? 0 : 11 - resto
-  
+  const digito1 = resto < 2 ? 0 : 11 - resto
+
   // Segundo dígito verificador
   soma = 0
   for (let i = 0; i < 10; i++) {
     soma += parseInt(cpfNumeros.charAt(i)) * (11 - i)
   }
   resto = soma % 11
-  let digito2 = resto < 2 ? 0 : 11 - resto
-  
+  const digito2 = resto < 2 ? 0 : 11 - resto
+
   return digito1 === parseInt(cpfNumeros.charAt(9)) && digito2 === parseInt(cpfNumeros.charAt(10))
 }
 
@@ -56,20 +56,22 @@ export const schemaLogin = z.object({
 })
 
 // Schema para cadastro
-export const schemaCadastro = schemaUsuario.extend({
-  senha: z.string().min(VALIDACAO.SENHA_MIN_LENGTH, 'Senha deve ter pelo menos 6 caracteres'),
-  confirmarSenha: z.string(),
-  cpf: z
-    .string()
-    .optional()
-    .refine((cpf) => {
-      if (!cpf || cpf.trim() === '') return true // CPF é opcional no cadastro
-      return validarCPF(cpf)
-    }, 'CPF inválido'),
-}).refine((data) => data.senha === data.confirmarSenha, {
-  message: 'Senhas não coincidem',
-  path: ['confirmarSenha'],
-})
+export const schemaCadastro = schemaUsuario
+  .extend({
+    senha: z.string().min(VALIDACAO.SENHA_MIN_LENGTH, 'Senha deve ter pelo menos 6 caracteres'),
+    confirmarSenha: z.string(),
+    cpf: z
+      .string()
+      .optional()
+      .refine((cpf) => {
+        if (!cpf || cpf.trim() === '') return true // CPF é opcional no cadastro
+        return validarCPF(cpf)
+      }, 'CPF inválido'),
+  })
+  .refine((data) => data.senha === data.confirmarSenha, {
+    message: 'Senhas não coincidem',
+    path: ['confirmarSenha'],
+  })
 
 // Schema para atualização de perfil
 export const schemaPerfilUsuario = z.object({
@@ -95,25 +97,25 @@ export const schemaPerfilUsuario = z.object({
     .optional()
     .refine((date) => {
       if (!date || date.trim() === '') return true
-      
+
       // Verificar formato básico da data
       const dateRegex = /^\d{4}-\d{2}-\d{2}$/
       if (!dateRegex.test(date)) return false
-      
+
       // Verificar se é uma data válida
       const birthDate = new Date(date)
       if (isNaN(birthDate.getTime())) return false
-      
+
       // Verificar idade
       const today = new Date()
       const age = today.getFullYear() - birthDate.getFullYear()
       const monthDiff = today.getMonth() - birthDate.getMonth()
-      
+
       let finalAge = age
       if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
         finalAge--
       }
-      
+
       return finalAge >= 13 && finalAge <= 120
     }, 'Data inválida ou idade deve estar entre 13 e 120 anos'),
   avatar_url: z.string().url().optional().or(z.literal('')),
@@ -152,19 +154,30 @@ export const schemaAgendamentoPublico = schemaAgendamento.extend({
 })
 
 // Schema para horário de trabalho
-export const schemaHorarioTrabalho = z.object({
-  ativo: z.boolean(),
-  inicio: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido'),
-  fim: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido'),
-  intervaloInicio: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido').optional(),
-  intervaloFim: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido').optional(),
-}).refine((data) => {
-  if (!data.ativo) return true
-  return data.inicio < data.fim
-}, {
-  message: 'Hora de início deve ser anterior à hora de fim',
-  path: ['fim'],
-})
+export const schemaHorarioTrabalho = z
+  .object({
+    ativo: z.boolean(),
+    inicio: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido'),
+    fim: z.string().regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido'),
+    intervaloInicio: z
+      .string()
+      .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido')
+      .optional(),
+    intervaloFim: z
+      .string()
+      .regex(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/, 'Formato de hora inválido')
+      .optional(),
+  })
+  .refine(
+    (data) => {
+      if (!data.ativo) return true
+      return data.inicio < data.fim
+    },
+    {
+      message: 'Hora de início deve ser anterior à hora de fim',
+      path: ['fim'],
+    }
+  )
 
 // Tipos inferidos dos schemas
 export type DadosUsuario = z.infer<typeof schemaUsuario>

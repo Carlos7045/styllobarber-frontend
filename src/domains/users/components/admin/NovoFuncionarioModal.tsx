@@ -1,11 +1,17 @@
 'use client'
 
 import React, { useState, useEffect } from 'react'
-import { SimpleModal, SimpleModalContent, SimpleModalHeader, SimpleModalTitle, SimpleModalFooter } from '@/shared/components/ui/modal-simple'
+import {
+  SimpleModal,
+  SimpleModalContent,
+  SimpleModalHeader,
+  SimpleModalTitle,
+  SimpleModalFooter,
+} from '@/shared/components/ui/modal-simple'
 import { Button, Input, Textarea } from '@/shared/components/ui'
 import { useFuncionariosAdmin } from '@/domains/users/hooks/use-funcionarios-admin'
 import { supabase } from '@/lib/api/supabase'
-import { User, Mail, Phone, Calendar, Percent } from 'lucide-react'
+import { User, Mail, Phone, Calendar, Percent, Tag } from 'lucide-react'
 
 interface NovoFuncionarioModalProps {
   isOpen: boolean
@@ -24,16 +30,16 @@ interface UserProfile {
 export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
   isOpen,
   onClose,
-  onSuccess
+  onSuccess,
 }) => {
   const { create: createFuncionario } = useFuncionariosAdmin()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
   const [step, setStep] = useState<'select' | 'configure'>('select')
-  
+
   const [availableUsers, setAvailableUsers] = useState<UserProfile[]>([])
   const [selectedUserId, setSelectedUserId] = useState<string>('')
-  
+
   const [formData, setFormData] = useState({
     especialidades: [] as string[],
     especialidadeInput: '',
@@ -46,8 +52,8 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
       quinta: { inicio: '08:00', fim: '18:00', ativo: true },
       sexta: { inicio: '08:00', fim: '18:00', ativo: true },
       sabado: { inicio: '08:00', fim: '17:00', ativo: true },
-      domingo: { inicio: '08:00', fim: '12:00', ativo: false }
-    }
+      domingo: { inicio: '08:00', fim: '12:00', ativo: false },
+    },
   })
 
   // Buscar usuários disponíveis para serem funcionários
@@ -65,16 +71,12 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
           .neq('role', 'saas_owner')
 
         // Buscar IDs de usuários que já são funcionários
-        const { data: funcionarios } = await supabase
-          .from('funcionarios')
-          .select('profile_id')
+        const { data: funcionarios } = await supabase.from('funcionarios').select('profile_id')
 
-        const funcionarioIds = funcionarios?.map(f => f.profile_id) || []
-        
+        const funcionarioIds = funcionarios?.map((f) => f.profile_id) || []
+
         // Filtrar usuários que não são funcionários
-        const availableUsers = users?.filter(user => 
-          !funcionarioIds.includes(user.id)
-        ) || []
+        const availableUsers = users?.filter((user) => !funcionarioIds.includes(user.id)) || []
 
         setAvailableUsers(availableUsers)
       } catch (err) {
@@ -103,8 +105,8 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
           quinta: { inicio: '08:00', fim: '18:00', ativo: true },
           sexta: { inicio: '08:00', fim: '18:00', ativo: true },
           sabado: { inicio: '08:00', fim: '17:00', ativo: true },
-          domingo: { inicio: '08:00', fim: '12:00', ativo: false }
-        }
+          domingo: { inicio: '08:00', fim: '12:00', ativo: false },
+        },
       })
       setError(undefined)
     }
@@ -116,19 +118,22 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
   }
 
   const handleAddEspecialidade = () => {
-    if (formData.especialidadeInput.trim() && !formData.especialidades.includes(formData.especialidadeInput.trim())) {
-      setFormData(prev => ({
+    if (
+      formData.especialidadeInput.trim() &&
+      !formData.especialidades.includes(formData.especialidadeInput.trim())
+    ) {
+      setFormData((prev) => ({
         ...prev,
         especialidades: [...prev.especialidades, prev.especialidadeInput.trim()],
-        especialidadeInput: ''
+        especialidadeInput: '',
       }))
     }
   }
 
   const handleRemoveEspecialidade = (especialidade: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      especialidades: prev.especialidades.filter(e => e !== especialidade)
+      especialidades: prev.especialidades.filter((e) => e !== especialidade),
     }))
   }
 
@@ -151,8 +156,10 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
         profile_id: selectedUserId,
         especialidades: formData.especialidades,
         horario_trabalho: formData.horario_trabalho,
-        comissao_percentual: formData.comissao_percentual ? parseFloat(formData.comissao_percentual) : 0,
-        data_admissao: formData.data_admissao
+        comissao_percentual: formData.comissao_percentual
+          ? parseFloat(formData.comissao_percentual)
+          : 0,
+        data_admissao: formData.data_admissao,
       }
 
       const result = await createFuncionario(data)
@@ -170,14 +177,10 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
     }
   }
 
-  const selectedUser = availableUsers.find(u => u.id === selectedUserId)
+  const selectedUser = availableUsers.find((u) => u.id === selectedUserId)
 
   return (
-    <SimpleModal
-      isOpen={isOpen}
-      onClose={onClose}
-      size="lg"
-    >
+    <SimpleModal isOpen={isOpen} onClose={onClose} size="lg">
       <SimpleModalHeader>
         <SimpleModalTitle>
           {step === 'select' ? 'Selecionar Usuário' : 'Configurar Funcionário'}
@@ -190,24 +193,24 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
             <p className="text-text-secondary">
               Selecione um usuário cliente para promover a funcionário:
             </p>
-            
+
             {availableUsers.length === 0 ? (
-              <div className="text-center py-8">
-                <User className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <div className="py-8 text-center">
+                <User className="mx-auto mb-4 h-12 w-12 text-gray-400" />
                 <p className="text-text-secondary">
                   Nenhum usuário disponível para ser funcionário
                 </p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {availableUsers.map(user => (
+              <div className="max-h-96 space-y-2 overflow-y-auto">
+                {availableUsers.map((user) => (
                   <div
                     key={user.id}
                     onClick={() => handleUserSelect(user.id)}
-                    className="p-4 border border-border-default rounded-lg hover:bg-background-secondary cursor-pointer transition-colors"
+                    className="border-border-default cursor-pointer rounded-lg border p-4 transition-colors hover:bg-background-secondary"
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-primary-gold rounded-full flex items-center justify-center text-primary-black font-semibold">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-gold font-semibold text-primary-black">
                         {user.nome.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -226,10 +229,10 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
         ) : (
           <div className="space-y-6">
             {/* Usuário selecionado */}
-            <div className="p-4 bg-background-secondary rounded-lg">
-              <h3 className="font-medium mb-2 text-text-primary">Usuário Selecionado:</h3>
+            <div className="rounded-lg bg-background-secondary p-4">
+              <h3 className="mb-2 font-medium text-text-primary">Usuário Selecionado:</h3>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary-gold rounded-full flex items-center justify-center text-primary-black font-semibold">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-gold font-semibold text-primary-black">
                   {selectedUser?.nome.charAt(0).toUpperCase()}
                 </div>
                 <div>
@@ -241,14 +244,16 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
 
             {/* Especialidades */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-text-primary">
+              <label className="mb-2 block text-sm font-medium text-text-primary">
                 Especialidades *
               </label>
-              <div className="flex gap-2 mb-2">
+              <div className="mb-2 flex gap-2">
                 <Input
                   leftIcon={<Tag className="h-4 w-4" />}
                   value={formData.especialidadeInput}
-                  onChange={(e) => setFormData(prev => ({ ...prev, especialidadeInput: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, especialidadeInput: e.target.value }))
+                  }
                   placeholder="Ex: Corte masculino, Barba"
                   onKeyPress={(e) => e.key === 'Enter' && handleAddEspecialidade()}
                 />
@@ -261,10 +266,10 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
                 </Button>
               </div>
               <div className="flex flex-wrap gap-2">
-                {formData.especialidades.map(especialidade => (
+                {formData.especialidades.map((especialidade) => (
                   <span
                     key={especialidade}
-                    className="px-3 py-1 bg-primary-gold/10 text-primary-gold rounded-full text-sm flex items-center gap-2"
+                    className="flex items-center gap-2 rounded-full bg-primary-gold/10 px-3 py-1 text-sm text-primary-gold"
                   >
                     {especialidade}
                     <button
@@ -280,9 +285,9 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
             </div>
 
             {/* Comissão e Data de Admissão */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium mb-2 text-text-primary">
+                <label className="mb-2 block text-sm font-medium text-text-primary">
                   Comissão (%)
                 </label>
                 <Input
@@ -292,27 +297,31 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
                   min="0"
                   max="100"
                   value={formData.comissao_percentual}
-                  onChange={(e) => setFormData(prev => ({ ...prev, comissao_percentual: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, comissao_percentual: e.target.value }))
+                  }
                   placeholder="0"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2 text-text-primary">
+                <label className="mb-2 block text-sm font-medium text-text-primary">
                   Data de Admissão
                 </label>
                 <Input
                   leftIcon={<Calendar className="h-4 w-4" />}
                   type="date"
                   value={formData.data_admissao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, data_admissao: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, data_admissao: e.target.value }))
+                  }
                 />
               </div>
             </div>
 
             {/* Erro */}
             {error && (
-              <div className="p-3 bg-error/10 border border-error/20 rounded-lg text-error text-sm">
+              <div className="rounded-lg border border-error/20 bg-error/10 p-3 text-sm text-error">
                 {error}
               </div>
             )}
@@ -321,7 +330,7 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
       </SimpleModalContent>
 
       <SimpleModalFooter>
-        <div className="flex justify-between w-full">
+        <div className="flex w-full justify-between">
           <Button
             variant="outline"
             onClick={step === 'select' ? onClose : () => setStep('select')}
@@ -329,13 +338,13 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
           >
             {step === 'select' ? 'Cancelar' : 'Voltar'}
           </Button>
-          
+
           {step === 'configure' && (
             <Button
               variant="primary"
               onClick={handleSubmit}
               loading={loading}
-              className="bg-primary-gold hover:bg-primary-gold-dark text-primary-black"
+              className="bg-primary-gold text-primary-black hover:bg-primary-gold-dark"
             >
               Criar Funcionário
             </Button>

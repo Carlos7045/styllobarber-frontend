@@ -36,35 +36,30 @@ class ClienteCadastroService {
   // Validar CPF brasileiro
   private validarCPF(cpf: string): boolean {
     if (!cpf) return false
-    
+
     const cpfNumeros = cpf.replace(/\D/g, '')
     if (cpfNumeros.length !== 11 || /^(\d)\1+$/.test(cpfNumeros)) return false
-    
+
     let soma = 0
     for (let i = 0; i < 9; i++) {
       soma += parseInt(cpfNumeros.charAt(i)) * (10 - i)
     }
     let resto = 11 - (soma % 11)
-    let digito1 = resto < 2 ? 0 : resto
-    
+    const digito1 = resto < 2 ? 0 : resto
+
     soma = 0
     for (let i = 0; i < 10; i++) {
       soma += parseInt(cpfNumeros.charAt(i)) * (11 - i)
     }
     resto = 11 - (soma % 11)
-    let digito2 = resto < 2 ? 0 : resto
-    
+    const digito2 = resto < 2 ? 0 : resto
+
     return digito1 === parseInt(cpfNumeros.charAt(9)) && digito2 === parseInt(cpfNumeros.charAt(10))
   }
 
   // Gerar CPF válido para testes (quando não fornecido)
   private gerarCPFValido(): string {
-    const cpfsValidos = [
-      '11144477735',
-      '12345678909', 
-      '98765432100',
-      '11111111111'
-    ]
+    const cpfsValidos = ['11144477735', '12345678909', '98765432100', '11111111111']
     return cpfsValidos[Math.floor(Math.random() * cpfsValidos.length)]
   }
 
@@ -95,19 +90,18 @@ class ClienteCadastroService {
   async verificarClienteExistente(telefone: string, email?: string, cpf?: string): Promise<any[]> {
     try {
       const telefoneNumeros = telefone.replace(/\D/g, '')
-      
-      let query = supabase
+
+      const query = supabase
         .from('profiles')
         .select('id, nome, telefone, email, cpf, created_at')
         .eq('role', 'client')
 
       // Buscar por telefone
-      const { data: clientesPorTelefone } = await query
-        .ilike('telefone', `%${telefoneNumeros}%`)
+      const { data: clientesPorTelefone } = await query.ilike('telefone', `%${telefoneNumeros}%`)
 
       let clientesPorEmail: any[] = []
       let clientesPorCPF: any[] = []
-      
+
       // Buscar por email se fornecido
       if (email) {
         const { data } = await supabase
@@ -115,7 +109,7 @@ class ClienteCadastroService {
           .select('id, nome, telefone, email, cpf, created_at')
           .eq('role', 'client')
           .ilike('email', email)
-        
+
         clientesPorEmail = data || []
       }
 
@@ -127,14 +121,14 @@ class ClienteCadastroService {
           .select('id, nome, telefone, email, cpf, created_at')
           .eq('role', 'client')
           .eq('cpf', cpfNumeros)
-        
+
         clientesPorCPF = data || []
       }
 
       // Combinar resultados e remover duplicatas
       const todosClientes = [...(clientesPorTelefone || []), ...clientesPorEmail, ...clientesPorCPF]
-      const clientesUnicos = todosClientes.filter((cliente, index, array) => 
-        array.findIndex(c => c.id === cliente.id) === index
+      const clientesUnicos = todosClientes.filter(
+        (cliente, index, array) => array.findIndex((c) => c.id === cliente.id) === index
       )
 
       return clientesUnicos
@@ -149,23 +143,21 @@ class ClienteCadastroService {
     // Se CPF não foi fornecido, gerar um válido para testes
     const cpfFinal = dados.cpf ? dados.cpf.replace(/\D/g, '') : this.gerarCPFValido()
 
-    const { error } = await supabase
-      .from('profiles')
-      .insert({
-        id: userId,
-        nome: dados.nome,
-        telefone: dados.telefone,
-        email: dados.email || null,
-        cpf: cpfFinal,
-        role: 'client',
-        status: 'ativo',
-        observacoes: dados.observacoes || null,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        // Marcar como cadastrado automaticamente
-        cadastro_automatico: true,
-        senha_alterada: false
-      })
+    const { error } = await supabase.from('profiles').insert({
+      id: userId,
+      nome: dados.nome,
+      telefone: dados.telefone,
+      email: dados.email || null,
+      cpf: cpfFinal,
+      role: 'client',
+      status: 'ativo',
+      observacoes: dados.observacoes || null,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      // Marcar como cadastrado automaticamente
+      cadastro_automatico: true,
+      senha_alterada: false,
+    })
 
     if (error) {
       throw new Error(`Erro ao criar perfil: ${error.message}`)
@@ -173,7 +165,10 @@ class ClienteCadastroService {
   }
 
   // Cadastrar novo cliente com usuário
-  async cadastrarCliente(dados: NovoClienteData, funcionarioId: string): Promise<ClienteComCredenciais> {
+  async cadastrarCliente(
+    dados: NovoClienteData,
+    funcionarioId: string
+  ): Promise<ClienteComCredenciais> {
     // Validar dados
     const validacao = this.validarDadosCliente(dados)
     if (!validacao.valido) {
@@ -181,7 +176,11 @@ class ClienteCadastroService {
     }
 
     // Verificar se cliente já existe
-    const clientesExistentes = await this.verificarClienteExistente(dados.telefone, dados.email, dados.cpf)
+    const clientesExistentes = await this.verificarClienteExistente(
+      dados.telefone,
+      dados.email,
+      dados.cpf
+    )
     if (clientesExistentes.length > 0) {
       throw new Error('Cliente já cadastrado com estes dados')
     }
@@ -200,8 +199,8 @@ class ClienteCadastroService {
           role: 'client',
           cadastro_automatico: true,
           cadastrado_por: funcionarioId,
-          cadastrado_em: new Date().toISOString()
-        }
+          cadastrado_em: new Date().toISOString(),
+        },
       })
 
       if (authError || !authData.user) {
@@ -220,14 +219,13 @@ class ClienteCadastroService {
         telefone: dados.telefone,
         email: dados.email,
         senhaTemporaria,
-        loginUsuario
+        loginUsuario,
       }
 
       // Enviar credenciais
       await this.enviarCredenciais(clienteComCredenciais)
 
       return clienteComCredenciais
-
     } catch (error) {
       console.error('Erro ao cadastrar cliente:', error)
       throw error
@@ -235,16 +233,18 @@ class ClienteCadastroService {
   }
 
   // Registrar log de cadastro
-  private async registrarLogCadastro(clienteId: string, funcionarioId: string, dados: NovoClienteData): Promise<void> {
+  private async registrarLogCadastro(
+    clienteId: string,
+    funcionarioId: string,
+    dados: NovoClienteData
+  ): Promise<void> {
     try {
-      await supabase
-        .from('logs_cadastro_automatico')
-        .insert({
-          cliente_id: clienteId,
-          funcionario_id: funcionarioId,
-          dados_originais: dados,
-          created_at: new Date().toISOString()
-        })
+      await supabase.from('logs_cadastro_automatico').insert({
+        cliente_id: clienteId,
+        funcionario_id: funcionarioId,
+        dados_originais: dados,
+        created_at: new Date().toISOString(),
+      })
     } catch (error) {
       console.error('Erro ao registrar log:', error)
       // Não falhar o cadastro por causa do log
@@ -258,7 +258,7 @@ class ClienteCadastroService {
       destinatario: cliente.email || cliente.telefone,
       nome: cliente.nome,
       login: cliente.loginUsuario,
-      senha: cliente.senhaTemporaria
+      senha: cliente.senhaTemporaria,
     }
 
     try {
@@ -270,7 +270,6 @@ class ClienteCadastroService {
 
       // Registrar envio
       await this.registrarEnvioCredenciais(cliente.id, notificacao.tipo, notificacao.destinatario)
-
     } catch (error) {
       console.error('Erro ao enviar credenciais:', error)
       // Registrar falha para reenvio posterior
@@ -299,9 +298,9 @@ class ClienteCadastroService {
     // Aqui você integraria com seu provedor de email (SendGrid, AWS SES, etc.)
     console.log('Enviando email para:', notificacao.destinatario)
     console.log('Conteúdo:', templateEmail)
-    
+
     // Simular envio
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
   // Enviar credenciais por SMS
@@ -311,24 +310,26 @@ class ClienteCadastroService {
     // Aqui você integraria com seu provedor de SMS (Twilio, AWS SNS, etc.)
     console.log('Enviando SMS para:', notificacao.destinatario)
     console.log('Conteúdo:', templateSMS)
-    
+
     // Simular envio
-    await new Promise(resolve => setTimeout(resolve, 1000))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
   }
 
   // Registrar envio de credenciais
-  private async registrarEnvioCredenciais(clienteId: string, tipo: string, destinatario: string): Promise<void> {
+  private async registrarEnvioCredenciais(
+    clienteId: string,
+    tipo: string,
+    destinatario: string
+  ): Promise<void> {
     try {
-      await supabase
-        .from('logs_envio_credenciais')
-        .insert({
-          cliente_id: clienteId,
-          tipo_envio: tipo,
-          destinatario,
-          status: 'enviado',
-          tentativa: 1,
-          created_at: new Date().toISOString()
-        })
+      await supabase.from('logs_envio_credenciais').insert({
+        cliente_id: clienteId,
+        tipo_envio: tipo,
+        destinatario,
+        status: 'enviado',
+        tentativa: 1,
+        created_at: new Date().toISOString(),
+      })
     } catch (error) {
       console.error('Erro ao registrar envio:', error)
     }
@@ -337,16 +338,14 @@ class ClienteCadastroService {
   // Registrar falha no envio
   private async registrarFalhaEnvio(clienteId: string, tipo: string, error: any): Promise<void> {
     try {
-      await supabase
-        .from('logs_envio_credenciais')
-        .insert({
-          cliente_id: clienteId,
-          tipo_envio: tipo,
-          status: 'falha',
-          erro: error.message || 'Erro desconhecido',
-          tentativa: 1,
-          created_at: new Date().toISOString()
-        })
+      await supabase.from('logs_envio_credenciais').insert({
+        cliente_id: clienteId,
+        tipo_envio: tipo,
+        status: 'falha',
+        erro: error.message || 'Erro desconhecido',
+        tentativa: 1,
+        created_at: new Date().toISOString(),
+      })
     } catch (logError) {
       console.error('Erro ao registrar falha:', logError)
     }
@@ -357,12 +356,14 @@ class ClienteCadastroService {
     try {
       const { data: falhas } = await supabase
         .from('logs_envio_credenciais')
-        .select(`
+        .select(
+          `
           cliente_id,
           tipo_envio,
           tentativa,
           profiles!inner(nome, telefone, email)
-        `)
+        `
+        )
         .eq('status', 'falha')
         .lt('tentativa', 3) // Máximo 3 tentativas
 
@@ -376,7 +377,7 @@ class ClienteCadastroService {
           telefone: profile.telefone,
           email: profile.email,
           senhaTemporaria: 'REENVIO', // Senha será regenerada
-          loginUsuario: profile.email || profile.telefone
+          loginUsuario: profile.email || profile.telefone,
         }
 
         try {
@@ -395,13 +396,15 @@ class ClienteCadastroService {
     try {
       const { data, error } = await supabase
         .from('logs_cadastro_automatico')
-        .select(`
+        .select(
+          `
           id,
           created_at,
           funcionario_id,
           profiles!logs_cadastro_automatico_funcionario_id_fkey(nome),
           profiles!logs_cadastro_automatico_cliente_id_fkey(nome, telefone, email)
-        `)
+        `
+        )
         .gte('created_at', periodo.inicio)
         .lte('created_at', periodo.fim)
 
@@ -411,7 +414,7 @@ class ClienteCadastroService {
         total: data?.length || 0,
         porFuncionario: this.agruparPorFuncionario(data || []),
         porDia: this.agruparPorDia(data || []),
-        sucessoEnvio: await this.obterTaxaSucessoEnvio(periodo)
+        sucessoEnvio: await this.obterTaxaSucessoEnvio(periodo),
       }
     } catch (error) {
       console.error('Erro ao obter estatísticas:', error)
@@ -445,7 +448,7 @@ class ClienteCadastroService {
 
       if (!data || data.length === 0) return 0
 
-      const sucessos = data.filter(item => item.status === 'enviado').length
+      const sucessos = data.filter((item) => item.status === 'enviado').length
       return (sucessos / data.length) * 100
     } catch (error) {
       console.error('Erro ao calcular taxa de sucesso:', error)
