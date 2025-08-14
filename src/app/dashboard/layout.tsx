@@ -11,7 +11,7 @@ import { ToastProvider } from '@/shared/components/ui'
 // Debug components removidos - problema resolvido!
 // import { SessionProvider } from '@/domains/auth/components/SessionProvider' // Removido temporariamente
 import { useAuth } from '@/domains/auth/hooks/use-auth'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils'
 import { usePreloadComponents } from '@/shared/hooks/use-dynamic-import'
 
 // Componente de loading para o dashboard

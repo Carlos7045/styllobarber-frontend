@@ -5,7 +5,7 @@ import { Clock, Calendar, Mail, MessageSquare, Bell, Smartphone, Trash2, Plus, S
 
 import { useAdminNotificacoes } from '@/domains/users/hooks/use-admin-notificacoes'
 import { Button, Input, Card, CardContent } from '@/shared/components/ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils'
 import { formatDate } from '@/shared/utils/date-utils'
 
 import type {

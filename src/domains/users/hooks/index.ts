@@ -5,7 +5,7 @@
 // Admin hooks
 export { useAdminAgendamentos } from './use-admin-agendamentos'
 export { useAdminClientes } from './use-admin-clientes'
-export { useAdminFuncionarios } from './use-admin-funcionarios'
+export { useFuncionariosAdmin } from './use-funcionarios-admin'
 export { useAdminHorarios } from './use-admin-horarios'
 export { useAdminNotificacoes } from './use-admin-notificacoes'
 export { useAdminServicos } from './use-admin-servicos'
@@ -17,7 +17,8 @@ export { useBarberPermissions } from './use-barber-permissions'
 
 // Profile hooks
 export { useProfileSync } from './use-profile-sync'
-export { useFuncionariosEspecialidades } from './use-funcionarios-especialidades-simple'
+// Hook unificado substituiu useFuncionariosEspecialidades
+// export { useFuncionariosEspecialidades } from './use-funcionarios-especialidades-simple'
 
 // Public hooks (for clients)
 export { useFuncionariosPublicos } from './use-funcionarios-publicos'

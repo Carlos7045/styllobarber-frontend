@@ -1,7 +1,7 @@
 'use client'
 
 import React from 'react'
-import { TestFuncionariosEspecialidades } from '@/components/debug/TestFuncionariosEspecialidades'
+import { TestFuncionariosAdmin } from '@/components/debug/TestFuncionariosAdmin'
 
 export default function TestFuncionariosPage() {
   return (
@@ -13,12 +13,12 @@ export default function TestFuncionariosPage() {
           <h2 className="mb-2 text-lg font-semibold">ℹ️ Informações do Teste</h2>
           <p className="mb-2 text-gray-600">
             Esta página testa o hook{' '}
-            <code className="rounded bg-gray-100 px-1">useFuncionariosEspecialidades</code>
+            <code className="rounded bg-gray-100 px-1">useFuncionariosAdmin</code>
           </p>
           <p className="text-gray-600">Verifique o console do navegador para logs detalhados.</p>
         </div>
 
-        <TestFuncionariosEspecialidades />
+        <TestFuncionariosAdmin />
       </div>
     </div>
   )

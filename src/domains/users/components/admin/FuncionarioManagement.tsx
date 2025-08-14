@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Users, Search, Filter, MoreHorizontal, Edit, Trash2, UserCheck, UserX, Plus, Download, RefreshCw, Scissors, Settings } from 'lucide-react'
 
 import { useAuth, UserProfile } from '@/domains/auth/hooks/use-auth'
@@ -12,7 +12,7 @@ import { UserEditModal } from './UserEditModal'
 import { ConfirmDialog } from './ConfirmDialog'
 import { CriarFuncionarioModal } from './CriarFuncionarioModal'
 import { EspecialidadesModal } from './EspecialidadesModal'
-import { useFuncionariosEspecialidades } from '@/domains/users/hooks/use-funcionarios-especialidades-simple'
+import { useFuncionariosAdmin } from '@/domains/users/hooks/use-funcionarios-admin'
 import type { FuncionarioComEspecialidades } from '@/types/funcionarios'
 
 interface FuncionarioManagementProps {
@@ -24,21 +24,14 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
     const { canManageEmployees, hasPermission } = usePermissions()
     const {
         funcionarios,
-        filteredFuncionarios,
         loading,
         error,
         refetch,
-        stats
-    } = useFuncionariosEspecialidades()
-
-    // Debug: Log dos dados recebidos do hook
-    console.log('🎯 [COMPONENTE] Dados do hook:', {
-        funcionarios: funcionarios?.length || 0,
-        filteredFuncionarios: filteredFuncionarios?.length || 0,
-        loading,
-        error,
-        stats
-    })
+        stats,
+        toggleStatus,
+        delete: deleteFuncionario,
+        updateEspecialidades
+    } = useFuncionariosAdmin()
 
     const [searchTerm, setSearchTerm] = useState('')
     const [roleFilter, setRoleFilter] = useState<string>('all')
@@ -61,6 +54,29 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
         action: () => { },
     })
     const [actionLoading, setActionLoading] = useState(false)
+
+    // Usar funcionários filtrados do hook (aplicar filtros locais se necessário)
+    const funcionariosFiltrados = useMemo(() => {
+        return funcionarios.filter(funcionario => {
+            const matchesSearch = funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                funcionario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (funcionario.telefone && funcionario.telefone.includes(searchTerm))
+            const matchesRole = roleFilter === 'all' || funcionario.role === roleFilter
+            const matchesStatus = statusFilter === 'all' ||
+                (statusFilter === 'active' && funcionario.ativo) ||
+                (statusFilter === 'inactive' && !funcionario.ativo)
+            return matchesSearch && matchesRole && matchesStatus
+        })
+    }, [funcionarios, searchTerm, roleFilter, statusFilter])
+
+    // Debug: Log dos dados recebidos do hook
+    console.log('🎯 [COMPONENTE] Dados do hook:', {
+        funcionarios: funcionarios?.length || 0,
+        funcionariosFiltrados: funcionariosFiltrados?.length || 0,
+        loading,
+        error,
+        stats
+    })
 
     // Mostrar loading se ainda não carregou o perfil
     if (!profile) {
@@ -107,18 +123,6 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
         link.click()
         document.body.removeChild(link)
     }
-
-    // Usar funcionários filtrados do hook (aplicar filtros locais se necessário)
-    const funcionariosFiltrados = funcionarios.filter(funcionario => {
-        const matchesSearch = funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            funcionario.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            (funcionario.telefone && funcionario.telefone.includes(searchTerm))
-        const matchesRole = roleFilter === 'all' || funcionario.role === roleFilter
-        const matchesStatus = statusFilter === 'all' ||
-            (statusFilter === 'active' && funcionario.ativo) ||
-            (statusFilter === 'inactive' && !funcionario.ativo)
-        return matchesSearch && matchesRole && matchesStatus
-    })
 
     // Alterar role do funcionário (apenas entre admin e barber)
     const handleRoleChange = async (userId: string, newRole: 'admin' | 'barber') => {
@@ -177,38 +181,13 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                 try {
                     setActionLoading(true)
 
-                    if (!activate) {
-                        // Verificar se funcionário tem agendamentos futuros
-                        const { data: agendamentosFuturos, error: checkError } = await supabase
-                            .from('appointments')
-                            .select('id')
-                            .eq('barbeiro_id', userId)
-                            .gte('data_agendamento', new Date().toISOString())
-                            .neq('status', 'cancelado')
-
-                        if (checkError) {
-                            throw checkError
-                        }
-
-                        if (agendamentosFuturos && agendamentosFuturos.length > 0) {
-                            alert(`Funcionário possui ${agendamentosFuturos.length} agendamento(s) futuro(s). Cancele-os primeiro.`)
-                            return
-                        }
+                    const result = await toggleStatus(userId, activate)
+                    
+                    if (result.success) {
+                        alert(`Funcionário ${activate ? 'ativado' : 'desativado'} com sucesso!`)
+                    } else {
+                        alert(result.error || 'Erro ao alterar status do funcionário')
                     }
-
-                    const { error: updateError } = await supabase
-                        .from('profiles')
-                        .update({ ativo: activate })
-                        .eq('id', userId)
-
-                    if (updateError) {
-                        throw updateError
-                    }
-
-                    // Recarregar dados
-                    refetch()
-
-                    alert(`Funcionário ${activate ? 'ativado' : 'desativado'} com sucesso!`)
                 } catch (error) {
                     console.error('Erro ao alterar status:', error)
                     alert('Erro inesperado ao alterar status do funcionário')
@@ -234,21 +213,13 @@ export function FuncionarioManagement({ className }: FuncionarioManagementProps)
                 try {
                     setActionLoading(true)
 
-                    // Deletar do banco
-                    const { error } = await supabase
-                        .from('profiles')
-                        .delete()
-                        .eq('id', userId)
-
-                    if (error) {
-                        console.error('Erro ao deletar funcionário:', error)
-                        alert('Erro ao deletar funcionário: ' + error.message)
-                        return
+                    const result = await deleteFuncionario(userId)
+                    
+                    if (result.success) {
+                        alert('Funcionário deletado com sucesso!')
+                    } else {
+                        alert(result.error || 'Erro ao deletar funcionário')
                     }
-
-                    // Recarregar dados
-                    refetch()
-                    alert('Funcionário deletado com sucesso!')
                 } catch (error) {
                     console.error('Erro ao deletar funcionário:', error)
                     alert('Erro inesperado ao deletar funcionário')

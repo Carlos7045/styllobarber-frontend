@@ -13,10 +13,10 @@ export {
   PasswordRecoveryLoading,
 } from './AuthLoadingStates'
 export {
-  AuthValidation,
   useFieldValidation,
   validationRules,
   ValidationDisplay,
+  PasswordStrength,
 } from './AuthValidation'
 export { LogoutButton } from './LogoutButton'
 export { LogoutPage } from './LogoutPage'

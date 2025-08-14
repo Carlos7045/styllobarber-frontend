@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import { SimpleModal, SimpleModalContent, SimpleModalHeader, SimpleModalTitle, SimpleModalFooter } from '@/shared/components/ui/modal-simple'
 import { Button, Input } from '@/shared/components/ui'
 import { useServices } from '@/shared/hooks/data/use-services'
-import { useFuncionariosEspecialidades } from '@/domains/users/hooks/use-funcionarios-especialidades-simple'
+import { useFuncionariosAdmin } from '@/domains/users/hooks/use-funcionarios-admin'
 import { Search, Check, X, Scissors, Clock, DollarSign, Trash2, RotateCcw } from 'lucide-react'
 import type { FuncionarioComEspecialidades } from '@/types/funcionarios'
 import type { Service } from '@/types/services'
@@ -23,7 +23,7 @@ export const EspecialidadesModal: React.FC<EspecialidadesModalProps> = ({
   onSuccess
 }) => {
   const { services, disabledServices, loading: servicesLoading, deleteService, reactivateService } = useServices()
-  const { updateFuncionarioEspecialidades } = useFuncionariosEspecialidades()
+  const { updateEspecialidades } = useFuncionariosAdmin()
   
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
@@ -85,10 +85,20 @@ export const EspecialidadesModal: React.FC<EspecialidadesModalProps> = ({
   const handleSubmit = async () => {
     if (!funcionario) return
 
+    // Validação: verificar se há mudanças
+    const especialidadesAtuais = funcionario.servicos.map(s => s.id).sort()
+    const novasEspecialidades = [...selectedServiceIds].sort()
+    
+    if (JSON.stringify(especialidadesAtuais) === JSON.stringify(novasEspecialidades)) {
+      // Não há mudanças, apenas fechar
+      onClose()
+      return
+    }
+
     // Confirmar se o usuário quer salvar sem especialidades
     if (selectedServiceIds.length === 0) {
       const confirmar = window.confirm(
-        `Tem certeza que deseja salvar sem especialidades?\n\n${funcionario.nome} não poderá realizar nenhum serviço até que especialidades sejam definidas.`
+        `⚠️ ATENÇÃO: Salvar sem especialidades\n\n${funcionario.nome} não poderá realizar nenhum serviço até que especialidades sejam definidas.\n\nDeseja continuar mesmo assim?`
       )
       if (!confirmar) return
     }
@@ -97,19 +107,43 @@ export const EspecialidadesModal: React.FC<EspecialidadesModalProps> = ({
     setError(undefined)
 
     try {
-      const result = await updateFuncionarioEspecialidades({
+      console.log('💾 Salvando especialidades:', {
+        funcionario_id: funcionario.id,
+        funcionario_nome: funcionario.nome,
+        especialidades_antigas: especialidadesAtuais,
+        especialidades_novas: novasEspecialidades,
+        total_selecionadas: selectedServiceIds.length
+      })
+
+      const result = await updateEspecialidades({
         funcionario_id: funcionario.id,
         service_ids: selectedServiceIds
       })
 
       if (result.success) {
+        console.log('✅ Especialidades salvas com sucesso!')
+        
+        // Mostrar feedback de sucesso
+        const servicosNomes = services
+          .filter(s => selectedServiceIds.includes(s.id))
+          .map(s => s.nome)
+          .join(', ')
+        
+        if (selectedServiceIds.length > 0) {
+          alert(`✅ Especialidades atualizadas!\n\n${funcionario.nome} agora pode realizar:\n${servicosNomes}`)
+        } else {
+          alert(`✅ Especialidades removidas!\n\n${funcionario.nome} não possui mais especialidades definidas.`)
+        }
+        
         onSuccess?.()
         onClose()
       } else {
+        console.error('❌ Erro ao salvar especialidades:', result.error)
         setError(result.error || 'Erro ao atualizar especialidades')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro inesperado')
+      console.error('❌ Erro inesperado ao salvar especialidades:', err)
+      setError(err instanceof Error ? err.message : 'Erro inesperado ao salvar especialidades')
     } finally {
       setLoading(false)
     }
@@ -185,6 +219,51 @@ export const EspecialidadesModal: React.FC<EspecialidadesModalProps> = ({
         <div className="text-sm text-text-secondary">
           Selecione os serviços que <strong>{funcionario.nome}</strong> pode realizar:
         </div>
+
+        {/* Resumo das especialidades selecionadas */}
+        {selectedServiceIds.length > 0 && (
+          <div className="bg-primary-gold/10 border border-primary-gold/20 rounded-lg p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <Scissors className="h-4 w-4 text-primary-gold" />
+              <span className="text-sm font-medium text-primary-gold">
+                {selectedServiceIds.length} especialidade{selectedServiceIds.length !== 1 ? 's' : ''} selecionada{selectedServiceIds.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {services
+                .filter(s => selectedServiceIds.includes(s.id))
+                .map(service => (
+                  <span
+                    key={service.id}
+                    className="inline-flex items-center gap-1 px-2 py-1 bg-primary-gold/20 text-primary-gold text-xs rounded-full"
+                  >
+                    {service.nome}
+                    <button
+                      onClick={() => handleServiceToggle(service.id)}
+                      className="hover:bg-primary-gold/30 rounded-full p-0.5"
+                      title="Remover especialidade"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))
+              }
+            </div>
+          </div>
+        )}
+
+        {selectedServiceIds.length === 0 && (
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-3 dark:bg-orange-900/20 dark:border-orange-800/30">
+            <div className="flex items-center gap-2">
+              <div className="h-4 w-4 rounded-full bg-orange-500 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">!</span>
+              </div>
+              <span className="text-sm text-orange-700 dark:text-orange-300">
+                <strong>{funcionario.nome}</strong> não poderá realizar nenhum serviço sem especialidades definidas.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Busca e ações */}
         <div className="space-y-3">

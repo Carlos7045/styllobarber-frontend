@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react'
 import { SimpleModal, SimpleModalContent, SimpleModalHeader, SimpleModalTitle, SimpleModalFooter } from '@/shared/components/ui/modal-simple'
 import { Button, Input, Textarea } from '@/shared/components/ui'
-import { useAdminFuncionarios, type CreateFuncionarioData } from '@/domains/users/hooks/use-admin-funcionarios'
+import { useFuncionariosAdmin } from '@/domains/users/hooks/use-funcionarios-admin'
 import { supabase } from '@/lib/api/supabase'
 import { User, Mail, Phone, Calendar, Percent } from 'lucide-react'
 
@@ -26,7 +26,7 @@ export const NovoFuncionarioModal: React.FC<NovoFuncionarioModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const { createFuncionario } = useAdminFuncionarios()
+  const { create: createFuncionario } = useFuncionariosAdmin()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string>()
   const [step, setStep] = useState<'select' | 'configure'>('select')

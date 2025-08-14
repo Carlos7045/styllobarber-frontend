@@ -5,7 +5,7 @@ import { Shield, RefreshCw, Clock, AlertTriangle, X, ShieldAlert, ShieldCheck } 
 
 import { Button } from '@/shared/components/ui'
 import { useMinimalSessionManager } from '../hooks/use-minimal-session-manager'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils'
 
 interface SessionStatusProps {
   className?: string

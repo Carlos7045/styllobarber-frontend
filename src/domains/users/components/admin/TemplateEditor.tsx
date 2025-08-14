@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { X, Save, Eye, Mail, MessageSquare, Bell, Smartphone, Plus, Trash2, Code } from 'lucide-react'
 
 import { Button, Input, Card, CardContent, CardHeader, CardTitle } from '@/shared/components/ui'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils'
 
 import type { 
   NotificationTemplate, 

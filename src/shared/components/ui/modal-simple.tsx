@@ -2,7 +2,7 @@ import * as React from 'react'
 import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/lib/utils'
+import { cn } from '@/shared/utils'
 
 // Variantes do modal usando CVA
 const modalVariants = cva(

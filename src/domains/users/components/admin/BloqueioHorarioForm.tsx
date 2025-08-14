@@ -8,7 +8,7 @@ import { Label } from '@/shared/components/ui'
 import { Textarea } from '@/shared/components/ui'
 import { ArrowLeft, Calendar, Save, AlertCircle, User } from 'lucide-react'
 import { useAdminHorarios, BloqueioHorario } from '@/domains/users/hooks/use-admin-horarios'
-import { useAdminFuncionarios } from '@/domains/users/hooks/use-admin-funcionarios'
+import { useFuncionariosAdmin } from '@/domains/users/hooks/use-funcionarios-admin'
 
 interface BloqueioHorarioFormProps {
   bloqueio?: BloqueioHorario | null
@@ -28,7 +28,7 @@ export function BloqueioHorarioForm({ bloqueio, onClose }: BloqueioHorarioFormPr
   const [error, setError] = useState<string | null>(null)
 
   const { createBloqueioHorario, updateBloqueioHorario } = useAdminHorarios()
-  const { funcionarios } = useAdminFuncionarios()
+  const { funcionarios } = useFuncionariosAdmin()
 
   // Definir data mínima como hoje
   const hoje = new Date().toISOString().split('T')[0]

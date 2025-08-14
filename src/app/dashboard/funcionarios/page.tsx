@@ -1,6 +1,6 @@
 import { Metadata } from 'next'
 import { Container } from '@/shared/components/layout'
-import { FuncionarioManagement } from '@/domains/users/components/admin/FuncionarioManagement'
+import { FuncionarioManagement, EspecialidadesManager, EspecialidadesValidator } from '@/domains/users/components/admin'
 
 export const metadata: Metadata = {
   title: 'Gestão de Funcionários - StylloBarber',
@@ -31,7 +31,15 @@ export default function FuncionariosPage() {
           <div className="w-24 h-1 bg-gradient-to-r from-primary-gold to-primary-gold-dark rounded-full mx-auto"></div>
         </div>
 
-        <FuncionarioManagement />
+        <div className="space-y-8">
+          <FuncionarioManagement />
+          
+          {/* Ferramentas avançadas de especialidades */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <EspecialidadesManager />
+            <EspecialidadesValidator />
+          </div>
+        </div>
       </div>
     </Container>
   )
